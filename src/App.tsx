@@ -1,13 +1,12 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import * as netplayjs from 'netplayjs'; // Re-add for type casting
 import Modal from 'react-modal'; // Import Modal
 import { NetplayAdapter } from './game/network/NetplayAdapter';
 // Types might still be needed for state-sync
-import { GameState, PlayerStats } from './game/state/types'; // Import PlayerStats
+import { GameState } from './game/state/types';
 import { UserProfile } from './types'; // Import UserProfile type
 import io, { Socket } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
-import { GRID_SIZE, PLAYER_COLORS, CELL_SIZE } from './game/constants'; // Import GRID_SIZE and PLAYER_COLORS
+import { GRID_SIZE, CELL_SIZE } from './game/constants';
 import ProfileModal from './components/ProfileModal'; // Import the modal component
 
 import './App.css'; // Import the CSS file
@@ -493,10 +492,11 @@ const App: React.FC = () => {
 
     // --- Cleanup function for this effect ---
     return () => {
-      console.log('Cleaning up App component main effect...');
+      console.log('Clean up main effect');
+      // First, cancel current animation frame if active
       if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = undefined;
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = undefined;
       }
       // Disconnect WebSocket
       socketRef.current?.disconnect();
@@ -504,9 +504,10 @@ const App: React.FC = () => {
       // Clear adapter ref
       gameAdapterRef.current = null;
       // Remove canvas if it was created by this effect instance
-      if (canvasCreated && canvasRef.current && gameContainerRef.current?.contains(canvasRef.current)) {
+      const gameContainer = gameContainerRef.current; // Copy the ref value
+      if (canvasCreated && canvasRef.current && gameContainer?.contains(canvasRef.current)) {
           console.log("Removing canvas element.");
-          gameContainerRef.current.removeChild(canvasRef.current);
+          gameContainer.removeChild(canvasRef.current);
           canvasRef.current = null;
       }
       console.log('Main effect cleanup complete.');

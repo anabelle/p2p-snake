@@ -1,5 +1,3 @@
-import { Point } from "./state/types";
-
 // Constants
 export const GRID_SIZE = { width: 50, height: 30 };
 export const CELL_SIZE = 12; // Decreased cell size to fit more cells in roughly the same area

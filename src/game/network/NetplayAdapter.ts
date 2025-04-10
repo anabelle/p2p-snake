@@ -1,5 +1,5 @@
-import { GameState, Direction } from "../state/types";
-import { GRID_SIZE, CELL_SIZE, GAME_SPEED_MS } from "../constants";
+import { GameState } from "../state/types";
+import { GRID_SIZE, CELL_SIZE } from "../constants";
 import { drawGame } from "../rendering/renderer";
 import * as netplayjs from 'netplayjs'; // Still needed for JsonValue type
 
