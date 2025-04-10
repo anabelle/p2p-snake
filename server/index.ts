@@ -2,7 +2,7 @@ import { Server, Socket } from 'socket.io';
 import { createServer } from 'http';
 // Remove NetplayAdapter import - server manages state directly
 // import { NetplayAdapter } from '../src/game/network/NetplayAdapter';
-import { GameState, Direction } from '../src/game/state/types';
+import { GameState, Direction, PlayerStats } from '../src/game/state/types';
 import { GAME_SPEED_MS, GRID_SIZE } from '../src/game/constants';
 import { updateGame, PlayerInputs } from '../src/game/logic/gameRules'; // Need updateGame
 import { generateFood } from '../src/game/logic/foodLogic'; // Need for initial food
@@ -71,26 +71,46 @@ initializeGame(); // Initialize on server start
 // --- Socket.IO Event Handlers ---
 io.on('connection', (socket: Socket) => {
   const playerId = socket.handshake.query.id as string;
-  if (!playerId) {
-    console.warn('Player connected without ID. Disconnecting.');
+  const playerName = socket.handshake.query.name as string; // Read name
+  const playerColor = socket.handshake.query.color as string; // Read color
+
+  if (!playerId || !playerName || !playerColor) { // Validate all are present
+    console.warn('Player connected without ID, Name, or Color. Disconnecting.', socket.handshake.query);
     socket.disconnect(true);
     return;
   }
 
-  console.log(`Player connected: ${playerId} (${socket.id})`);
+  console.log(`Player connected: ID=${playerId}, Name=${playerName}, Color=${playerColor} (${socket.id})`);
   connectedPlayers.set(playerId, socket);
   playerInputs.set(playerId, { dx: 0, dy: 0 }); // Initialize input
 
   // Update player count in game state
   currentGameState.playerCount = connectedPlayers.size;
-  
-  // Update connected status in playerStats if the player already exists
-  if (currentGameState.playerStats && currentGameState.playerStats[playerId]) {
-    console.log(`Reconnecting existing player: ${playerId}`);
+
+  // Initialize or update playerStats, including name and preferred color
+  if (!currentGameState.playerStats) {
+      currentGameState.playerStats = {}; // Ensure playerStats exists
+  }
+
+  if (currentGameState.playerStats[playerId]) {
+    console.log(`Reconnecting existing player: ${playerName} (${playerId})`);
     currentGameState.playerStats[playerId] = {
       ...currentGameState.playerStats[playerId],
-      isConnected: true
+      isConnected: true,
+      name: playerName // Update name in case it changed
+      // Color is handled by generateNewSnake or player preference later
     };
+  } else {
+     console.log(`New player joined: ${playerName} (${playerId})`);
+     // Initial stats for a completely new player
+     currentGameState.playerStats[playerId] = {
+         id: playerId,
+         name: playerName,
+         color: playerColor, // Store preferred color
+         score: 0,
+         deaths: 0,
+         isConnected: true
+     };
   }
 
   // Handle join event - might not be needed if query.id is reliable
@@ -183,14 +203,19 @@ setInterval(() => {
                 currentGameState.snakes.forEach(snake => {
                     if (!updatedPlayerStats[snake.id]) {
                         // Initialize missing player
+                        const playerSocket = Array.from(connectedPlayers.values()).find(s => s.handshake.query.id === snake.id);
+                        const nameFromQuery = playerSocket?.handshake.query.name as string || `Player_${snake.id.substring(0, 4)}`;
+                        const colorFromQuery = playerSocket?.handshake.query.color as string || snake.color;
+
                         updatedPlayerStats[snake.id] = {
                             id: snake.id,
-                            color: snake.color,
+                            name: nameFromQuery, // Get name from connection query if possible
+                            color: colorFromQuery, // Get preferred color or snake color
                             score: snake.score,
                             deaths: 0,
                             isConnected: currentPlayerIDSet.has(snake.id)
                         };
-                        console.log(`Added missing player stats for ${snake.id}`);
+                        console.log(`Added missing player stats for ${snake.id} (Name: ${nameFromQuery})`);
                     }
                 });
                 currentGameState.playerStats = updatedPlayerStats;

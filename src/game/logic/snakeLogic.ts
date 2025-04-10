@@ -1,5 +1,5 @@
 import { Direction, Point, Snake } from "../state/types";
-import { generateRandomColor, generateRandomPosition } from "./prng";
+import { generateRandomColor, generateRandomPosition, mulberry32 } from "./prng";
 import { PLAYER_COLORS } from "../constants"; // Import player colors
 
 // Helper function to get a color for a player ID
@@ -19,10 +19,20 @@ export const generateNewSnake = (
   id: string,
   gridSize: { width: number; height: number },
   occupiedPositions: Point[],
-  randomFunc: () => number
+  randomFunc: () => number,
+  preferredColor?: string // Optional preferred color
 ): Snake => {
   // Start with a single segment at a random, unoccupied position
   const position = generateRandomPosition(gridSize, occupiedPositions, randomFunc);
+
+  // Determine color: Use preferred if valid hex, otherwise fallback to hash
+  let finalColor = preferredColor;
+  const hexColorRegex = /^#[0-9A-F]{6}$/i;
+  if (!finalColor || !hexColorRegex.test(finalColor)) {
+      console.log(`Preferred color '${preferredColor}' for ${id} invalid or missing, using hash.`);
+      finalColor = getPlayerColor(id);
+  }
+
   if (!position) {
     // Handle the rare case where no position could be found (grid full)
     console.error(`Could not generate initial position for snake ${id}`);
@@ -30,7 +40,7 @@ export const generateNewSnake = (
     // For now, placing it at 0,0, which might cause immediate collision
     return {
       id,
-      color: getPlayerColor(id),
+      color: finalColor, // Use the determined final color
       body: [{ x: 0, y: 0 }],
       direction: Direction.RIGHT,
       score: 0,
@@ -43,7 +53,7 @@ export const generateNewSnake = (
 
   return {
     id,
-    color: getPlayerColor(id),
+    color: finalColor, // Use the determined final color
     body: [position],
     direction: initialDirection,
     score: 0,

@@ -42,8 +42,12 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
         if (!existingSnakeIDs.has(playerId)) {
             console.log(`updateGame: Player joined: ${playerId}. Adding snake.`);
             const occupied = getOccupiedPositions({ snakes: nextSnakes, food: nextFood, powerUps: nextPowerUps });
-            // Use the tick's randomFunc
-            const newSnake = generateNewSnake(playerId, currentState.gridSize, occupied, randomFunc);
+            
+            // --- Use preferred color from playerStats if available ---
+            const preferredColor = nextPlayerStats[playerId]?.color; // Get color from stats
+            
+            // Use the tick's randomFunc and potentially the preferred color
+            const newSnake = generateNewSnake(playerId, currentState.gridSize, occupied, randomFunc, preferredColor);
             
             // Important: Restore score from playerStats if available (for reconnecting players)
             if (nextPlayerStats[playerId] && nextPlayerStats[playerId].score > 0) {
@@ -58,7 +62,8 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
             if (!nextPlayerStats[playerId]) {
                 nextPlayerStats[playerId] = {
                     id: playerId,
-                    color: newSnake.color,
+                    name: `Player_${playerId.substring(0,4)}`, // Add default name here too
+                    color: newSnake.color, // Use the *actual* color assigned to the snake
                     score: newSnake.score,
                     deaths: 0,
                     isConnected: true
@@ -67,7 +72,7 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
                 nextPlayerStats[playerId] = {
                     ...nextPlayerStats[playerId],
                     isConnected: true,
-                    color: newSnake.color, // Make sure color is updated
+                    color: newSnake.color, // Update color in stats to match the snake's actual color
                 };
             }
             
@@ -83,6 +88,7 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
                 // Add missing player to playerStats
                 nextPlayerStats[playerId] = {
                     id: playerId,
+                    name: `Player_${playerId.substring(0,4)}`, // Default name if stats are missing
                     color: existingSnake.color,
                     score: existingSnake.score,
                     deaths: 0,

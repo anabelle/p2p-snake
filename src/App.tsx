@@ -2,16 +2,77 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as netplayjs from 'netplayjs'; // Re-add for type casting
 import { NetplayAdapter } from './game/network/NetplayAdapter';
 // Types might still be needed for state-sync
-import { GameState } from './game/state/types';
+import { GameState, PlayerStats } from './game/state/types'; // Import PlayerStats
 import io, { Socket } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
-import { GRID_SIZE } from './game/constants'; // Import GRID_SIZE
+import { GRID_SIZE, PLAYER_COLORS } from './game/constants'; // Import GRID_SIZE and PLAYER_COLORS
+import { generateRandomColor } from './game/logic/prng'; // Import random color generator
+
+// Define the user profile structure
+interface UserProfile {
+  id: string;
+  name: string;
+  color: string;
+}
+
+// Function to get a random color from the predefined list
+const getRandomPlayerColor = (): string => {
+  return PLAYER_COLORS[Math.floor(Math.random() * PLAYER_COLORS.length)];
+};
+
+// Function to load or create user profile
+const loadUserProfile = (): UserProfile => {
+  const storedProfile = localStorage.getItem('snakeUserProfile');
+  if (storedProfile) {
+    try {
+      const profile = JSON.parse(storedProfile);
+      // Basic validation
+      if (profile.id && profile.name && profile.color) {
+        console.log('Loaded user profile from localStorage:', profile);
+        return profile;
+      }
+    } catch (e) {
+      console.error('Failed to parse user profile from localStorage:', e);
+      localStorage.removeItem('snakeUserProfile'); // Clear invalid data
+    }
+  }
+
+  // No valid profile found, create a new one
+  console.log('No valid user profile found. Prompting for new profile...');
+  const id = uuidv4();
+  let name = prompt("Enter your name (leave blank for default):")?.trim() || '';
+  let color = prompt(`Enter your preferred color hex (e.g., #33FF57) or leave blank for random:
+Available: ${PLAYER_COLORS.join(', ')}`)?.trim() || '';
+
+  // Validate or set defaults
+  if (!name) {
+    name = `Player_${id.substring(0, 4)}`; // Default name using part of UUID
+    console.log(`Using default name: ${name}`);
+  }
+
+  // Basic hex color validation
+  const hexColorRegex = /^#[0-9A-F]{6}$/i;
+  if (!color || !hexColorRegex.test(color)) {
+    color = getRandomPlayerColor(); // Default random color
+     console.log(`Using random color: ${color}`);
+  } else {
+     console.log(`Using chosen color: ${color}`);
+  }
+
+
+  const newProfile: UserProfile = { id, name, color };
+  localStorage.setItem('snakeUserProfile', JSON.stringify(newProfile));
+  console.log('Created and saved new user profile:', newProfile);
+  return newProfile;
+};
+
 
 const App: React.FC = () => {
   const gameContainerRef = useRef<HTMLDivElement>(null);
   // Core component refs
   const socketRef = useRef<Socket | null>(null);
-  const localPlayerIdRef = useRef<string>(uuidv4()); // Keep local ID for identifying self
+  const localPlayerIdRef = useRef<string>(''); // Will be set from profile
+  const userProfileRef = useRef<UserProfile | null>(null); // Store the loaded profile
   const gameAdapterRef = useRef<NetplayAdapter | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameRef = useRef<number>();
@@ -108,11 +169,23 @@ const App: React.FC = () => {
 
   // --- Centralized WebSocket Logic ---
   useEffect(() => {
-    const SIGNALING_SERVER_URI = 'ws://localhost:3001';
-    console.log(`Local Player ID: ${localPlayerIdRef.current}`);
+    // --- Load Profile FIRST ---
+    const profile = loadUserProfile();
+    userProfileRef.current = profile;
+    localPlayerIdRef.current = profile.id; // Set the ref ID here
+    // --- End Profile Loading ---
 
-    // Connect to server, sending ID
-    socketRef.current = io(SIGNALING_SERVER_URI, { query: { id: localPlayerIdRef.current } });
+    const SIGNALING_SERVER_URI = 'ws://localhost:3001';
+    console.log(`Local Player ID: ${localPlayerIdRef.current}, Name: ${profile.name}, Color: ${profile.color}`);
+
+    // Connect to server, sending ID, Name, and Color
+    socketRef.current = io(SIGNALING_SERVER_URI, {
+      query: {
+        id: profile.id,
+        name: profile.name,
+        color: profile.color
+      }
+    });
     const socket = socketRef.current;
 
     socket.on('connect', () => {
@@ -210,6 +283,14 @@ const App: React.FC = () => {
         // Update React state to trigger re-render
         setGameState(serverState);
 
+        // Update user profile color if server assigned a different one
+        const playerStats = serverState.playerStats?.[localPlayerIdRef.current];
+        if (playerStats && playerStats.color !== userProfileRef.current?.color) {
+            console.log(`Server assigned color ${playerStats.color}, updating local profile.`);
+            userProfileRef.current = { ...userProfileRef.current!, color: playerStats.color };
+            localStorage.setItem('snakeUserProfile', JSON.stringify(userProfileRef.current));
+        }
+
         // Removed: gameAdapterRef.current.deserialize(...) call
     });
 
@@ -305,7 +386,7 @@ const App: React.FC = () => {
   return (
     <div className="App">
       <h1>Central Server Snake Game</h1>
-      <div>Status: {isConnected ? `Connected (ID: ${localPlayerIdRef.current})` : 'Disconnected'}</div>
+      <div>Status: {isConnected ? `Connected (${userProfileRef.current?.name || localPlayerIdRef.current})` : 'Disconnected'}</div>
       {/* Container for the game canvas */}
       <div ref={gameContainerRef} id="game-container" style={{
           marginTop: '20px',
@@ -340,6 +421,11 @@ const App: React.FC = () => {
               paddingBottom: '5px'
             }}>Your Snake</h3>
             <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{ fontWeight: 'bold', marginRight: '10px' }}>Name:</div>
+              <div style={{ marginRight: '20px' }}>
+                  {/* Display name from profile ref or fallback */}
+                  {userProfileRef.current?.name || localPlayerIdRef.current.substring(0, 6)}
+              </div>
               <div style={{ fontWeight: 'bold', marginRight: '10px' }}>Color:</div>
               
               {/* Direct dynamic access to your snake info */}
@@ -423,7 +509,11 @@ const App: React.FC = () => {
                             marginRight: '8px',
                             border: '1px solid #fff' 
                           }} />
-                          {snake.id === localPlayerIdRef.current ? 'You' : snake.id.substring(0, 6)}
+                          {/* Display name from playerStats or fallback */}
+                           {(() => {
+                                const stats = gameState.playerStats?.[snake.id];
+                                return stats?.name || (snake.id === localPlayerIdRef.current ? 'You' : snake.id.substring(0, 6));
+                           })()}
                         </td>
                         <td style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #444' }}>
                           {snake.score}
@@ -471,7 +561,8 @@ const App: React.FC = () => {
                             marginRight: '8px',
                             border: '1px solid #fff' 
                           }} />
-                          {player.id === localPlayerIdRef.current ? 'You' : player.id.substring(0, 6)}
+                          {/* Display name from playerStats or fallback */}
+                          {player.name || (player.id === localPlayerIdRef.current ? 'You' : player.id.substring(0, 6))}
                         </td>
                         <td style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #444' }}>
                           {player.score}

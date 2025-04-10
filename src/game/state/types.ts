@@ -39,6 +39,7 @@ export interface ActivePowerUp {
 
 export interface PlayerStats {
     id: string;
+    name?: string; // Add optional name field
     color: string; // Store color here for persistence
     score: number;
     deaths: number;
