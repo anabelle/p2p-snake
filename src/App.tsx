@@ -607,7 +607,7 @@ const App: React.FC = () => {
             </div>
             <div className="editable-profile-item" onClick={handleOpenProfileModal} title="Click to edit profile">
               <span>
-                <strong>Color:</strong>
+                <strong>Color: </strong>
                 {(() => {
                   // Use currentUserProfile.color as the primary source
                   const color = currentUserProfile.color;
@@ -633,12 +633,7 @@ const App: React.FC = () => {
             <div id="active-powerups">
               <strong>Active Effects:</strong>
               {(() => {
-                // --- Add Debug Logging ---
-                console.log("Checking active power-ups:");
-                console.log("  Raw activePowerUps from state:", gameState.activePowerUps);
-                console.log("  Local Player ID:", localPlayerIdRef.current);
-                console.log("  Server Timestamp:", gameState.timestamp);
-                // --- End Debug Logging ---
+
 
                 // Use the timestamp from the received game state for comparison
                 const serverTime = gameState.timestamp;
@@ -652,7 +647,6 @@ const App: React.FC = () => {
                   return isLocal && !isExpired; // Compare against server time
                 });
 
-                console.log("  Filtered Active Power-ups for local player:", active);
 
                 if (active.length === 0) {
                   return <span style={{ fontStyle: 'italic', opacity: 0.7 }}> None</span>;
