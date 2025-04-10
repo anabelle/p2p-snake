@@ -23,6 +23,11 @@ export const getAIDirection = (gameState: GameState): Direction => {
   // This ensures the AI makes the same decisions on all clients
   const deterministicRandom = mulberry32(gameState.rngSeed + gameState.sequence);
   
+  // Add a chance of making a "mistake" - more likely with longer snakes (increases difficulty)
+  // The calculation ensures the result is deterministic across all clients
+  const mistakeProbability = Math.min(0.05 + (aiSnake.body.length * 0.002), 0.15);
+  const makeMistake = deterministicRandom() < mistakeProbability;
+  
   // Calculate possible next positions for each direction
   const possibleMoves: Record<Direction, Point> = {
     [Direction.UP]: { 
@@ -43,6 +48,34 @@ export const getAIDirection = (gameState: GameState): Direction => {
     }
   };
 
+  // Get all possible directions regardless of collision
+  const allDirections = Object.keys(possibleMoves) as Direction[];
+  
+  // If we're making a mistake, potentially choose a direction that might lead to collision
+  if (makeMistake) {
+    // 50% chance to make a truly poor decision (potentially leading to collision)
+    // Otherwise, just make a non-optimal but still safe move
+    const severeError = deterministicRandom() < 0.5;
+    
+    if (severeError) {
+      // Choose a random direction that may lead to collision
+      const randomIndex = Math.floor(deterministicRandom() * allDirections.length);
+      const randomDirection = allDirections[randomIndex];
+      
+      // Don't go directly back into own neck though - that's too obvious
+      const isOpposite =
+        (randomDirection === Direction.UP && currentDirection === Direction.DOWN) ||
+        (randomDirection === Direction.DOWN && currentDirection === Direction.UP) ||
+        (randomDirection === Direction.LEFT && currentDirection === Direction.RIGHT) ||
+        (randomDirection === Direction.RIGHT && currentDirection === Direction.LEFT);
+      
+      if (!isOpposite || aiSnake.body.length === 1) {
+        return randomDirection;
+      }
+    }
+  }
+  
+  // Normal AI behavior if not making a mistake (or if severe error would cause obvious death)
   // Filter out invalid moves (collisions)
   const validDirections = Object.entries(possibleMoves).filter(([direction, position]) => {
     // Check if this move would result in a collision with a wall
@@ -83,12 +116,15 @@ export const getAIDirection = (gameState: GameState): Direction => {
       validDirections
     );
     
-    if (directionToFood) {
+    // Even when not making a severe mistake, occasionally don't choose the optimal path
+    // This creates more natural-looking movement
+    if (directionToFood && (!makeMistake || deterministicRandom() > 0.7)) {
       return directionToFood;
     }
   }
 
-  // If can't move toward food, select a direction deterministically
+  // If can't move toward food, or deliberately choosing suboptimal path,
+  // select a direction deterministically
   // Prefer continuing in same direction if that's valid
   if (validDirections.includes(currentDirection)) {
     return currentDirection;

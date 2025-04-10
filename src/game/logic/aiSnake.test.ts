@@ -1,5 +1,6 @@
 import { Direction, GameState, Snake } from "../state/types";
 import { AI_SNAKE_ID, getAIDirection } from "./aiSnake";
+import * as collision from './collision';
 
 describe("AI Snake Logic", () => {
   // Create a basic game state for testing
@@ -176,5 +177,118 @@ describe("AI Snake Logic", () => {
     // We don't test direction3 !== direction1 as it might randomly be the same
     // but we ensure the function returns a valid direction
     expect(Object.values(Direction)).toContain(direction3);
+  });
+
+  test("AI snake occasionally makes mistakes that could lead to collisions", () => {
+    // Create a mock snake with a long body to increase mistake probability
+    const aiSnake: Snake = {
+      id: AI_SNAKE_ID,
+      color: "#FF5500",
+      body: [
+        { x: 5, y: 5 }, // head
+        { x: 5, y: 6 },
+        { x: 5, y: 7 },
+        { x: 5, y: 8 },
+        { x: 5, y: 9 },
+        { x: 5, y: 10 },
+        { x: 5, y: 11 },
+        { x: 5, y: 12 },
+        { x: 5, y: 13 },
+        { x: 5, y: 14 },
+        { x: 5, y: 15 },
+        { x: 5, y: 16 },
+        { x: 5, y: 17 },
+        { x: 5, y: 18 },
+        { x: 5, y: 19 },
+        { x: 5, y: 20 },
+        { x: 5, y: 21 },
+        { x: 5, y: 22 },
+        { x: 5, y: 23 },
+        { x: 5, y: 24 },
+        { x: 5, y: 25 },
+        { x: 5, y: 26 },
+        { x: 5, y: 27 },
+        { x: 5, y: 28 },
+        { x: 5, y: 29 },
+        { x: 5, y: 30 }, // Long body to increase mistake probability
+      ],
+      direction: Direction.UP,
+      score: 0,
+      activePowerUps: []
+    };
+    
+    const otherSnake: Snake = {
+      id: "other-snake",
+      color: "#00FF00",
+      body: [
+        { x: 6, y: 5 }, // Right next to AI snake's head
+        { x: 7, y: 5 }
+      ],
+      direction: Direction.LEFT,
+      score: 0,
+      activePowerUps: []
+    };
+    
+    // Create game state
+    const gameState: GameState = {
+      snakes: [aiSnake, otherSnake],
+      food: [{ position: { x: 10, y: 5 }, value: 1 }],
+      powerUps: [],
+      activePowerUps: [],
+      gridSize: { width: 40, height: 40 },
+      timestamp: Date.now(),
+      sequence: 0,
+      rngSeed: 123456, // Fixed seed for deterministic testing
+      playerCount: 1,
+      powerUpCounter: 0,
+      playerStats: {
+        [AI_SNAKE_ID]: {
+          id: AI_SNAKE_ID,
+          name: "AI Snake",
+          color: "#FF5500",
+          score: 0,
+          deaths: 0,
+          isConnected: true
+        },
+        "other-snake": {
+          id: "other-snake",
+          name: "Other Snake",
+          color: "#00FF00",
+          score: 0,
+          deaths: 0,
+          isConnected: true
+        }
+      }
+    };
+    
+    // Spy on collision detection to see if it's called with directions that would cause collision
+    const hasCollidedWithSnakeSpy = jest.spyOn(collision, 'hasCollidedWithSnake');
+    
+    // Run multiple iterations with different sequences to trigger different random behaviors
+    let madeRiskyChoice = false;
+    
+    // Try multiple iterations to increase chance of seeing a mistake
+    for (let i = 0; i < 100; i++) {
+      // Update the sequence to get different random behavior
+      gameState.sequence = i;
+      
+      // Reset the spy counts
+      hasCollidedWithSnakeSpy.mockClear();
+      
+      // Get AI direction
+      const direction = getAIDirection(gameState);
+      
+      // If we chose to move right, that would be a mistake (collision with other snake)
+      if (direction === Direction.RIGHT) {
+        madeRiskyChoice = true;
+        break;
+      }
+    }
+    
+    // Assert that the AI snake made at least one risky choice
+    expect(madeRiskyChoice).toBe(true);
+    
+    // Clean up
+    hasCollidedWithSnakeSpy.mockRestore();
   });
 }); 

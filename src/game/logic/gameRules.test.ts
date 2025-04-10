@@ -19,6 +19,7 @@ import * as foodLogic from './foodLogic';
 import * as powerUpLogic from './powerUpLogic';
 import * as collision from './collision';
 import * as prng from './prng';
+import { AI_SNAKE_ID } from "./aiSnake";
 
 // --- Mocks ---
 jest.mock('./prng', () => ({
@@ -77,6 +78,22 @@ const createInitialState = (snakes: Snake[] = [], food: Food[] = [], powerUps: P
   playerCount: snakes.length,
   playerStats,
 });
+
+const createMinimalGameState = (): GameState => {
+  return {
+    snakes: [],
+    food: [],
+    powerUps: [],
+    activePowerUps: [],
+    gridSize: { width: 20, height: 20 },
+    timestamp: Date.now(),
+    sequence: 0,
+    rngSeed: 12345,
+    playerCount: 0,
+    powerUpCounter: 0,
+    playerStats: {}
+  };
+};
 
 // --- Tests ---
 describe('Game Rules - updateGame', () => {
@@ -684,5 +701,94 @@ describe('Game Rules - updateGame', () => {
       });
 
       // ... other state integrity tests ...
+    });
+
+    describe('AI Snake Collisions', () => {
+      it('should remove AI snake and increment its death counter when it collides with another snake', () => {
+        // Mock snakes
+        const aiSnake = createMockSnake(AI_SNAKE_ID, [{ x: 5, y: 5 }, { x: 5, y: 6 }]);
+        const playerSnake = createMockSnake('player1', [{ x: 6, y: 5 }, { x: 7, y: 5 }]);
+        
+        // Create state with AI snake about to move into player snake
+        const initialState = createMinimalGameState();
+        initialState.snakes = [aiSnake, playerSnake];
+        initialState.playerStats = {
+          [AI_SNAKE_ID]: { id: AI_SNAKE_ID, color: 'orange', score: 0, deaths: 0, isConnected: true },
+          player1: { id: 'player1', color: 'blue', score: 0, deaths: 0, isConnected: true }
+        };
+        
+        // Mock collision detection to simulate AI snake colliding with player
+        const hasCollidedWithSnakeMock = jest.spyOn(collision, 'hasCollidedWithSnake');
+        hasCollidedWithSnakeMock.mockImplementation((head, snakes, currentSnakeId) => {
+          if (currentSnakeId === AI_SNAKE_ID) {
+            return true; // Simulate AI snake collision
+          }
+          return false;
+        });
+        
+        // Set up inputs to make AI snake move
+        const inputs = new Map<string, Direction>();
+        inputs.set(AI_SNAKE_ID, Direction.RIGHT);
+        
+        // Execute update
+        const playerIds = new Set(['player1']);
+        const nextState = updateGame(initialState, inputs, Date.now(), playerIds);
+        
+        // Verify AI snake was removed
+        const aiSnakeAfter = nextState.snakes.find(s => s.id === AI_SNAKE_ID);
+        expect(aiSnakeAfter).toBeUndefined();
+        
+        // Verify death counter was incremented
+        expect(nextState.playerStats[AI_SNAKE_ID].deaths).toBe(1);
+        
+        // Clean up mock
+        hasCollidedWithSnakeMock.mockRestore();
+      });
+
+      it('should remove AI snake and increment its death counter when it collides with itself', () => {
+        // Mock AI snake with a longer body (to test self-collision)
+        const aiSnake = createMockSnake(AI_SNAKE_ID, [
+          { x: 5, y: 5 }, // head
+          { x: 6, y: 5 }, 
+          { x: 7, y: 5 },
+          { x: 7, y: 6 },
+          { x: 6, y: 6 },
+          { x: 5, y: 6 } // this segment is adjacent to head, could cause collision
+        ]);
+        
+        // Create state with just the AI snake
+        const initialState = createMinimalGameState();
+        initialState.snakes = [aiSnake];
+        initialState.playerStats = {
+          [AI_SNAKE_ID]: { id: AI_SNAKE_ID, color: 'orange', score: 0, deaths: 0, isConnected: true }
+        };
+        
+        // Mock collision detection to simulate AI snake colliding with itself
+        const hasCollidedWithSnakeMock = jest.spyOn(collision, 'hasCollidedWithSnake');
+        hasCollidedWithSnakeMock.mockImplementation((head, snakes, currentSnakeId) => {
+          if (currentSnakeId === AI_SNAKE_ID) {
+            return true; // Simulate AI snake self-collision
+          }
+          return false;
+        });
+        
+        // Set up inputs to make AI snake move
+        const inputs = new Map<string, Direction>();
+        inputs.set(AI_SNAKE_ID, Direction.DOWN);
+        
+        // Execute update
+        const playerIds = new Set(['player1']); // Need at least one player for AI to exist
+        const nextState = updateGame(initialState, inputs, Date.now(), playerIds);
+        
+        // Verify AI snake was removed
+        const aiSnakeAfter = nextState.snakes.find(s => s.id === AI_SNAKE_ID);
+        expect(aiSnakeAfter).toBeUndefined();
+        
+        // Verify death counter was incremented
+        expect(nextState.playerStats[AI_SNAKE_ID].deaths).toBe(1);
+        
+        // Clean up mock
+        hasCollidedWithSnakeMock.mockRestore();
+      });
     });
 }); 
