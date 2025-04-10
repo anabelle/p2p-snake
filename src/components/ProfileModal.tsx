@@ -71,7 +71,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
       overlayClassName="profile-modal-overlay" // Add CSS class for styling
       ariaHideApp={process.env.NODE_ENV !== 'test'} // Prevent warning in tests
     >
-      <h2>{initialProfile ? 'Edit Profile' : 'Create Profile'}</h2>
+      <h2>{initialProfile ? 'Edit Profile' : 'Welcome, please create a profile to start playing!'}</h2>
       <div className="profile-modal-content">
         <div className="form-group">
           <label htmlFor="profileName">Name:</label>
