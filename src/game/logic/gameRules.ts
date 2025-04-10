@@ -5,6 +5,7 @@ import { moveSnakeBody, growSnake, generateNewSnake } from "./snakeLogic";
 import { generateFood } from "./foodLogic";
 import { generatePowerUp, activatePowerUp, cleanupExpiredActivePowerUps, cleanupExpiredGridPowerUps, getScoreMultiplier, isInvincible, getSpeedFactor } from "./powerUpLogic";
 import { POWERUP_SPAWN_CHANCE } from "../constants"; // Import the constant
+import { AI_SNAKE_ID, getAIDirection } from "./aiSnake"; // Import AI snake functions
 
 // Define the structure for player inputs for a single tick
 export type PlayerInputs = Map<string, Direction>; // Map<playerId, intendedDirection>
@@ -35,6 +36,37 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
     // --- Deterministic Player Handling --- 
     const existingSnakeIDs = new Set(currentState.snakes.map(s => s.id));
     let snakesChanged = false;
+
+    // Add AI snake if it doesn't exist
+    if (!existingSnakeIDs.has(AI_SNAKE_ID)) {
+        const occupied = getOccupiedPositions({ snakes: nextSnakes, food: nextFood, powerUps: nextPowerUps });
+        
+        // Create an AI snake with a distinct color
+        const aiSnake = generateNewSnake(
+            AI_SNAKE_ID, 
+            currentState.gridSize, 
+            occupied, 
+            randomFunc, 
+            "#FF5500" // Distinct orange color for AI
+        );
+        
+        // Add AI snake to the game
+        nextSnakes = [...nextSnakes, aiSnake];
+        snakesChanged = true;
+        
+        // Initialize AI player stats
+        nextPlayerStats[AI_SNAKE_ID] = {
+            id: AI_SNAKE_ID,
+            name: "AI Snake",
+            color: aiSnake.color,
+            score: 0,
+            deaths: 0,
+            isConnected: true
+        };
+        
+        // Update RNG seed after AI snake generation
+        nextRngSeed = randomFunc() * 4294967296;
+    }
 
     // Add new players
     const snakesToAdd: Snake[] = [];
@@ -114,7 +146,11 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
 
     // Remove players who left
     const originalSnakeCount = nextSnakes.length;
-    const disconnectedSnakes = nextSnakes.filter(snake => !currentPlayerIDs.has(snake.id));
+    
+    // We don't want to remove the AI snake, so filter it out of disconnected snakes
+    const disconnectedSnakes = nextSnakes.filter(snake => 
+        !currentPlayerIDs.has(snake.id) && snake.id !== AI_SNAKE_ID
+    );
 
     // Update disconnected snake stats before removing them
     for (const snake of disconnectedSnakes) {
@@ -128,8 +164,11 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
         }
     }
 
-    // Now filter out the disconnected snakes
-    nextSnakes = nextSnakes.filter(snake => currentPlayerIDs.has(snake.id));
+    // Now filter out the disconnected snakes, but keep the AI snake
+    nextSnakes = nextSnakes.filter(snake => 
+        currentPlayerIDs.has(snake.id) || snake.id === AI_SNAKE_ID
+    );
+    
     if (nextSnakes.length !== originalSnakeCount) {
         //console.log(`updateGame: Players left. Snake count changed.`);
         snakesChanged = true;
@@ -137,6 +176,9 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
 
     // Update connected status for players
     for (const playerId of Object.keys(nextPlayerStats)) {
+        // AI snake is always connected
+        if (playerId === AI_SNAKE_ID) continue;
+        
         const isConnected = currentPlayerIDs.has(playerId);
         if (nextPlayerStats[playerId].isConnected !== isConnected) {
             nextPlayerStats[playerId] = {
@@ -167,6 +209,12 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
     const newActivePowerUps: ActivePowerUp[] = [];
     const foodToRemove: Food[] = []; // Store actual food objects to remove
     const powerUpsToRemove: PowerUp[] = []; // Store actual powerup objects to remove
+
+    // Add AI direction to inputs
+    const aiDirection = getAIDirection(currentState);
+    if (aiDirection) {
+        inputs.set(AI_SNAKE_ID, aiDirection);
+    }
 
     // Map returns a new array, update snakes based on current state arrays
     const updatedSnakes = nextSnakes.map(snake => {

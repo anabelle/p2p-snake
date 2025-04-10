@@ -7,6 +7,7 @@ import { GAME_SPEED_MS, GRID_SIZE } from '../src/game/constants';
 import { updateGame, PlayerInputs } from '../src/game/logic/gameRules'; // Need updateGame
 import { generateFood } from '../src/game/logic/foodLogic'; // Need for initial food
 import { getOccupiedPositions, mulberry32 } from '../src/game/logic/prng'; // Need for initial food
+import { AI_SNAKE_ID } from '../src/game/logic/aiSnake'; // Import AI snake ID
 
 // --- Server Setup ---
 // Create HTTP server with request handler for browser redirects
@@ -75,6 +76,16 @@ function initializeGame() {
         playerStats: {} // Initialize with empty player stats object
     };
 
+    // Add AI snake to player stats to ensure it's always created
+    initialState.playerStats[AI_SNAKE_ID] = {
+        id: AI_SNAKE_ID,
+        name: "AI Snake",
+        color: "#FF5500", // Consistent color for AI
+        score: 0,
+        deaths: 0,
+        isConnected: true
+    };
+
     // Generate initial food
     const occupiedInitial = getOccupiedPositions(initialState);
     const foodCount = 3;
@@ -89,6 +100,11 @@ function initializeGame() {
     initialState.rngSeed = initialRandomFunc() * 4294967296;
 
     currentGameState = initialState;
+    
+    // Force an initial game tick to ensure AI snake is created immediately
+    const emptyInputs = new Map<string, Direction>();
+    const emptyPlayerSet = new Set<string>();
+    currentGameState = updateGame(currentGameState, emptyInputs, currentGameState.timestamp, emptyPlayerSet);
 }
 
 initializeGame(); // Initialize on server start
@@ -223,9 +239,20 @@ let lastTickTime = performance.now();
 setInterval(() => {
     // if (!currentGameState) return; // Should always be initialized now
     if (connectedPlayers.size === 0) {
-        // //console.log("No players connected, skipping tick.");
-        // Optional: Reset game? Pause?
-        lastTickTime = performance.now(); // Reset timer if paused
+        // Don't skip ticks even with no human players
+        // AI snake should keep running for when players connect
+        // Just update the timestamp
+        lastTickTime = performance.now();
+        
+        // Still run the game tick with empty player set
+        const now = performance.now();
+        const logicalTime = currentGameState.timestamp + (now - lastTickTime);
+        lastTickTime = now;
+        
+        // Run with empty inputs but ensure AI snake is kept
+        const emptyInputs = new Map<string, Direction>();
+        const emptyPlayerSet = new Set<string>();
+        currentGameState = updateGame(currentGameState, emptyInputs, logicalTime, emptyPlayerSet);
         return;
     }
 

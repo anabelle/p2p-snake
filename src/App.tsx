@@ -258,8 +258,9 @@ const App: React.FC = () => {
 
     console.log(`Connecting to WebSocket with Profile: ID=${profile.id}, Name=${profile.name}, Color=${profile.color}`);
     
-    // Update to use Heroku URL
-    const SIGNALING_SERVER_URI = 'https://snake-api-974c0cc98060.herokuapp.com';
+    // Use environment variable for the server URL, falling back to production URL
+    const SIGNALING_SERVER_URI = process.env.REACT_APP_SIGNALING_SERVER_URL || 'https://snake-api-974c0cc98060.herokuapp.com';
+    console.log(`Using signaling server: ${SIGNALING_SERVER_URI}`);
     
     socketRef.current = io(SIGNALING_SERVER_URI, {
         query: {
