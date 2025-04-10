@@ -45,7 +45,8 @@ function initializeGame() {
         sequence: 0,
         rngSeed: initialSeed,
         playerCount: 0, // Will be updated dynamically
-        powerUpCounter: 0
+        powerUpCounter: 0,
+        playerStats: {} // Initialize with empty player stats object
     };
 
     // Generate initial food
@@ -82,6 +83,15 @@ io.on('connection', (socket: Socket) => {
 
   // Update player count in game state
   currentGameState.playerCount = connectedPlayers.size;
+  
+  // Update connected status in playerStats if the player already exists
+  if (currentGameState.playerStats && currentGameState.playerStats[playerId]) {
+    console.log(`Reconnecting existing player: ${playerId}`);
+    currentGameState.playerStats[playerId] = {
+      ...currentGameState.playerStats[playerId],
+      isConnected: true
+    };
+  }
 
   // Handle join event - might not be needed if query.id is reliable
   // socket.on('join', (data) => { ... });
@@ -103,8 +113,19 @@ io.on('connection', (socket: Socket) => {
     console.log(`Player disconnected: ${playerId} (${socket.id})`);
     connectedPlayers.delete(playerId);
     playerInputs.delete(playerId);
+    
     // Update player count in game state immediately
     currentGameState.playerCount = connectedPlayers.size;
+    
+    // Mark player as disconnected in playerStats but keep their data
+    if (currentGameState.playerStats && currentGameState.playerStats[playerId]) {
+      console.log(`Marking player as disconnected: ${playerId}`);
+      currentGameState.playerStats[playerId] = {
+        ...currentGameState.playerStats[playerId],
+        isConnected: false
+      };
+    }
+    
     // The updateGame logic will handle removing the snake when the player ID is missing
   });
 });
@@ -149,6 +170,32 @@ setInterval(() => {
     // 2. Call updateGame directly
     try {
         currentGameState = updateGame(currentGameState, currentTickPlayerInputs, logicalTime, currentPlayerIDSet);
+        
+        // Debug check - log player stats if empty but players are connected
+        if (Object.keys(currentGameState.playerStats).length === 0 && currentPlayerIDSet.size > 0) {
+            console.log("WARNING: playerStats is empty but we have players:", currentPlayerIDSet.size);
+            console.log("Connected players:", Array.from(currentPlayerIDSet));
+            console.log("Snake count:", currentGameState.snakes.length);
+            
+            // Force initialize playerStats from snakes if missing
+            if (currentGameState.snakes.length > 0) {
+                const updatedPlayerStats = { ...currentGameState.playerStats };
+                currentGameState.snakes.forEach(snake => {
+                    if (!updatedPlayerStats[snake.id]) {
+                        // Initialize missing player
+                        updatedPlayerStats[snake.id] = {
+                            id: snake.id,
+                            color: snake.color,
+                            score: snake.score,
+                            deaths: 0,
+                            isConnected: currentPlayerIDSet.has(snake.id)
+                        };
+                        console.log(`Added missing player stats for ${snake.id}`);
+                    }
+                });
+                currentGameState.playerStats = updatedPlayerStats;
+            }
+        }
     } catch (e) {
         console.error("!!! Error during updateGame on server:", e);
         return; // Stop this tick on error

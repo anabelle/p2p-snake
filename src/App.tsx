@@ -5,6 +5,7 @@ import { NetplayAdapter } from './game/network/NetplayAdapter';
 import { GameState } from './game/state/types';
 import io, { Socket } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
+import { GRID_SIZE } from './game/constants'; // Import GRID_SIZE
 
 const App: React.FC = () => {
   const gameContainerRef = useRef<HTMLDivElement>(null);
@@ -15,8 +16,22 @@ const App: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameRef = useRef<number>();
 
-  // Simplified state
+  // --- React State ---
   const [isConnected, setIsConnected] = useState(false);
+  const [gameState, setGameState] = useState<GameState>({ // Initialize game state
+      snakes: [],
+      food: [],
+      powerUps: [],
+      activePowerUps: [],
+      gridSize: GRID_SIZE,
+      timestamp: 0,
+      sequence: 0,
+      rngSeed: 0,
+      playerCount: 0,
+      powerUpCounter: 0,
+      playerStats: {}
+  });
+  const gameStateRef = useRef<GameState>(gameState); // Ref to hold current game state
 
   // Input State (remains the same)
   const localInputStateRef = useRef({ dx: 0, dy: 0 });
@@ -135,14 +150,67 @@ const App: React.FC = () => {
 
     // --- Listener for State Sync from Server ---
     socket.on('state-sync', (serverState: GameState) => {
-        if (gameAdapterRef.current) {
-            // Apply the authoritative state received from the server
-            // Explicitly cast to satisfy JsonValue type
-            gameAdapterRef.current.deserialize(serverState as unknown as netplayjs.JsonValue);
-        } else {
-            // This might happen if state arrives before adapter is ready on initial connect
-            console.warn("Received state-sync but game adapter not ready.");
+        // We don't need the adapter to deserialize anymore
+        // Process the received state directly
+
+        // Debug check - log player stats if empty but players exist
+        if (serverState.snakes.length > 0 &&
+            (!serverState.playerStats || Object.keys(serverState.playerStats).length === 0)) {
+            console.warn("Received state with snakes but empty playerStats", {
+                snakeCount: serverState.snakes.length,
+                playerStats: serverState.playerStats
+            });
+
+            // Create playerStats if missing from snakes as a fallback (MUTATES serverState copy)
+            if (!serverState.playerStats) {
+                serverState.playerStats = {};
+            }
+
+            // Populate from snakes if needed (MUTATES serverState copy)
+            serverState.snakes.forEach(snake => {
+                if (!serverState.playerStats[snake.id]) {
+                    console.log(`Client: Adding missing stats for snake ${snake.id} from sync`);
+                    serverState.playerStats[snake.id] = {
+                        id: snake.id,
+                        color: snake.color,
+                        score: snake.score,
+                        deaths: 0, // Assume 0 deaths if initializing here
+                        isConnected: true // Assume connected if they have a snake
+                    };
+                }
+            });
+        } else if (serverState.playerStats) {
+            // Ensure all snakes have a corresponding playerStat entry if playerStats exists
+            serverState.snakes.forEach(snake => {
+                 if (!serverState.playerStats[snake.id]) {
+                    console.log(`Client: Adding missing stats for snake ${snake.id} (stats existed)`);
+                    serverState.playerStats[snake.id] = {
+                        id: snake.id,
+                        color: snake.color,
+                        score: snake.score,
+                        deaths: 0, // Assume 0 deaths
+                        isConnected: true
+                    };
+                 } else {
+                     // Ensure existing playerStats has correct 'isConnected' status if snake is present
+                     serverState.playerStats[snake.id].isConnected = true;
+                 }
+            });
+            // Ensure playerStats reflects disconnected players (those in stats but not snakes)
+            Object.keys(serverState.playerStats).forEach(pId => {
+                if (!serverState.snakes.some(s => s.id === pId)) {
+                    if (serverState.playerStats[pId].isConnected) {
+                         console.log(`Client: Marking player ${pId} as disconnected (not in snakes)`);
+                        serverState.playerStats[pId].isConnected = false;
+                    }
+                }
+            });
         }
+
+        // Update React state to trigger re-render
+        setGameState(serverState);
+
+        // Removed: gameAdapterRef.current.deserialize(...) call
     });
 
     // --- Game Adapter Initialization (Client-side only) ---
@@ -166,7 +234,7 @@ const App: React.FC = () => {
 
         try {
           // Create adapter (constructor simplified in NetplayAdapter.ts)
-          gameAdapterRef.current = new NetplayAdapter(canvasRef.current);
+          gameAdapterRef.current = new NetplayAdapter(canvasRef.current, localPlayerIdRef.current);
           console.log(`Client NetplayAdapter instance created.`);
         } catch (e) {
           console.error("Error creating NetplayAdapter instance:", e);
@@ -196,8 +264,10 @@ const App: React.FC = () => {
       // 2. Client does NOT tick the simulation.
 
       // 3. Draw the current state (updated by state-sync messages)
+      // Read gameState from the ref for the most up-to-date value
       try {
-        gameAdapterRef.current.draw(canvasRef.current);
+        // Pass gameState from the ref to draw function
+        gameAdapterRef.current.draw(canvasRef.current, gameStateRef.current);
       } catch (e) {
         console.error("Error during gameAdapter.draw:", e);
         // Stop loop on draw error
@@ -226,6 +296,11 @@ const App: React.FC = () => {
     };
   }, []); // Main effect runs once on mount, cleanup on unmount
 
+  // Effect to keep gameStateRef updated with the latest gameState
+  useEffect(() => {
+    gameStateRef.current = gameState;
+  }, [gameState]);
+
   // Render function
   return (
     <div className="App">
@@ -243,6 +318,194 @@ const App: React.FC = () => {
          {/* Canvas will be appended here dynamically */}
          {!isConnected && <div style={{color: 'white', textAlign: 'center', paddingTop: '50px'}}>Connecting...</div>}
       </div>
+      
+      {/* Player information display */}
+      {isConnected && gameAdapterRef.current && (
+        <div id="player-info-wrapper" style={{
+          width: NetplayAdapter.canvasSize.width,
+          marginTop: '20px',
+          padding: '15px',
+          backgroundColor: '#222',
+          color: 'white',
+          borderRadius: '5px',
+          border: '1px solid #444',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+        }}>
+          <div style={{ marginBottom: '15px' }}>
+            <h3 style={{ 
+              marginTop: '0', 
+              marginBottom: '10px',
+              color: '#fff',
+              borderBottom: '2px solid #444',
+              paddingBottom: '5px'
+            }}>Your Snake</h3>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{ fontWeight: 'bold', marginRight: '10px' }}>Color:</div>
+              
+              {/* Direct dynamic access to your snake info */}
+              {(() => {
+                // Try to find your snake in the game state
+                const yourSnake = gameState.snakes.find(
+                  snake => snake.id === localPlayerIdRef.current
+                );
+                
+                if (yourSnake) {
+                  return (
+                    <div style={{ 
+                      width: '20px', 
+                      height: '20px', 
+                      backgroundColor: yourSnake.color,
+                      border: '1px solid #fff'
+                    }} />
+                  );
+                }
+                
+                // Fallback to playerStats
+                const yourPlayerStats = gameState.playerStats?.[localPlayerIdRef.current];
+                if (yourPlayerStats) {
+                  return (
+                    <div style={{ 
+                      width: '20px', 
+                      height: '20px', 
+                      backgroundColor: yourPlayerStats.color,
+                      border: '1px solid #fff'
+                    }} />
+                  );
+                }
+                
+                // If neither is available, show not spawned message
+                return (
+                  <span style={{ color: '#aaa', fontStyle: 'italic' }}>Not spawned yet</span>
+                );
+              })()}
+            </div>
+          </div>
+          
+          <h3 style={{ 
+            marginBottom: '10px',
+            color: '#fff',
+            borderBottom: '2px solid #444',
+            paddingBottom: '5px'
+          }}>Player Rankings</h3>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#333' }}>
+                <th style={{ padding: '8px', textAlign: 'left', borderBottom: '1px solid #555' }}>Player</th>
+                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #555' }}>Score</th>
+                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #555' }}>Deaths</th>
+                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #555' }}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Get players from snakes or playerStats, whichever is available */}
+              {(() => {
+                // First check if we have snakes to display
+                const snakes = gameState.snakes || [];
+                
+                if (snakes.length > 0) {
+                  console.log("Rendering", snakes.length, "snakes from gameState");
+                  return snakes
+                    .sort((a, b) => b.score - a.score)
+                    .map(snake => (
+                      <tr key={snake.id} style={{ 
+                        backgroundColor: snake.id === localPlayerIdRef.current ? '#3a4a5a' : 'transparent' 
+                      }}>
+                        <td style={{ 
+                          padding: '8px', 
+                          borderBottom: '1px solid #444',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}>
+                          <div style={{ 
+                            width: '12px', 
+                            height: '12px', 
+                            backgroundColor: snake.color,
+                            marginRight: '8px',
+                            border: '1px solid #fff' 
+                          }} />
+                          {snake.id === localPlayerIdRef.current ? 'You' : snake.id.substring(0, 6)}
+                        </td>
+                        <td style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #444' }}>
+                          {snake.score}
+                        </td>
+                        <td style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #444' }}>
+                          {/* Use gameState for playerStats */}
+                          {gameState.playerStats?.[snake.id]?.deaths || 0}
+                        </td>
+                        <td style={{ 
+                          padding: '8px', 
+                          textAlign: 'center', 
+                          borderBottom: '1px solid #444',
+                          color: '#4caf50',
+                          fontWeight: 'bold'
+                        }}>
+                          {/* Status from playerStats - use gameState */}
+                          {gameState.playerStats?.[snake.id]?.isConnected ? 'Online' : 'Offline'}
+                        </td>
+                      </tr>
+                    ));
+                }
+                
+                // Fallback to playerStats if for some reason snakes aren't available
+                const playerStats = gameState.playerStats || {};
+                const players = Object.values(playerStats);
+                
+                if (players.length > 0) {
+                  console.log("Rendering", players.length, "players from gameState.playerStats");
+                  return players
+                    .sort((a, b) => b.score - a.score)
+                    .map(player => (
+                      <tr key={player.id} style={{ 
+                        backgroundColor: player.id === localPlayerIdRef.current ? '#3a4a5a' : 'transparent' 
+                      }}>
+                        <td style={{ 
+                          padding: '8px', 
+                          borderBottom: '1px solid #444',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}>
+                          <div style={{ 
+                            width: '12px', 
+                            height: '12px', 
+                            backgroundColor: player.color,
+                            marginRight: '8px',
+                            border: '1px solid #fff' 
+                          }} />
+                          {player.id === localPlayerIdRef.current ? 'You' : player.id.substring(0, 6)}
+                        </td>
+                        <td style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #444' }}>
+                          {player.score}
+                        </td>
+                        <td style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #444' }}>
+                          {player.deaths}
+                        </td>
+                        <td style={{ 
+                          padding: '8px', 
+                          textAlign: 'center', 
+                          borderBottom: '1px solid #444',
+                          color: player.isConnected ? '#4caf50' : '#f44336',
+                          fontWeight: 'bold'
+                        }}>
+                          {player.isConnected ? 'Online' : 'Offline'}
+                        </td>
+                      </tr>
+                    ));
+                }
+                
+                // If we reach here, there are no players to display
+                return (
+                  <tr>
+                    <td colSpan={4} style={{ padding: '8px', textAlign: 'center' }}>
+                      {/* Conditional message based on connection status */}
+                      {!isConnected ? 'Connecting...' : 'No players yet'}
+                    </td>
+                  </tr>
+                );
+              })()}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };

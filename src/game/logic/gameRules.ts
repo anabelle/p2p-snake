@@ -28,6 +28,7 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
     let nextActivePowerUps = currentState.activePowerUps;
     let nextFood = currentState.food;
     let nextSnakes = currentState.snakes;
+    let nextPlayerStats = { ...currentState.playerStats }; // Add player stats tracking
     // --- End Optimization ---
 
     // --- Deterministic Player Handling --- 
@@ -43,13 +44,63 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
             const occupied = getOccupiedPositions({ snakes: nextSnakes, food: nextFood, powerUps: nextPowerUps });
             // Use the tick's randomFunc
             const newSnake = generateNewSnake(playerId, currentState.gridSize, occupied, randomFunc);
+            
+            // Important: Restore score from playerStats if available (for reconnecting players)
+            if (nextPlayerStats[playerId] && nextPlayerStats[playerId].score > 0) {
+                console.log(`Restoring score for returning player ${playerId}: ${nextPlayerStats[playerId].score}`);
+                newSnake.score = nextPlayerStats[playerId].score;
+            }
+            
             snakesToAdd.push(newSnake);
             snakesChanged = true;
+            
+            // Initialize or update player stats
+            if (!nextPlayerStats[playerId]) {
+                nextPlayerStats[playerId] = {
+                    id: playerId,
+                    color: newSnake.color,
+                    score: newSnake.score,
+                    deaths: 0,
+                    isConnected: true
+                };
+            } else {
+                nextPlayerStats[playerId] = {
+                    ...nextPlayerStats[playerId],
+                    isConnected: true,
+                    color: newSnake.color, // Make sure color is updated
+                };
+            }
+            
             // Update occupied positions locally for subsequent spawns *within this handler only*
             occupied.push(...newSnake.body);
             // Since RNG was used, update the seed *if* generateNewSnake used it
             // Assuming generateNewSnake uses randomFunc passed to it
             nextRngSeed = randomFunc() * 4294967296;
+        } else {
+            // Player already exists, ensure they're in playerStats
+            const existingSnake = nextSnakes.find(snake => snake.id === playerId);
+            if (existingSnake && !nextPlayerStats[playerId]) {
+                // Add missing player to playerStats
+                nextPlayerStats[playerId] = {
+                    id: playerId,
+                    color: existingSnake.color,
+                    score: existingSnake.score,
+                    deaths: 0,
+                    isConnected: true
+                };
+            } else if (existingSnake && nextPlayerStats[playerId]) {
+                // Sync score between snake and playerStats (in case they got out of sync)
+                if (existingSnake.score !== nextPlayerStats[playerId].score) {
+                    console.log(`Syncing score for ${playerId}: Snake=${existingSnake.score}, Stats=${nextPlayerStats[playerId].score}`);
+                    // Prefer the higher score to avoid losing progress
+                    const highestScore = Math.max(existingSnake.score, nextPlayerStats[playerId].score);
+                    existingSnake.score = highestScore;
+                    nextPlayerStats[playerId].score = highestScore;
+                }
+                
+                // Ensure connected status is set correctly
+                nextPlayerStats[playerId].isConnected = true;
+            }
         }
     }
     if (snakesToAdd.length > 0) {
@@ -58,11 +109,38 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
 
     // Remove players who left
     const originalSnakeCount = nextSnakes.length;
+    const disconnectedSnakes = nextSnakes.filter(snake => !currentPlayerIDs.has(snake.id));
+    
+    // Update disconnected snake stats before removing them
+    for (const snake of disconnectedSnakes) {
+        if (nextPlayerStats[snake.id]) {
+            console.log(`Preserving stats for disconnected player: ${snake.id}, score: ${snake.score}`);
+            nextPlayerStats[snake.id] = {
+                ...nextPlayerStats[snake.id],
+                score: snake.score, // Save the latest score
+                isConnected: false
+            };
+        }
+    }
+    
+    // Now filter out the disconnected snakes
     nextSnakes = nextSnakes.filter(snake => currentPlayerIDs.has(snake.id));
     if (nextSnakes.length !== originalSnakeCount) {
         console.log(`updateGame: Players left. Snake count changed.`);
         snakesChanged = true;
     }
+    
+    // Update connected status for players
+    for (const playerId of Object.keys(nextPlayerStats)) {
+        const isConnected = currentPlayerIDs.has(playerId);
+        if (nextPlayerStats[playerId].isConnected !== isConnected) {
+            nextPlayerStats[playerId] = {
+                ...nextPlayerStats[playerId],
+                isConnected
+            };
+        }
+    }
+    
     // Update player count state
     const nextPlayerCount = currentPlayerIDs.size;
     // --- End Deterministic Player Handling ---
@@ -118,6 +196,15 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
                 hasCollidedWithSnake(movedHead, nextSnakes, snake.id)) {
                 console.log(`Snake ${snake.id} collided!`);
                 snakesToRemove.push(snake.id);
+                
+                // Update player death count
+                if (nextPlayerStats[snake.id]) {
+                    nextPlayerStats[snake.id] = {
+                        ...nextPlayerStats[snake.id],
+                        deaths: nextPlayerStats[snake.id].deaths + 1
+                    };
+                }
+                
                 return currentSnake; // Return the moved snake state before filtering
             }
         }
@@ -129,8 +216,17 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
             foodToRemove.push(eatenFood);
             currentSnake = growSnake(currentSnake); // Assume returns new snake
             const scoreMultiplier = getScoreMultiplier(snake.id, nextActivePowerUps, currentTime);
-             // Update score immutably on the copied snake
-            currentSnake = { ...currentSnake, score: currentSnake.score + eatenFood.value * scoreMultiplier };
+            // Update score immutably on the copied snake
+            const points = eatenFood.value * scoreMultiplier;
+            currentSnake = { ...currentSnake, score: currentSnake.score + points };
+            
+            // Also update in player stats
+            if (nextPlayerStats[snake.id]) {
+                nextPlayerStats[snake.id] = {
+                    ...nextPlayerStats[snake.id],
+                    score: nextPlayerStats[snake.id].score + points
+                };
+            }
         }
 
         // Power-up Collision Check (use potentially updated powerup list)
@@ -142,11 +238,28 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
             newActivePowerUps.push(newActive);
         }
 
+        // Update score in playerStats from each snake's current score
+        if (nextPlayerStats[snake.id]) {
+            nextPlayerStats[snake.id].score = currentSnake.score;
+        }
+
         return currentSnake; // Return the (potentially) modified snake copy
     });
     // Always assign the result of map
     nextSnakes = updatedSnakes;
 
+    // Ensure all snakes are in playerStats (in case they were added outside this process)
+    nextSnakes.forEach(snake => {
+        if (!nextPlayerStats[snake.id]) {
+            nextPlayerStats[snake.id] = {
+                id: snake.id,
+                color: snake.color,
+                score: snake.score,
+                deaths: 0,
+                isConnected: true
+            };
+        }
+    });
 
     // 4. Remove collided snakes
     if (snakesToRemove.length > 0) {
@@ -235,7 +348,8 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
         food: nextFood,
         timestamp: currentTime,
         powerUpCounter: nextPowerUpCounter, // Store the updated counter
-        playerCount: nextPlayerCount // Add player count here
+        playerCount: nextPlayerCount, // Add player count here
+        playerStats: nextPlayerStats // Add updated player stats
     };
     // --- End Optimization ---
 

@@ -37,6 +37,14 @@ export interface ActivePowerUp {
   expiresAt: number; // Timestamp when the effect expires for this snake
 }
 
+export interface PlayerStats {
+    id: string;
+    color: string; // Store color here for persistence
+    score: number;
+    deaths: number;
+    isConnected: boolean;
+}
+
 export interface GameState {
   snakes: Snake[];
   food: Food[];
@@ -51,6 +59,7 @@ export interface GameState {
   rngSeed: number; // For deterministic randomness
   playerCount: number; // Number of active players
   powerUpCounter: number; // Counter for deterministic power-up IDs
+  playerStats: Record<string, PlayerStats>; // Add map for player stats
 }
 
 export enum Direction {

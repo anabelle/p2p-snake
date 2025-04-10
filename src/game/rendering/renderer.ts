@@ -2,7 +2,7 @@ import { GameState, Snake, Food, PowerUp, Direction } from "../state/types";
 import { CELL_SIZE } from "../constants";
 
 // Function to draw the entire game state onto a canvas
-export const drawGame = (ctx: CanvasRenderingContext2D, state: GameState) => {
+export const drawGame = (ctx: CanvasRenderingContext2D, state: GameState, localPlayerId?: string) => {
     const { width, height } = ctx.canvas;
 
     // Clear canvas
@@ -35,11 +35,21 @@ export const drawGame = (ctx: CanvasRenderingContext2D, state: GameState) => {
     state.powerUps.forEach(powerUp => drawPowerUp(ctx, powerUp));
 
     // Draw Snakes
-    state.snakes.forEach(snake => drawSnake(ctx, snake));
+    state.snakes.forEach(snake => {
+        const isLocalSnake = localPlayerId ? snake.id === localPlayerId : false;
+        drawSnake(ctx, snake, isLocalSnake);
+    });
+
+    // Draw player count
+    ctx.fillStyle = "white";
+    ctx.font = "16px Arial";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(`Players: ${state.playerCount}`, 10, 10);
 };
 
 // Helper to draw a single snake
-const drawSnake = (ctx: CanvasRenderingContext2D, snake: Snake) => {
+const drawSnake = (ctx: CanvasRenderingContext2D, snake: Snake, isLocalSnake: boolean = false) => {
     if (snake.body.length === 0) return;
 
     // Draw body segments
@@ -53,8 +63,8 @@ const drawSnake = (ctx: CanvasRenderingContext2D, snake: Snake) => {
             CELL_SIZE
         );
         // Add slight border to segments for clarity
-        ctx.strokeStyle = '#333';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = isLocalSnake ? '#fff' : '#333'; // Highlight local snake
+        ctx.lineWidth = isLocalSnake ? 2 : 1;
         ctx.strokeRect(
             segment.x * CELL_SIZE,
             segment.y * CELL_SIZE,
@@ -72,6 +82,17 @@ const drawSnake = (ctx: CanvasRenderingContext2D, snake: Snake) => {
         CELL_SIZE,
         CELL_SIZE
     );
+    
+    // Draw border on head
+    ctx.strokeStyle = isLocalSnake ? '#fff' : '#333';
+    ctx.lineWidth = isLocalSnake ? 2 : 1;
+    ctx.strokeRect(
+        head.x * CELL_SIZE,
+        head.y * CELL_SIZE,
+        CELL_SIZE,
+        CELL_SIZE
+    );
+    
     // Draw eyes based on direction for visual cue
     drawSnakeEyes(ctx, head, snake.direction);
 };
