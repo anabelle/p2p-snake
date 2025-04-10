@@ -50,6 +50,7 @@ export interface GameState {
   sequence: number; // Managed by NetplayJS adapter
   rngSeed: number; // For deterministic randomness
   playerCount: number; // Number of active players
+  powerUpCounter: number; // Counter for deterministic power-up IDs
 }
 
 export enum Direction {

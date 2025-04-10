@@ -26,7 +26,7 @@ export class NetplayAdapter extends netplayjs.Game {
   // Store intended direction changes between logic ticks
   private intendedDirections: Map<string, Direction> = new Map();
 
-  constructor(canvas: HTMLCanvasElement, players: Array<netplayjs.NetplayPlayer>) {
+  constructor(canvas: HTMLCanvasElement, players: Array<netplayjs.NetplayPlayer>, isInitiallyHost?: boolean) {
     super();
 
     // Initialize Authoritative State
@@ -41,119 +41,123 @@ export class NetplayAdapter extends netplayjs.Game {
       timestamp: 0,
       sequence: 0,
       rngSeed: initialSeed,
-      playerCount: 0 // Initialize playerCount
+      playerCount: 0,
+      powerUpCounter: 0 // Initialize the counter
     };
 
-    // --- Dynamic Player Handling ---
-    // Snakes are now added dynamically in the tick() method
-    // based on connected players each tick.
-    // The constructor only initializes the core game state.
-    // --- End Dynamic Player Handling ---
-
-    // Initialize Food (can still be done here)
-    const occupiedInitial = getOccupiedPositions(this.state);
-    const foodCount = 3;
-    for (let i = 0; i < foodCount; i++) {
-      const food = generateFood(this.state.gridSize, occupiedInitial, initialRandomFunc);
-      if (food) {
-        this.state.food.push(food);
-        occupiedInitial.push(food.position);
-      }
+    // Conditional Initialization based on host status
+    // If not host initially, don't generate food. Rely on first state sync.
+    if (isInitiallyHost !== false) { // Assume host unless explicitly told otherwise
+        const occupiedInitial = getOccupiedPositions(this.state);
+        const foodCount = 3;
+        for (let i = 0; i < foodCount; i++) {
+            const food = generateFood(this.state.gridSize, occupiedInitial, initialRandomFunc);
+            if (food) {
+                this.state.food.push(food);
+                occupiedInitial.push(food.position);
+            }
+        }
+        console.log("Adapter Constructor: Initialized food as host.");
+    } else {
+        console.log("Adapter Constructor: Skipped initial food generation as client.");
     }
 
     this.lastTickTime = performance.now();
     this.state.timestamp = this.lastTickTime;
   }
 
-  tick(playerInputs: Map<netplayjs.NetplayPlayer, Input>): void {
+  tick(playerInputs: Map<any, any>): void {
     const now = performance.now();
     const dt = now - this.lastTickTime;
     this.lastTickTime = now;
 
-    // --- Dynamic Player Handling (Before Logic Tick) ---
-    const currentPlayerIDs = new Set(Array.from(playerInputs.keys()).map(p => p.getID().toString()));
-    const existingSnakeIDs = new Set(this.state.snakes.map(s => s.id));
-
-    let stateChanged = false;
-    let nextSnakes = [...this.state.snakes]; // Start with current snakes
-    const randomFuncForNewSnakes = mulberry32(this.state.rngSeed); // Use current seed
-
-    // Add new players
-    for (const player of Array.from(playerInputs.keys())) {
-        const playerId = player.getID().toString();
-        if (!existingSnakeIDs.has(playerId)) {
-            console.log(`Player joined: ${playerId}. Adding snake.`);
-            const occupied = getOccupiedPositions(this.state);
-            const newSnake = generateNewSnake(playerId, this.state.gridSize, occupied, randomFuncForNewSnakes);
-            nextSnakes.push(newSnake);
-            stateChanged = true;
-            // Update occupied positions locally for next potential spawn
-            occupied.push(...newSnake.body);
-        }
-    }
-
-    // Remove players who left
-    const snakesToRemove = this.state.snakes.filter(snake => !currentPlayerIDs.has(snake.id));
-    if (snakesToRemove.length > 0) {
-        console.log(`Players left: ${snakesToRemove.map(s => s.id).join(', ')}. Removing snakes.`);
-        const idsToRemove = new Set(snakesToRemove.map(s => s.id));
-        nextSnakes = nextSnakes.filter(snake => !idsToRemove.has(snake.id));
-        stateChanged = true;
-    }
-
-    // Update state if players changed
-    if (stateChanged) {
-        this.state = {
-            ...this.state,
-            snakes: nextSnakes,
-            playerCount: currentPlayerIDs.size,
-            // Advance RNG seed because we used it for new snake positions
-            rngSeed: randomFuncForNewSnakes() * 4294967296
-        };
-    } else {
-        // If no players joined/left, still update player count in case it's the first tick
-        this.state = { ...this.state, playerCount: currentPlayerIDs.size };
-    }
-    // --- End Dynamic Player Handling ---
-
     // --- Input Processing (Every Frame) ---
-    // Clear previous intentions before processing new ones for this frame
     this.intendedDirections.clear();
-    for (const [player, input] of Array.from(playerInputs.entries())) {
-        const playerId = player.getID().toString();
-        const currentSnake = this.state.snakes.find(s => s.id === playerId);
-        if (!currentSnake) continue; // Ignore input if snake doesn't exist (might happen briefly during join/leave)
+    
+    // UNCOMMENT Log: Check received playerInputs map
+    console.log("Adapter Tick - Received playerInputs:", playerInputs);
 
-        const vel = input.arrowKeys();
+    // Calculate currentPlayerIDs here for passing to updateGame
+    const currentPlayerIDs = new Set<string>();
+    for (const [player, input] of Array.from(playerInputs.entries())) {
+        // UNCOMMENT Log: Check player and input object received in loop
+        // console.log(`Adapter Tick - Processing input for player: ${player?.getID ? player.getID() : 'UNKNOWN'}`);
+        // console.log(`Adapter Tick - Input object:`, input);
+        
+        const playerId = player?.getID ? player.getID().toString() : null;
+        if (!playerId) continue; 
+
+        // Add player ID to the set for this tick
+        currentPlayerIDs.add(playerId);
+
+        const currentSnake = this.state.snakes.find(s => s.id === playerId);
+        if (!currentSnake) continue; 
+
+        let vel = { x: 0, y: 0 };
+        try {
+            if (input && typeof input.arrowKeys === 'function') {
+                vel = input.arrowKeys(); // <= Call arrowKeys()
+                // UNCOMMENT Log: Check result of arrowKeys()
+                console.log(`Adapter Tick - arrowKeys() for ${playerId} returned:`, vel);
+            } else {
+                console.warn(`Adapter Tick - Invalid input object for ${playerId}:`, input);
+            }
+        } catch (e) {
+             console.error(`Adapter Tick - Error calling arrowKeys() for ${playerId}:`, e);
+             continue;
+        }
+        
         let requestedDirection: Direction | null = null;
 
         if (vel.x === -1) requestedDirection = Direction.LEFT;
         else if (vel.x === 1) requestedDirection = Direction.RIGHT;
-        else if (vel.y === 1) requestedDirection = Direction.UP;   // NetplayJS +Y is up
-        else if (vel.y === -1) requestedDirection = Direction.DOWN; // NetplayJS -Y is down
+        else if (vel.y === 1) requestedDirection = Direction.UP;   
+        else if (vel.y === -1) requestedDirection = Direction.DOWN; 
 
         if (requestedDirection) {
+            console.log(`Adapter Tick - Setting intended direction for ${playerId}: ${requestedDirection}`);
             this.intendedDirections.set(playerId, requestedDirection);
         }
     }
+
+    // UNCOMMENT Log: Show the final intendedDirections map before the logic loop
+    // console.log("Adapter Tick - Final intendedDirections:", this.intendedDirections);
 
     // --- Game Logic Update (Fixed Timestep) ---
     this.gameLogicTickAccumulator += dt;
     let logicalTime = this.state.timestamp;
 
     while (this.gameLogicTickAccumulator >= this.gameLogicInterval) {
-        // Use the collected intended directions for this logic tick
         const currentInputs: PlayerInputs = new Map(this.intendedDirections);
-
         logicalTime += this.gameLogicInterval;
+        
+        // Add Log: Check inputs being passed to updateGame
+        console.log(`Adapter Tick - Passing to updateGame (Tick ${logicalTime}):`, currentInputs);
 
-        // Run the deterministic game update function
-        this.state = updateGame(this.state, currentInputs, logicalTime);
+        // Add Log: Log state BEFORE update
+        const stateBeforeJson = JSON.stringify(this.state); // Stringify the whole state for comparison
+        // console.log(`Adapter Tick - State BEFORE updateGame (Tick ${logicalTime}):`, stateBeforeJson);
 
+        // Pass currentPlayerIDs to updateGame
+        try {
+            this.state = updateGame(this.state, currentInputs, logicalTime, currentPlayerIDs);
+        } catch (e) {
+            console.error(`Adapter Tick - Error during updateGame (Tick ${logicalTime}):`, e);
+            // Prevent infinite loop if updateGame consistently fails
+            this.gameLogicTickAccumulator = 0; 
+            break; // Exit while loop for this frame
+        }
+        
+        // Add Log: Log state AFTER update
+        const stateAfterJson = JSON.stringify(this.state);
+        // console.log(`Adapter Tick - State AFTER updateGame (Tick ${logicalTime}):`, stateAfterJson);
+        if (stateBeforeJson === stateAfterJson && currentInputs.size > 0) {
+             // Only warn if state didn't change AND there were inputs intended for this tick
+             console.warn(`Adapter Tick - State did not change after updateGame despite inputs (Tick ${logicalTime}). Inputs:`, currentInputs, "State:", this.state);
+        }
+        
         this.gameLogicTickAccumulator -= this.gameLogicInterval;
-        // Intended directions persist until the next frame's input processing clears them
     }
-    // Timestamp is updated within updateGame
   }
 
   serialize(): netplayjs.JsonValue {

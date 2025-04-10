@@ -1,7 +1,7 @@
-import { GameState, Direction, Food, PowerUp, ActivePowerUp } from "../state/types";
+import { GameState, Direction, Food, PowerUp, ActivePowerUp, Snake } from "../state/types";
 import { mulberry32, getOccupiedPositions } from "./prng";
 import { checkFoodCollision, checkPowerUpCollision, hasCollidedWithSnake, hasCollidedWithWall } from "./collision";
-import { moveSnakeBody, growSnake } from "./snakeLogic";
+import { moveSnakeBody, growSnake, generateNewSnake } from "./snakeLogic";
 import { generateFood } from "./foodLogic";
 import { generatePowerUp, activatePowerUp, cleanupExpiredActivePowerUps, cleanupExpiredGridPowerUps, getScoreMultiplier, isInvincible } from "./powerUpLogic";
 
@@ -11,14 +11,17 @@ export type PlayerInputs = Map<string, Direction>; // Map<playerId, intendedDire
 // The main game logic tick function
 // Takes the current state and player inputs, returns the next state
 // This function should be PURE and DETERMINISTIC
-export const updateGame = (currentState: GameState, inputs: PlayerInputs, currentTime: number): GameState => {
+export const updateGame = (currentState: GameState, inputs: PlayerInputs, currentTime: number, currentPlayerIDs: Set<string>): GameState => {
     // --- Start Optimization ---
     // Use a shallow copy + immutable updates instead of deep copy
     // const nextState: GameState = JSON.parse(JSON.stringify(currentState)); // Deep copy to avoid mutation - REMOVED
     const randomFunc = mulberry32(currentState.rngSeed); // Get PRNG function for this tick
 
     // 1. Update RNG seed for next tick (do this first)
-    const nextRngSeed = randomFunc() * 4294967296; // Calculate new seed
+    let nextRngSeed = randomFunc() * 4294967296; // Calculate new seed FIRST
+
+    // Track the next counter value
+    let nextPowerUpCounter = currentState.powerUpCounter;
 
     // Keep track of changes to arrays to avoid unnecessary copying if nothing changes
     let nextPowerUps = currentState.powerUps;
@@ -27,14 +30,51 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
     let nextSnakes = currentState.snakes;
     // --- End Optimization ---
 
+    // --- Deterministic Player Handling --- 
+    const existingSnakeIDs = new Set(currentState.snakes.map(s => s.id));
+    let snakesChanged = false;
+
+    // Add new players
+    const snakesToAdd: Snake[] = [];
+    // Convert Set to Array for iteration to support older TS targets
+    for (const playerId of Array.from(currentPlayerIDs)) {
+        if (!existingSnakeIDs.has(playerId)) {
+            console.log(`updateGame: Player joined: ${playerId}. Adding snake.`);
+            const occupied = getOccupiedPositions({ snakes: nextSnakes, food: nextFood, powerUps: nextPowerUps });
+            // Use the tick's randomFunc
+            const newSnake = generateNewSnake(playerId, currentState.gridSize, occupied, randomFunc);
+            snakesToAdd.push(newSnake);
+            snakesChanged = true;
+            // Update occupied positions locally for subsequent spawns *within this handler only*
+            occupied.push(...newSnake.body);
+            // Since RNG was used, update the seed *if* generateNewSnake used it
+            // Assuming generateNewSnake uses randomFunc passed to it
+            nextRngSeed = randomFunc() * 4294967296;
+        }
+    }
+    if (snakesToAdd.length > 0) {
+        nextSnakes = [...nextSnakes, ...snakesToAdd];
+    }
+
+    // Remove players who left
+    const originalSnakeCount = nextSnakes.length;
+    nextSnakes = nextSnakes.filter(snake => currentPlayerIDs.has(snake.id));
+    if (nextSnakes.length !== originalSnakeCount) {
+        console.log(`updateGame: Players left. Snake count changed.`);
+        snakesChanged = true;
+    }
+    // Update player count state
+    const nextPlayerCount = currentPlayerIDs.size;
+    // --- End Deterministic Player Handling ---
+
     // 2. Cleanup expired power-ups (grid and active)
     // These functions should ideally return the original array if no changes were made
-    const cleanedGridPowerUps = cleanupExpiredGridPowerUps(currentState.powerUps, currentTime);
-    if (cleanedGridPowerUps !== currentState.powerUps) {
+    const cleanedGridPowerUps = cleanupExpiredGridPowerUps(nextPowerUps, currentTime);
+    if (cleanedGridPowerUps !== nextPowerUps) {
         nextPowerUps = cleanedGridPowerUps;
     }
-    const cleanedActivePowerUps = cleanupExpiredActivePowerUps(currentState.activePowerUps, currentTime);
-     if (cleanedActivePowerUps !== currentState.activePowerUps) {
+    const cleanedActivePowerUps = cleanupExpiredActivePowerUps(nextActivePowerUps, currentTime);
+     if (cleanedActivePowerUps !== nextActivePowerUps) {
         nextActivePowerUps = cleanedActivePowerUps;
     }
 
@@ -46,7 +86,7 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
     const powerUpsToRemove: PowerUp[] = []; // Store actual powerup objects to remove
 
     // Map returns a new array, update snakes based on current state arrays
-    const updatedSnakes = currentState.snakes.map(snake => {
+    const updatedSnakes = nextSnakes.map(snake => {
         let currentSnake = { ...snake }; // Shallow copy snake for modification
 
         // Apply intended direction change from input
@@ -75,7 +115,7 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
         if (!invincible) {
             // Pass currentState.snakes here for consistent collision checks within the tick
             if (/*hasCollidedWithWall(movedHead, currentState.gridSize) ||*/
-                hasCollidedWithSnake(movedHead, currentState.snakes, snake.id)) {
+                hasCollidedWithSnake(movedHead, nextSnakes, snake.id)) {
                 console.log(`Snake ${snake.id} collided!`);
                 snakesToRemove.push(snake.id);
                 return currentSnake; // Return the moved snake state before filtering
@@ -147,6 +187,7 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
             if (newFood) {
                 foodToAdd.push(newFood); // Collect
                 occupied.push(newFood.position); // Update occupied positions *locally* for subsequent spawns in this loop
+                nextRngSeed = randomFunc() * 4294967296; // Update seed after RNG use
             }
         }
     }
@@ -158,25 +199,25 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
     // --- End Optimization ---
 
 
-    // 9. Generate new power-ups periodically (or based on other logic)
-    const POWERUP_SPAWN_CHANCE = 0.01; // Example: 1% chance per tick
-    const powerUpsToAdd: PowerUp[] = []; // Collect new powerups here
-    // Check length against the potentially updated array
+    // 9. Generate new power-ups periodically
+    const POWERUP_SPAWN_CHANCE = 0.01; 
+    const powerUpsToAdd: PowerUp[] = [];
     if (randomFunc() < POWERUP_SPAWN_CHANCE && nextPowerUps.length < 2) {
-         // Pass the current state snapshot for occupied positions calculation
          const occupied = getOccupiedPositions({ snakes: nextSnakes, food: nextFood, powerUps: nextPowerUps });
-         const newPowerUp = generatePowerUp(currentState.gridSize, occupied, randomFunc, currentTime);
+         // Pass the current counter value and increment it for the next potential spawn
+         const newPowerUp = generatePowerUp(currentState.gridSize, occupied, randomFunc, currentTime, nextPowerUpCounter);
          if (newPowerUp) {
-             powerUpsToAdd.push(newPowerUp); // Collect
+             powerUpsToAdd.push(newPowerUp); 
+             nextPowerUpCounter++; // Increment counter only if power-up was generated
+             // Note: If generatePowerUp could fail AND we wanted to retry in the same tick,
+             // we'd need more complex logic to ensure the counter only advances once per SUCCESSFUL generation.
+             // Assuming generatePowerUp failure is rare (full grid) and we don't retry in the same tick.
+             nextRngSeed = randomFunc() * 4294967296; // Update seed after RNG use
          }
     }
-    // --- Start Optimization ---
-    // Create new powerUps array only if items were added
-     if (powerUpsToAdd.length > 0) {
+    if (powerUpsToAdd.length > 0) {
         nextPowerUps = [...nextPowerUps, ...powerUpsToAdd];
     }
-    // --- End Optimization ---
-
 
     // 10. Increment sequence number (or handled by NetplayAdapter)
     // nextState.sequence++;
@@ -193,6 +234,8 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
         snakes: nextSnakes,
         food: nextFood,
         timestamp: currentTime,
+        powerUpCounter: nextPowerUpCounter, // Store the updated counter
+        playerCount: nextPlayerCount // Add player count here
     };
     // --- End Optimization ---
 

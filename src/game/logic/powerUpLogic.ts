@@ -1,14 +1,14 @@
 import { Point, PowerUp, PowerUpType, ActivePowerUp, Snake } from "../state/types";
 import { generateRandomPosition } from "./prng";
 import { POWER_UP_GRID_DURATION, POWER_UP_EFFECT_DURATION } from "../constants";
-import { v4 as uuidv4 } from 'uuid'; // Import UUID generator
 
 // Generate a new power-up at a random position
 export const generatePowerUp = (
   gridSize: { width: number; height: number },
   occupiedPositions: Point[],
   randomFunc: () => number,
-  currentTime: number
+  currentTime: number,
+  powerUpId: number
 ): PowerUp | null => {
   const position = generateRandomPosition(gridSize, occupiedPositions, randomFunc);
   if (!position) {
@@ -20,7 +20,7 @@ export const generatePowerUp = (
   const randomType = powerUpTypes[Math.floor(randomFunc() * powerUpTypes.length)];
 
   return {
-    id: uuidv4(), // Assign a unique ID
+    id: `powerup-${powerUpId}`,
     type: randomType,
     position,
     expiresAt: currentTime + POWER_UP_GRID_DURATION,
