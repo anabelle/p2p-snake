@@ -384,218 +384,126 @@ const App: React.FC = () => {
 
   // Render function
   return (
-    <div className="App">
-      <h1>Central Server Snake Game</h1>
-      <div>Status: {isConnected ? `Connected (${userProfileRef.current?.name || localPlayerIdRef.current})` : 'Disconnected'}</div>
-      {/* Container for the game canvas */}
-      <div ref={gameContainerRef} id="game-container" style={{
-          marginTop: '20px',
-          position: 'relative',
+    <div className="game-container">
+      <h1>Multiplayer Snake Game</h1>
+
+      <div ref={gameContainerRef} id="game-canvas-container" style={{
           width: NetplayAdapter.canvasSize.width,
           height: NetplayAdapter.canvasSize.height,
-          border: '1px solid grey',
-          backgroundColor: '#222' // Add a background color
-          }}>
-         {/* Canvas will be appended here dynamically */}
-         {!isConnected && <div style={{color: 'white', textAlign: 'center', paddingTop: '50px'}}>Connecting...</div>}
+          position: 'relative',
+        }}>
+         {!isConnected && 
+            <div style={{
+              width: '100%', height: '100%', display: 'flex', 
+              alignItems: 'center', justifyContent: 'center', 
+              backgroundColor: 'var(--card-bg-color)', borderRadius: '8px' 
+            }}>
+                Connecting...
+            </div>
+         }
       </div>
       
-      {/* Player information display */}
       {isConnected && gameAdapterRef.current && (
-        <div id="player-info-wrapper" style={{
-          width: NetplayAdapter.canvasSize.width,
-          marginTop: '20px',
-          padding: '15px',
-          backgroundColor: '#222',
-          color: 'white',
-          borderRadius: '5px',
-          border: '1px solid #444',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
-        }}>
-          <div style={{ marginBottom: '15px' }}>
-            <h3 style={{ 
-              marginTop: '0', 
-              marginBottom: '10px',
-              color: '#fff',
-              borderBottom: '2px solid #444',
-              paddingBottom: '5px'
-            }}>Your Snake</h3>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <div style={{ fontWeight: 'bold', marginRight: '10px' }}>Name:</div>
-              <div style={{ marginRight: '20px' }}>
-                  {/* Display name from profile ref or fallback */}
-                  {userProfileRef.current?.name || localPlayerIdRef.current.substring(0, 6)}
+        <>
+          <div className="info-section" id="your-snake-info">
+            <h3>Your Snake</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <span><strong>Name:</strong> {userProfileRef.current?.name || localPlayerIdRef.current.substring(0, 6)}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <strong>Color:</strong>
+                {(() => {
+                  const yourPlayerStats = gameState.playerStats?.[localPlayerIdRef.current];
+                  const color = yourPlayerStats?.color;
+
+                  if (color) {
+                    return (
+                      <span 
+                        className="player-color-swatch" 
+                        style={{ backgroundColor: color }} 
+                      />
+                    );
+                  } else {
+                     // Check snake state as fallback if stats somehow missing color initially
+                     const yourSnake = gameState.snakes.find(snake => snake.id === localPlayerIdRef.current);
+                     if (yourSnake?.color) {
+                      return (
+                         <span 
+                           className="player-color-swatch" 
+                           style={{ backgroundColor: yourSnake.color }} 
+                         />
+                      );
+                     }
+                  }
+                  
+                  return (
+                    <span style={{ color: 'var(--text-color)', opacity: 0.7, fontStyle: 'italic' }}> (Waiting...)</span>
+                  );
+                })()}
               </div>
-              <div style={{ fontWeight: 'bold', marginRight: '10px' }}>Color:</div>
-              
-              {/* Direct dynamic access to your snake info */}
-              {(() => {
-                // Try to find your snake in the game state
-                const yourSnake = gameState.snakes.find(
-                  snake => snake.id === localPlayerIdRef.current
-                );
-                
-                if (yourSnake) {
-                  return (
-                    <div style={{ 
-                      width: '20px', 
-                      height: '20px', 
-                      backgroundColor: yourSnake.color,
-                      border: '1px solid #fff'
-                    }} />
-                  );
-                }
-                
-                // Fallback to playerStats
-                const yourPlayerStats = gameState.playerStats?.[localPlayerIdRef.current];
-                if (yourPlayerStats) {
-                  return (
-                    <div style={{ 
-                      width: '20px', 
-                      height: '20px', 
-                      backgroundColor: yourPlayerStats.color,
-                      border: '1px solid #fff'
-                    }} />
-                  );
-                }
-                
-                // If neither is available, show not spawned message
-                return (
-                  <span style={{ color: '#aaa', fontStyle: 'italic' }}>Not spawned yet</span>
-                );
-              })()}
             </div>
           </div>
-          
-          <h3 style={{ 
-            marginBottom: '10px',
-            color: '#fff',
-            borderBottom: '2px solid #444',
-            paddingBottom: '5px'
-          }}>Player Rankings</h3>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#333' }}>
-                <th style={{ padding: '8px', textAlign: 'left', borderBottom: '1px solid #555' }}>Player</th>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #555' }}>Score</th>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #555' }}>Deaths</th>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #555' }}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Get players from snakes or playerStats, whichever is available */}
-              {(() => {
-                // First check if we have snakes to display
-                const snakes = gameState.snakes || [];
-                
-                if (snakes.length > 0) {
-                  console.log("Rendering", snakes.length, "snakes from gameState");
-                  return snakes
-                    .sort((a, b) => b.score - a.score)
-                    .map(snake => (
-                      <tr key={snake.id} style={{ 
-                        backgroundColor: snake.id === localPlayerIdRef.current ? '#3a4a5a' : 'transparent' 
-                      }}>
-                        <td style={{ 
-                          padding: '8px', 
-                          borderBottom: '1px solid #444',
-                          display: 'flex',
-                          alignItems: 'center'
-                        }}>
-                          <div style={{ 
-                            width: '12px', 
-                            height: '12px', 
-                            backgroundColor: snake.color,
-                            marginRight: '8px',
-                            border: '1px solid #fff' 
-                          }} />
-                          {/* Display name from playerStats or fallback */}
-                           {(() => {
-                                const stats = gameState.playerStats?.[snake.id];
-                                return stats?.name || (snake.id === localPlayerIdRef.current ? 'You' : snake.id.substring(0, 6));
-                           })()}
-                        </td>
-                        <td style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #444' }}>
-                          {snake.score}
-                        </td>
-                        <td style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #444' }}>
-                          {/* Use gameState for playerStats */}
-                          {gameState.playerStats?.[snake.id]?.deaths || 0}
-                        </td>
-                        <td style={{ 
-                          padding: '8px', 
-                          textAlign: 'center', 
-                          borderBottom: '1px solid #444',
-                          color: '#4caf50',
-                          fontWeight: 'bold'
-                        }}>
-                          {/* Status from playerStats - use gameState */}
-                          {gameState.playerStats?.[snake.id]?.isConnected ? 'Online' : 'Offline'}
-                        </td>
-                      </tr>
-                    ));
-                }
-                
-                // Fallback to playerStats if for some reason snakes aren't available
-                const playerStats = gameState.playerStats || {};
-                const players = Object.values(playerStats);
-                
-                if (players.length > 0) {
-                  console.log("Rendering", players.length, "players from gameState.playerStats");
-                  return players
-                    .sort((a, b) => b.score - a.score)
-                    .map(player => (
-                      <tr key={player.id} style={{ 
-                        backgroundColor: player.id === localPlayerIdRef.current ? '#3a4a5a' : 'transparent' 
-                      }}>
-                        <td style={{ 
-                          padding: '8px', 
-                          borderBottom: '1px solid #444',
-                          display: 'flex',
-                          alignItems: 'center'
-                        }}>
-                          <div style={{ 
-                            width: '12px', 
-                            height: '12px', 
-                            backgroundColor: player.color,
-                            marginRight: '8px',
-                            border: '1px solid #fff' 
-                          }} />
-                          {/* Display name from playerStats or fallback */}
-                          {player.name || (player.id === localPlayerIdRef.current ? 'You' : player.id.substring(0, 6))}
-                        </td>
-                        <td style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #444' }}>
-                          {player.score}
-                        </td>
-                        <td style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #444' }}>
-                          {player.deaths}
-                        </td>
-                        <td style={{ 
-                          padding: '8px', 
-                          textAlign: 'center', 
-                          borderBottom: '1px solid #444',
-                          color: player.isConnected ? '#4caf50' : '#f44336',
-                          fontWeight: 'bold'
-                        }}>
-                          {player.isConnected ? 'Online' : 'Offline'}
-                        </td>
-                      </tr>
-                    ));
-                }
-                
-                // If we reach here, there are no players to display
-                return (
-                  <tr>
-                    <td colSpan={4} style={{ padding: '8px', textAlign: 'center' }}>
-                      {/* Conditional message based on connection status */}
-                      {!isConnected ? 'Connecting...' : 'No players yet'}
-                    </td>
-                  </tr>
-                );
-              })()}
-            </tbody>
-          </table>
-        </div>
+
+          <div className="info-section" id="player-rankings">
+            <h3>Player Rankings</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Player</th>
+                  <th style={{ textAlign: 'center' }}>Score</th>
+                  <th style={{ textAlign: 'center' }}>Deaths</th>
+                  <th style={{ textAlign: 'center' }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(() => {
+                  // Always derive players from playerStats
+                  const playerStats = gameState.playerStats || {};
+                  const players = Object.values(playerStats);
+
+                  if (players.length > 0) {
+                    console.log("Rendering", players.length, "players from gameState.playerStats (incl. offline)");
+                    return players
+                      .sort((a, b) => b.score - a.score) // Sort by score descending
+                      .map(player => (
+                        <tr 
+                          key={player.id} 
+                          className={player.id === localPlayerIdRef.current ? 'highlight-row' : ''}
+                        >
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                              <span 
+                                className="player-color-swatch" 
+                                style={{ backgroundColor: player.color }}
+                              />
+                              {player.name || player.id.substring(0, 6)} {player.id === localPlayerIdRef.current ? '(You)' : ''}
+                            </div>
+                          </td>
+                          <td style={{ textAlign: 'center' }}>
+                            {player.score}
+                          </td>
+                          <td style={{ textAlign: 'center' }}>
+                            {player.deaths}
+                          </td>
+                          <td style={{ textAlign: 'center' }} className={player.isConnected ? 'status-online' : 'status-offline'}>
+                            {player.isConnected ? 'Online' : 'Offline'}
+                          </td>
+                        </tr>
+                      ));
+                  }
+                  
+                  // If playerStats is empty
+                  return (
+                    <tr>
+                      <td colSpan={4} style={{ textAlign: 'center', fontStyle: 'italic', opacity: 0.7 }}>
+                        {isConnected ? 'Waiting for players...' : 'Connecting...'}
+                      </td>
+                    </tr>
+                  );
+                })()}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

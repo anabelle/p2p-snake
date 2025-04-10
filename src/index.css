@@ -1,136 +1,222 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
+
+:root {
+  --bg-color: #1a1d21; /* Darker background */
+  --card-bg-color: #2c3037; /* Slightly lighter for cards/sections */
+  --text-color: #e0e0e0; /* Off-white text */
+  --primary-color: #4f46e5; /* Indigo */
+  --primary-hover-color: #4338ca;
+  --secondary-color: #10b981; /* Emerald */
+  --secondary-hover-color: #059669;
+  --danger-color: #ef4444; /* Red */
+  --danger-hover-color: #dc2626;
+  --border-color: #4b5563; /* Gray */
+  --grid-line-color: rgba(255, 255, 255, 0.05); /* Subtle grid */
+  --highlight-bg: rgba(79, 70, 229, 0.2); /* Semi-transparent primary */
+
+  --font-family-sans: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
+  --font-family-mono: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0; /* Ensure no default padding */
+  font-family: var(--font-family-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #282c34;
-  color: white;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.6;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: var(--font-family-mono);
+  background-color: var(--card-bg-color);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
 }
 
 canvas {
   display: block;
   margin: 0 auto;
-  border: 2px solid white;
+  /* border: 1px solid var(--border-color); Softer border */
+  /* Removed border, let the grid lines define the space */
+  background-color: var(--card-bg-color); /* Match card background */
+  /* Grid lines are drawn by the canvas itself, this ensures background */
 }
 
 .game-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start; /* Align content to top */
   min-height: 100vh;
+  padding: 2rem 1rem; /* Add padding for spacing */
+  gap: 1.5rem; /* Space between elements */
+}
+
+/* Style generic info sections */
+.info-section {
+  background-color: var(--card-bg-color);
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  width: 100%;
+  max-width: 600px; /* Match canvas approx width */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.info-section h2, .info-section h3 {
+  margin-top: 0;
+  color: var(--primary-color);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .game-info {
-  margin: 20px 0;
+  /* Inherits .info-section potentially, or use directly */
   text-align: center;
 }
 
-.controls {
-  margin: 20px 0;
-  text-align: center;
-}
-
-.controls-help {
-  margin: 20px 0;
-  max-width: 500px;
-}
-
-.power-up-guide h3 {
-  margin-bottom: 5px;
-}
-
-.power-up-guide ul {
-  list-style-type: none;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-}
-
-.power-up-guide li {
-  display: flex;
-  align-items: center;
-  margin: 5px;
-  padding: 5px 10px;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 5px;
-}
-
-.power-up-color {
+.player-color-swatch {
   display: inline-block;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  margin-right: 5px;
+  width: 1em;
+  height: 1em;
+  border-radius: 3px;
+  margin-right: 0.5em;
+  vertical-align: middle;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-button {
-  padding: 10px 20px;
-  margin: 0 10px;
-  background-color: #61dafb;
-  color: #282c34;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 16px;
+/* Basic Table Styling (for Player Rankings) */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+th, td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+th {
+  color: var(--primary-color);
   font-weight: bold;
-  transition: background-color 0.2s, transform 0.1s;
+}
+
+tbody tr:last-child th,
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Highlight row (e.g., for current player) */
+.highlight-row {
+  background-color: var(--highlight-bg);
+  font-weight: bold;
+}
+
+.status-online {
+  color: var(--secondary-color);
+  font-weight: bold;
+}
+
+.status-offline {
+  color: var(--danger-color);
+  opacity: 0.7;
+}
+
+/* Button styles */
+button {
+  padding: 0.6rem 1.2rem;
+  margin: 0 0.5rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  font-family: var(--font-family-sans);
+  transition: background-color 0.2s ease-out, transform 0.1s ease-out;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 button:hover {
-  background-color: #21a1c7;
+  background-color: var(--primary-hover-color);
 }
 
 button:active {
   transform: scale(0.98);
 }
 
-.start-button {
-  background-color: #4caf50; /* Green */
+button:disabled {
+  background-color: var(--border-color);
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
-.start-button:hover {
-  background-color: #388e3c;
+.start-button {
+  background-color: var(--secondary-color);
+}
+
+.start-button:hover:not(:disabled) {
+  background-color: var(--secondary-hover-color);
 }
 
 .pause-button {
-  background-color: #f44336; /* Red */
+  background-color: var(--danger-color);
 }
 
-.pause-button:hover {
-  background-color: #d32f2f;
+.pause-button:hover:not(:disabled) {
+  background-color: var(--danger-hover-color);
 }
 
+/* Modal styles */
 .modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
+  inset: 0; /* Replaces top, left, width, height */
+  background-color: rgba(0, 0, 0, 0.75); /* Darker overlay */
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 1rem;
+  z-index: 1000; /* Ensure modal is on top */
 }
 
 .modal-content {
-  background-color: #282c34;
-  padding: 20px;
-  border-radius: 5px;
-  border: 2px solid white;
-  width: 80%;
+  background-color: var(--card-bg-color);
+  padding: 2rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  width: 100%;
   max-width: 500px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
+.modal-content h2 {
+    margin-top: 0;
+    color: var(--primary-color);
+}
+
+/* Visually Hidden - Keep for accessibility */
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -140,26 +226,29 @@ button:active {
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   border: 0;
+  white-space: nowrap; /* Add this */
 }
 
+/* Error Message */
 .error-message {
   position: fixed;
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #f44336;
+  background-color: var(--danger-color);
   color: white;
-  padding: 15px 20px;
-  border-radius: 5px;
+  padding: 1rem 1.5rem;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  z-index: 1000;
+  gap: 1rem;
+  z-index: 1001; /* Above modal overlay */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  animation: slideDown 0.3s ease-out;
+  animation: slideDown 0.3s ease-out forwards; /* Ensure it stays */
   max-width: 90%;
-  width: 400px;
+  width: auto; /* Adjust width based on content */
+  min-width: 300px;
 }
 
 .error-message p {
@@ -170,25 +259,67 @@ button:active {
 .error-message button {
   background-color: transparent;
   color: white;
-  border: 1px solid white;
-  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  padding: 0.3rem 0.6rem;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 0.9rem;
   transition: background-color 0.2s;
   margin: 0;
+  text-transform: none; /* Reset button transform */
+  letter-spacing: normal; /* Reset button spacing */
+  font-weight: normal; /* Reset button weight */
 }
 
 .error-message button:hover {
   background-color: rgba(255, 255, 255, 0.2);
 }
 
+/* Keep existing animation */
 @keyframes slideDown {
   from {
-    transform: translate(-50%, -50px);
+    transform: translate(-50%, -70px); /* Start further up */
     opacity: 0;
   }
   to {
     transform: translate(-50%, 0);
     opacity: 1;
   }
-} 
+}
+
+/* Basic Responsiveness */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px; /* Slightly smaller base font */
+  }
+
+  .game-container {
+    padding: 1rem 0.5rem; /* Reduce padding */
+    gap: 1rem;
+  }
+
+  .info-section {
+    padding: 0.75rem 1rem;
+  }
+
+  th, td {
+    padding: 0.5rem 0.75rem;
+  }
+
+  button {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .modal-content {
+    padding: 1.5rem;
+  }
+}
+
+/* Remove old rules that might conflict or are redundant */
+/* Removed .controls, .controls-help, .power-up-guide related styles as they seem specific and might be better handled in components */
+/* Removed default font families specified directly in body/code */
+/* Removed old button colors */
+
+/* Removed .controls, .controls-help, .power-up-guide related styles as they seem specific and might be better handled in components */
+/* Removed default font families specified directly in body/code */
+/* Removed old button colors */ 
