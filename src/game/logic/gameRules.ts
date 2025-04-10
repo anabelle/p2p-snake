@@ -4,6 +4,7 @@ import { checkFoodCollision, checkPowerUpCollision, hasCollidedWithSnake, hasCol
 import { moveSnakeBody, growSnake, generateNewSnake } from "./snakeLogic";
 import { generateFood } from "./foodLogic";
 import { generatePowerUp, activatePowerUp, cleanupExpiredActivePowerUps, cleanupExpiredGridPowerUps, getScoreMultiplier, isInvincible, getSpeedFactor } from "./powerUpLogic";
+import { POWERUP_SPAWN_CHANCE } from "../constants"; // Import the constant
 
 // Define the structure for player inputs for a single tick
 export type PlayerInputs = Map<string, Direction>; // Map<playerId, intendedDirection>
@@ -342,14 +343,14 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
 
 
     // 9. Generate new power-ups periodically
-    const POWERUP_SPAWN_CHANCE = 0.01; 
+    // const POWERUP_SPAWN_CHANCE = 0.01; // REMOVED local definition
     const powerUpsToAdd: PowerUp[] = [];
-    if (randomFunc() < POWERUP_SPAWN_CHANCE && nextPowerUps.length < 2) {
+    if (randomFunc() < POWERUP_SPAWN_CHANCE && nextPowerUps.length < 2) { // Use imported constant
          const occupied = getOccupiedPositions({ snakes: nextSnakes, food: nextFood, powerUps: nextPowerUps });
          // Pass the current counter value and increment it for the next potential spawn
          const newPowerUp = generatePowerUp(currentState.gridSize, occupied, randomFunc, currentTime, nextPowerUpCounter);
          if (newPowerUp) {
-             powerUpsToAdd.push(newPowerUp); 
+             powerUpsToAdd.push(newPowerUp);
              nextPowerUpCounter++; // Increment counter only if power-up was generated
              // Note: If generatePowerUp could fail AND we wanted to retry in the same tick,
              // we'd need more complex logic to ensure the counter only advances once per SUCCESSFUL generation.

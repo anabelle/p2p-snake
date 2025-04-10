@@ -6,6 +6,7 @@ export const CELL_SIZE = 12; // Decreased cell size to fit more cells in roughly
 export const GAME_SPEED_MS = 100; // Update game logic every 100ms
 export const FOOD_VALUE = 1;
 export const POWER_UP_SPAWN_INTERVAL = 5000; // Spawn power-up every 5 seconds (in ms)
+export const POWERUP_SPAWN_CHANCE = 0.01; // Chance (0 to 1) to spawn power-up per tick
 export const POWER_UP_GRID_DURATION = 5000; // ms on the grid
 export const POWER_UP_EFFECT_DURATION = 8000; // ms effect on snake
 export const POWERUP_DURATION_MS = 5000; // 5 seconds
