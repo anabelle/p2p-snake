@@ -101,27 +101,36 @@ const App: React.FC = () => {
   // Input State (remains the same)
   const localInputStateRef = useRef({ dx: 0, dy: 0 });
   const pressedKeysRef = useRef<Set<string>>(new Set());
+  // State for touch controls
+  const touchStartPos = useRef<{ x: number, y: number } | null>(null);
 
-  // Input Event Listeners (remains the same)
+  // Input Event Listeners
   useEffect(() => {
+    // --- Keyboard Listeners ---
     const handleKeyDown = (event: KeyboardEvent) => {
       // Only process if connected? Maybe allow input buffering? For now, process always.
       // console.log(`KEYDOWN Event: key=${event.key}`);
       let changed = false;
       let newState = { ...localInputStateRef.current };
+      let isArrowKey = false;
       if (!pressedKeysRef.current.has(event.key)) {
           pressedKeysRef.current.add(event.key);
           // Map arrow keys to dx/dy for sending
           switch (event.key) {
-              case 'ArrowUp':    newState = { dx: 0, dy: 1 }; changed = true; break;
-              case 'ArrowDown':  newState = { dx: 0, dy: -1 }; changed = true; break;
-              case 'ArrowLeft':  newState = { dx: -1, dy: 0 }; changed = true; break;
-              case 'ArrowRight': newState = { dx: 1, dy: 0 }; changed = true; break;
+              case 'ArrowUp':    newState = { dx: 0, dy: 1 }; changed = true; isArrowKey = true; break;
+              case 'ArrowDown':  newState = { dx: 0, dy: -1 }; changed = true; isArrowKey = true; break;
+              case 'ArrowLeft':  newState = { dx: -1, dy: 0 }; changed = true; isArrowKey = true; break;
+              case 'ArrowRight': newState = { dx: 1, dy: 0 }; changed = true; isArrowKey = true; break;
           }
       }
       if (changed) {
           localInputStateRef.current = newState;
           // console.log("KEYDOWN - Input Ref updated to:", localInputStateRef.current);
+      }
+
+      // Prevent default scrolling behavior for arrow keys
+      if (isArrowKey) {
+        event.preventDefault();
       }
     };
 
@@ -165,11 +174,87 @@ const App: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
+    // --- Touch Listeners for Swipe Controls ---
+    const gameArea = gameContainerRef.current; // Capture ref value
+
+    const handleTouchStart = (event: TouchEvent) => {
+      if (event.touches.length === 1) { // Only handle single touch swipes
+        touchStartPos.current = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+        // Prevent default scroll/zoom behavior triggered by touchstart
+        // event.preventDefault(); // May prevent clicking UI elements inside? Test this.
+      }
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+        // Prevent scrolling while dragging finger
+        event.preventDefault();
+    };
+
+    const handleTouchEnd = (event: TouchEvent) => {
+      if (!touchStartPos.current || event.changedTouches.length === 0) return;
+
+      const touchEndPos = { x: event.changedTouches[0].clientX, y: event.changedTouches[0].clientY };
+      const dx = touchEndPos.x - touchStartPos.current.x;
+      const dy = touchEndPos.y - touchStartPos.current.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      const swipeThreshold = 30; // Minimum distance for a swipe
+
+      if (distance > swipeThreshold) { // Check if swipe distance is significant
+        const angle = Math.atan2(dy, dx) * 180 / Math.PI; // Angle in degrees
+        let detectedDirection: { dx: number, dy: number } | null = null;
+
+        // Determine direction based on angle ranges (adjust ranges as needed)
+        if (angle >= -45 && angle < 45) {
+          detectedDirection = { dx: 1, dy: 0 }; // Right
+        } else if (angle >= 45 && angle < 135) {
+          detectedDirection = { dx: 0, dy: -1 }; // Down (screen coordinates)
+        } else if (angle >= 135 || angle < -135) {
+          detectedDirection = { dx: -1, dy: 0 }; // Left
+        } else if (angle >= -135 && angle < -45) {
+          detectedDirection = { dx: 0, dy: 1 }; // Up (screen coordinates)
+        }
+
+        if (detectedDirection) {
+          // Don't allow reversing direction immediately
+          const currentInput = localInputStateRef.current;
+          const isOpposite =
+                (detectedDirection.dx !== 0 && detectedDirection.dx === -currentInput.dx) ||
+                (detectedDirection.dy !== 0 && detectedDirection.dy === -currentInput.dy);
+
+          if (!isOpposite) {
+              localInputStateRef.current = detectedDirection;
+               console.log("SWIPE Detected - Angle:", angle, " Direction:", detectedDirection);
+          } else {
+              console.log("SWIPE Ignored - Opposite direction");
+          }
+        } else {
+             console.log("SWIPE Ignored - Angle not in defined range:", angle);
+        }
+      }
+
+      touchStartPos.current = null; // Reset start position
+    };
+
+    if (gameArea) {
+        console.log("Attaching touch listeners...");
+        // Use { passive: false } to allow preventDefault inside listeners
+        gameArea.addEventListener('touchstart', handleTouchStart, { passive: false });
+        gameArea.addEventListener('touchmove', handleTouchMove, { passive: false });
+        gameArea.addEventListener('touchend', handleTouchEnd, { passive: true }); // touchend doesn't need preventDefault usually
+    }
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      if (gameArea) {
+        console.log("Removing touch listeners...");
+        gameArea.removeEventListener('touchstart', handleTouchStart);
+        gameArea.removeEventListener('touchmove', handleTouchMove);
+        gameArea.removeEventListener('touchend', handleTouchEnd);
+      }
     };
-  }, []); // Empty dependency array is correct here
+  }, [canvasHeight, canvasWidth]); // Re-run if canvas size changes to re-attach listeners
 
   // --- Centralized WebSocket Logic ---
   useEffect(() => {

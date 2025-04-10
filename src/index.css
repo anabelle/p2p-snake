@@ -372,4 +372,20 @@ button:disabled {
 .powerup-symbol.speed { background-color: #64B5F6; color: white; } /* Light Blue */
 .powerup-symbol.slow { background-color: #FFB74D; color: white; } /* Orange */
 .powerup-symbol.invincibility { background-color: #BA68C8; color: white; } /* Purple */
-.powerup-symbol.double-score { background-color: #4DB6AC; color: white; } /* Teal */ 
+.powerup-symbol.double-score { background-color: #4DB6AC; color: white; } /* Teal */
+
+#game-canvas-container {
+  position: relative;
+  /* Ensure the container doesn't exceed screen width */
+  max-width: 100%; 
+  /* Optional: center the container if it's narrower than the screen */
+  margin-left: auto;
+  margin-right: auto;
+  /* Make the canvas element scale visually within the container */
+  & > canvas {
+    display: block; /* Remove extra space below canvas */
+    max-width: 100%;
+    height: auto; /* Maintain aspect ratio */
+    background-color: #222; /* Ensure background shows if scaled */
+  }
+} 
