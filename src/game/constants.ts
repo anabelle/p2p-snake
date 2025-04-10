@@ -1,7 +1,7 @@
 // Constants
 export const GRID_SIZE = { width: 50, height: 30 };
 export const CELL_SIZE = 12; // Decreased cell size to fit more cells in roughly the same area
-export const GAME_SPEED_MS = 300; // Update game logic every 150ms (increased from 100ms for slower connections)
+export const GAME_SPEED_MS = 150; // Update game logic every 150ms (was 300ms)
 export const FOOD_VALUE = 1;
 export const POWER_UP_SPAWN_INTERVAL = 5000; // Spawn power-up every 5 seconds (in ms)
 export const POWERUP_SPAWN_CHANCE = 0.01; // Chance (0 to 1) to spawn power-up per tick
