@@ -407,61 +407,67 @@ describe('Game Rules - updateGame', () => {
 
    // --- Collision Handling ---
    describe('Collision Handling', () => {
-        const snake1 = createMockSnake('p1', [{ x: 5, y: 5 }, { x: 4, y: 5 }]);
-        const snake2 = createMockSnake('p2', [{ x: 5, y: 5 }, { x: 5, y: 6 }]); // Head collision
+        // Define snakes for shared use
+        const initialSnake1 = createMockSnake('p1', [{ x: 5, y: 5 }, { x: 4, y: 5 }], Direction.RIGHT);
+        const initialSnake2 = createMockSnake('p2', [{ x: 4, y: 5 }, { x: 3, y: 5 }], Direction.RIGHT); // p2 intends to move to 5,5
         
         beforeEach(() => {
-             baseState = createInitialState([snake1, snake2], [], [], [], {
+             // Base state setup uses clones of initial snakes to avoid cross-test mutation
+             baseState = createInitialState([ {...initialSnake1}, {...initialSnake2} ], [], [], [], {
                  'p1': { id: 'p1', color: 'red', score: 0, deaths: 0, isConnected: true },
                  'p2': { id: 'p2', color: 'blue', score: 0, deaths: 0, isConnected: true }
              });
-             moveSnakeBodyMock.mockImplementation((snake) => snake);
+             // Default mocks for collision tests
+             moveSnakeBodyMock.mockImplementation((snake) => snake); // Assume no actual move for simplicity
              hasCollidedWithSnakeMock.mockReturnValue(false);
              isInvincibleMock.mockReturnValue(false);
-        });
-
-        it('should remove a snake if hasCollidedWithSnake returns true', () => {
-            const snake1 = createMockSnake('p1', [{ x: 5, y: 5 }, { x: 4, y: 5 }]); // p1 head at 5,5
-            const snake2 = createMockSnake('p2', [{ x: 4, y: 5 }, { x: 5, y: 5 }]); // p2 head at 4,5 (collides with p1 body)
-            const baseState = createInitialState([snake1, snake2]); // AI snake will be added
-            const inputs: PlayerInputs = new Map();
-            const currentPlayerIDs = new Set(['p1', 'p2']);
-            const p2Head = { x: 4, y: 5 }; // Define p2's head explicitly
-
-            // Mock AI snake generation
-            const mockAISnake = createMockSnake(AI_SNAKE_ID, [{x:0, y:0}]);
+             // Mock AI snake generation
+             const mockAISnake = createMockSnake(AI_SNAKE_ID, [{x:0, y:0}]);
              generateNewSnakeMock.mockImplementation((id) => {
                 if (id === AI_SNAKE_ID) return mockAISnake;
-                if (id === 'p1') return snake1; 
-                if (id === 'p2') return snake2;
+                // Return clones for the specific test cases if needed, or default mocks
+                if (id === 'p1') return { ...initialSnake1 }; 
+                if (id === 'p2') return { ...initialSnake2 };
                 return createMockSnake(id, [{x:9,y:9}]);
              });
+        });
+
+        it('should remove a snake if hasCollidedWithSnake returns true based on intended position', () => {
+            // Scenario: p2 intends to move RIGHT from {4,5} to {5,5}, colliding with p1's head.
+            const p1Start = { ...initialSnake1 }; // Head {5,5}
+            const p2Start = { ...initialSnake2 }; // Head {4,5}, Dir RIGHT
+            const testState = createInitialState([p1Start, p2Start]); // AI snake will be added
+            const inputs: PlayerInputs = new Map();
+            const currentPlayerIDs = new Set(['p1', 'p2']);
             
-            // Simulate moveSnakeBody just returning the current snake to focus on collision logic
-            moveSnakeBodyMock.mockImplementation(s => s); 
-            
-            // Mock collision check to return true only for p2 hitting p1's body segment
-             hasCollidedWithSnakeMock.mockImplementation((head, otherSnakes, selfId) => {
-                 // We expect p2's head {4,5} to be checked against p1's body [{5,5}, {4,5}] and AI's body [{0,0}]
-                 if (selfId === 'p2' && head.x === p2Head.x && head.y === p2Head.y) {
-                     // Check if any segment in otherSnakes matches the head
-                     // Note: In this setup, p2's head {4,5} matches p1's second body segment {4,5}
-                     // Add types for s and seg to fix linter errors
-                     return otherSnakes.some((s: Snake) => s.body.some((seg: Point) => seg.x === head.x && seg.y === head.y));
+            // Calculate expected intended positions BEFORE calling updateGame
+            const p1IntendedPos = snakeLogic.getNextHeadPosition(p1Start, GRID_SIZE); // {6,5}
+            const p2IntendedPos = snakeLogic.getNextHeadPosition(p2Start, GRID_SIZE); // {5,5}
+            const aiIntendedPos = snakeLogic.getNextHeadPosition(createMockSnake(AI_SNAKE_ID, [{x:0, y:0}]), GRID_SIZE); // {1,0}
+
+            // Mock collision check to return true only for p2 intending to move into p1's current head
+             hasCollidedWithSnakeMock.mockImplementation((intendedPos, allSnakes, selfId) => {
+                 if (selfId === 'p2' && intendedPos.x === p2IntendedPos.x && intendedPos.y === p2IntendedPos.y) {
+                     // Check if p2's intended position {5,5} matches any part of other snakes (p1's head)
+                     const otherSnakes = allSnakes.filter((s: Snake) => s.id !== selfId);
+                     return otherSnakes.some((s: Snake) => s.body.some((seg: Point) => seg.x === intendedPos.x && seg.y === intendedPos.y));
                  }
                  return false;
              });
             isInvincibleMock.mockReturnValue(false); // Ensure not invincible
 
-            const nextState = updateGame(baseState, inputs, currentTime, currentPlayerIDs);
+            const nextState = updateGame(testState, inputs, currentTime, currentPlayerIDs);
 
-            // Verify the collision check was called correctly for p2
-            // The 'otherSnakes' array should contain snake1 and the mockAISnake
-            expect(hasCollidedWithSnakeMock).toHaveBeenCalledWith(p2Head, expect.arrayContaining([
+            // Verify the collision check was called with p2's *intended* position
+            expect(hasCollidedWithSnakeMock).toHaveBeenCalledWith(p2IntendedPos, expect.arrayContaining([
                  expect.objectContaining({ id: 'p1' }),
-                 expect.objectContaining({ id: AI_SNAKE_ID }) 
-            ]), 'p2'); // Corrected assertion
+                 expect.objectContaining({ id: AI_SNAKE_ID })
+            ]), 'p2');
             
+            // Verify checks for others were also called with their intended positions
+             expect(hasCollidedWithSnakeMock).toHaveBeenCalledWith(p1IntendedPos, expect.anything(), 'p1');
+             expect(hasCollidedWithSnakeMock).toHaveBeenCalledWith(aiIntendedPos, expect.anything(), AI_SNAKE_ID);
+
             expect(isInvincibleMock).toHaveBeenCalledWith('p2', [], currentTime);
             
             // Expect p1 and AI snake to remain, p2 removed
@@ -473,60 +479,39 @@ describe('Game Rules - updateGame', () => {
         });
         
         it('should NOT remove a snake if it collides but is invincible', () => {
-            const snake1 = createMockSnake('p1', [{ x: 5, y: 5 }, { x: 4, y: 5 }]);
-            const snake2 = createMockSnake('p2', [{ x: 4, y: 5 }, { x: 5, y: 5 }]); // Collides with p1 body
-            const baseState = createInitialState([snake1, snake2]);
+            // Scenario: p2 intends to move RIGHT from {4,5} to {5,5}, colliding with p1's head, but p2 is invincible.
+            const p1Start = { ...initialSnake1 }; // Head {5,5}
+            const p2Start = { ...initialSnake2 }; // Head {4,5}, Dir RIGHT
+            const testState = createInitialState([p1Start, p2Start]); // AI snake added
             const inputs: PlayerInputs = new Map();
             const currentPlayerIDs = new Set(['p1', 'p2']);
-            const p2Head = { x: 4, y: 5 }; // Define p2's head explicitly
-            
-            const mockAISnake = createMockSnake(AI_SNAKE_ID, [{x:0, y:0}]);
-             generateNewSnakeMock.mockImplementation((id) => {
-                if (id === AI_SNAKE_ID) return mockAISnake;
-                if (id === 'p1') return snake1; 
-                if (id === 'p2') return snake2;
-                return createMockSnake(id, [{x:9,y:9}]);
-             });
-             
-            moveSnakeBodyMock.mockImplementation(s => s); // No movement
 
-            // Mock collision check to return true ONLY when checking p2
-             hasCollidedWithSnakeMock.mockImplementation((head, otherSnakes, selfId) => {
-                 return selfId === 'p2'; 
+            // Calculate expected intended positions
+            const p1IntendedPos = snakeLogic.getNextHeadPosition(p1Start, GRID_SIZE); // {6,5}
+            const p2IntendedPos = snakeLogic.getNextHeadPosition(p2Start, GRID_SIZE); // {5,5}
+            const aiIntendedPos = snakeLogic.getNextHeadPosition(createMockSnake(AI_SNAKE_ID, [{x:0, y:0}]), GRID_SIZE); // {1,0}
+             
+            // Mock collision check to return true if p2's intended move hits anything
+             hasCollidedWithSnakeMock.mockImplementation((intendedPos, allSnakes, selfId) => {
+                 if (selfId === 'p2' && intendedPos.x === p2IntendedPos.x && intendedPos.y === p2IntendedPos.y) {
+                    const otherSnakes = allSnakes.filter((s: Snake) => s.id !== selfId);
+                    return otherSnakes.some((s: Snake) => s.body.some((seg: Point) => seg.x === intendedPos.x && seg.y === intendedPos.y));
+                 }
+                 return false; // No other collisions simulated
              });
             isInvincibleMock.mockImplementation((playerId) => playerId === 'p2'); // p2 is invincible
 
-            const nextState = updateGame(baseState, inputs, currentTime, currentPlayerIDs);
+            const nextState = updateGame(testState, inputs, currentTime, currentPlayerIDs);
 
-            // Verify collision check was called for p1 and AI, but NOT for p2 (because invincible)
-            // Check calls for p1 and AI snake
-            expect(hasCollidedWithSnakeMock).toHaveBeenCalledWith(
-                expect.objectContaining({ x: 5, y: 5 }), // p1's head (didn't move)
-                expect.arrayContaining([ 
-                    expect.objectContaining({ id: 'p1' }),
-                    expect.objectContaining({ id: 'p2' }),
-                    expect.objectContaining({ id: AI_SNAKE_ID })
-                ]),
-                'p1' 
-            );
-             expect(hasCollidedWithSnakeMock).toHaveBeenCalledWith(
-                expect.objectContaining({ x: 0, y: 0 }), // AI snake's head (didn't move)
-                expect.arrayContaining([ 
-                    expect.objectContaining({ id: 'p1' }),
-                    expect.objectContaining({ id: 'p2' }),
-                    expect.objectContaining({ id: AI_SNAKE_ID })
-                ]),
-                AI_SNAKE_ID 
-            );
-            
-            // Check that it was NOT called for p2
-            expect(hasCollidedWithSnakeMock).not.toHaveBeenCalledWith(
-                expect.anything(), 
-                expect.anything(), 
-                'p2' 
-            );
-            
-            expect(isInvincibleMock).toHaveBeenCalledWith('p2', [], currentTime); 
+            // Verify collision check for p2 was skipped because invincible check comes first
+            expect(isInvincibleMock).toHaveBeenCalledWith('p2', [], currentTime);
+            expect(hasCollidedWithSnakeMock).not.toHaveBeenCalledWith(p2IntendedPos, expect.anything(), 'p2');
+
+            // Verify collision checks for others still happened with their intended positions
+            expect(hasCollidedWithSnakeMock).toHaveBeenCalledWith(p1IntendedPos, expect.anything(), 'p1');
+            expect(hasCollidedWithSnakeMock).toHaveBeenCalledWith(aiIntendedPos, expect.anything(), AI_SNAKE_ID);
+                
+            // Check snake p2 still exists
             expect(nextState.snakes.some(s => s.id === 'p2')).toBe(true);    
             expect(nextState.snakes).toHaveLength(3); 
             expect(nextState.playerStats['p2'].deaths).toBe(0);
@@ -603,6 +588,77 @@ describe('Game Rules - updateGame', () => {
             expect(nextState.food).toHaveLength(3);
             expect(nextState.food).toEqual(expect.arrayContaining([newFoodItem]));
         });
+
+        // --- Test for Slow Powerup Food Bug ---
+        it('should eat food correctly even if SLOW powerup prevents movement in the current tick', () => {
+            const foodItem: Food = { position: { x: 6, y: 5 }, value: FOOD_VALUE }; // Food at destination
+            const snake = createMockSnake('p1', [{ x: 5, y: 5 }, { x: 4, y: 5 }]);
+            const slowPowerUp: ActivePowerUp = { type: PowerUpType.SLOW, playerId: 'p1', expiresAt: currentTime + 1000 };
+            const initialState = createInitialState([snake], [foodItem], [], [slowPowerUp], {
+                 'p1': { id: 'p1', color: 'red', score: 0, deaths: 0, isConnected: true }
+            });
+            initialState.sequence = 0; // Even sequence, snake should NOT move this tick
+
+            // Mock speed factor to be slow
+            getSpeedFactorMock.mockReturnValue(0.5);
+
+            // Mock moveSnakeBody to simulate head moving to food (even though body won't update due to slow)
+            // This reflects that the intended position IS the food location
+            const expectedHeadPos = { x: 6, y: 5 };
+            moveSnakeBodyMock.mockImplementation(s =>
+                s.id === 'p1' ? { ...s, body: [expectedHeadPos, { x: 5, y: 5 }] } : s // Simulates head moving
+            );
+
+            // Mock food collision detection
+            checkFoodCollisionMock.mockImplementation((point, foodList) => {
+                if (point.x === foodItem.position.x && point.y === foodItem.position.y && foodList.includes(foodItem)) {
+                    return foodItem;
+                }
+                return null;
+            });
+
+            // Mock growSnake
+            const growSnakeMock = snakeLogic.growSnake as jest.Mock;
+            growSnakeMock.mockImplementation(s => ({ ...s, body: [{x: s.body[0].x, y: s.body[0].y}, ...s.body] }));
+
+            // Mock score multiplier (default 1)
+            const getScoreMultiplierMock = powerUpLogic.getScoreMultiplier as jest.Mock;
+            getScoreMultiplierMock.mockReturnValue(1);
+
+            const inputs: PlayerInputs = new Map();
+            const currentPlayerIDs = new Set(['p1']);
+
+            // --- Act ---
+            const nextState = updateGame(initialState, inputs, currentTime, currentPlayerIDs);
+
+            // --- Assert ---
+            // 1. Speed factor was checked
+            expect(getSpeedFactorMock).toHaveBeenCalledWith('p1', [slowPowerUp], currentTime);
+
+            // 2. Calculate Intended Position: The logic now calculates intended position internally.
+            //    We don't need to directly assert moveSnakeBody was called in the same way.
+            //    Instead, we focus on the *outcomes* based on the intended position.
+
+            // 3. Food collision was checked with the *intended* head position
+            expect(checkFoodCollisionMock).toHaveBeenCalledWith(expectedHeadPos, [foodItem]);
+
+            // 4. Snake GREW based on collision at intended position (THIS IS THE CORE FIX)
+            expect(growSnakeMock).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1' }));
+
+            // 5. Score multiplier was checked
+            expect(getScoreMultiplierMock).toHaveBeenCalledWith('p1', [slowPowerUp], currentTime);
+
+            // 6. Food was removed
+            expect(nextState.food).toHaveLength(0);
+
+            // 7. Snake score increased
+            expect(nextState.snakes[0].score).toBe(FOOD_VALUE * 1);
+            expect(nextState.playerStats['p1'].score).toBe(FOOD_VALUE * 1);
+
+            // 8. Snake length increased
+            expect(nextState.snakes[0].body.length).toBe(3); // Original 2 + 1 from growth
+        });
+        // --- End Test for Slow Powerup Food Bug ---
     });
     
     // --- PowerUp Handling ---
@@ -729,7 +785,7 @@ describe('Game Rules - updateGame', () => {
              generateNewSnakeMock.mockImplementation((id) => {
                 if (id === AI_SNAKE_ID) return mockAISnake;
                 if (id === 'p1') return snake1; 
-                return createMockSnake(id, [{x:9,y:9}]);
+                return createMockSnake(id, [{x:9, y:9}]);
              });
 
           updateGame(initialState, inputs, currentTime, currentPlayerIDs);

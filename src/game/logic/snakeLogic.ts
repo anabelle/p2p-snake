@@ -95,10 +95,7 @@ export const moveSnakeBody = (snake: Snake, gridSize: { width: number; height: n
   // Growth is handled separately (e.g., after eating food)
   const newBody = [nextHead, ...snake.body.slice(0, -1)];
 
-  return {
-    ...snake,
-    body: newBody,
-  };
+  return { ...snake, body: newBody };
 };
 
 // Grow snake by duplicating the tail segment

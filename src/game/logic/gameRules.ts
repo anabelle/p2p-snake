@@ -1,7 +1,7 @@
 import { GameState, Direction, Food, PowerUp, ActivePowerUp, Snake } from "../state/types";
 import { mulberry32, getOccupiedPositions } from "./prng";
 import { checkFoodCollision, checkPowerUpCollision, hasCollidedWithSnake, hasCollidedWithWall } from "./collision";
-import { moveSnakeBody, growSnake, generateNewSnake } from "./snakeLogic";
+import { moveSnakeBody, growSnake, generateNewSnake, getNextHeadPosition } from "./snakeLogic";
 import { generateFood } from "./foodLogic";
 import { generatePowerUp, activatePowerUp, cleanupExpiredActivePowerUps, cleanupExpiredGridPowerUps, getScoreMultiplier, isInvincible, getSpeedFactor } from "./powerUpLogic";
 import { POWERUP_SPAWN_CHANCE } from "../constants"; // Import the constant
@@ -256,91 +256,86 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
             }
         }
 
-        // --- Check Speed Factor and Conditionally Move --- 
+        // --- Step 1: Calculate Intended Next Head Position --- 
+        const intendedHeadPos = getNextHeadPosition(currentSnake, currentState.gridSize);
+
+        // --- Step 2: Check Collisions based on Intended Position ---
+        const invincible = isInvincible(snake.id, nextActivePowerUps, currentTime);
+        let fatalCollision = false;
+
+        // Check collision with other snakes/self
+        if (!invincible) {
+            // Check against the state of snakes *at the start* of this map iteration for consistency
+            if (hasCollidedWithSnake(intendedHeadPos, nextSnakes, snake.id)) {
+                fatalCollision = true;
+            }
+        }
+
+        // Check food collision
+        const eatenFood = checkFoodCollision(intendedHeadPos, nextFood);
+
+        // Check powerup collision
+        const collectedPowerUp = checkPowerUpCollision(intendedHeadPos, nextPowerUps);
+
+        // --- Step 3: Handle Fatal Collision --- 
+        if (fatalCollision) {
+            //console.log(`Snake ${snake.id} collided fatally at intended position!`);
+            snakesToRemove.push(snake.id);
+            // Update player death count
+            if (nextPlayerStats[snake.id]) {
+                nextPlayerStats[snake.id] = {
+                    ...nextPlayerStats[snake.id],
+                    deaths: nextPlayerStats[snake.id].deaths + 1
+                };
+            }
+            return currentSnake; // Return current state, it will be filtered out
+        }
+
+        // --- Step 4: Conditional Movement based on Speed Factor ---
         const speedFactor = getSpeedFactor(snake.id, nextActivePowerUps, currentTime);
         let shouldMoveThisTick = true;
-        if (speedFactor < 1) { // Currently only handles SLOW (0.5)
-            // Move every 1 / speedFactor ticks. For 0.5, move every 2 ticks.
-            // Move on odd sequence numbers for simplicity.
+        if (speedFactor < 1) { // Handles SLOW
             if (currentState.sequence % Math.round(1 / speedFactor) === 0) {
                 shouldMoveThisTick = false;
             }
         }
-        // Note: SPEED power-up (factor > 1) doesn't require extra moves here,
-        // it's just faster relative to slowed snakes.
 
         if (shouldMoveThisTick) {
-            // Calculate next position and move snake
+            // Only update the snake's body position if it should move
             currentSnake = moveSnakeBody(currentSnake, currentState.gridSize);
         }
-        // --- End Conditional Move --- 
 
-        const movedHead = currentSnake.body[0]; // Head position (might be same as last tick if !shouldMoveThisTick)
+        // --- Step 5: Handle Item Collection (Food & Powerups) ---
+        // Process based on collisions detected at the *intended* position, 
+        // but apply effects to the snake's *final* state for this tick.
 
-        // Invincibility check (using potentially updated active powerups)
-        const invincible = isInvincible(snake.id, nextActivePowerUps, currentTime);
-
-        // Collision Checks (check against *original* snake list for this tick)
-        // REMOVE wall collision check if wrapping is enabled
-        if (!invincible) {
-            // Pass currentState.snakes here for consistent collision checks within the tick
-            if (/*hasCollidedWithWall(movedHead, currentState.gridSize) ||*/
-                hasCollidedWithSnake(movedHead, nextSnakes, snake.id)) {
-                //console.log(`Snake ${snake.id} collided!`);
-                snakesToRemove.push(snake.id);
-
-                // Update player death count
-                if (nextPlayerStats[snake.id]) {
-                    nextPlayerStats[snake.id] = {
-                        ...nextPlayerStats[snake.id],
-                        deaths: nextPlayerStats[snake.id].deaths + 1
-                    };
-                }
-
-                return currentSnake; // Return the moved snake state before filtering
-            }
-        }
-
-        // Food Collision Check (use potentially updated food list)
-        const eatenFood = checkFoodCollision(movedHead, nextFood);
         if (eatenFood) {
-            // Only grow/score if the snake actually moved into the food this tick
-            if (shouldMoveThisTick) {
-                foodToRemove.push(eatenFood);
-                currentSnake = growSnake(currentSnake); // Assume returns new snake
-                const scoreMultiplier = getScoreMultiplier(snake.id, nextActivePowerUps, currentTime);
-                // Update score immutably on the copied snake
-                const points = eatenFood.value * scoreMultiplier;
-                currentSnake = { ...currentSnake, score: currentSnake.score + points };
-
-                // Also update in player stats
-                if (nextPlayerStats[snake.id]) {
-                    nextPlayerStats[snake.id] = {
-                        ...nextPlayerStats[snake.id],
-                        score: nextPlayerStats[snake.id].score + points
-                    };
-                }
-            }
+            foodToRemove.push(eatenFood);
+            currentSnake = growSnake(currentSnake); // Grow the snake (potentially moved)
+            const scoreMultiplier = getScoreMultiplier(snake.id, nextActivePowerUps, currentTime);
+            const points = eatenFood.value * scoreMultiplier;
+            currentSnake = { ...currentSnake, score: currentSnake.score + points }; // Add score
+            // Update player stats score
+            if (nextPlayerStats[snake.id]) {
+                 nextPlayerStats[snake.id] = {
+                     ...nextPlayerStats[snake.id],
+                     score: nextPlayerStats[snake.id].score + points
+                 };
+             }
         }
 
-        // Power-up Collision Check (use potentially updated powerup list)
-        const collectedPowerUp = checkPowerUpCollision(movedHead, nextPowerUps);
         if (collectedPowerUp) {
-            // Only activate if the snake actually moved into the power-up this tick
-            if (shouldMoveThisTick) {
-                powerUpsToRemove.push(collectedPowerUp);
-                const newActive = activatePowerUp(currentSnake, collectedPowerUp, currentTime);
-                newActivePowerUps.push(newActive);
-            }
+            powerUpsToRemove.push(collectedPowerUp);
+            const newActive = activatePowerUp(currentSnake, collectedPowerUp, currentTime);
+            newActivePowerUps.push(newActive); // Collect for adding later
         }
 
-        // Update score in playerStats from each snake's current score
-        // (Do this regardless of movement, as score might change from previous ticks)
+        // Final sync of score to playerStats after all updates for the tick
         if (nextPlayerStats[snake.id]) {
             nextPlayerStats[snake.id].score = currentSnake.score;
         }
 
-        return currentSnake; // Return the (potentially modified) snake copy
+        return currentSnake; // Return the final state of the snake for this tick
     });
     // Always assign the result of map
     nextSnakes = updatedSnakes;
