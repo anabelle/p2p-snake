@@ -2,6 +2,8 @@
 
 A real-time multiplayer snake game using the `netplayjs` library for deterministic state synchronization over WebRTC.
 
+**Play it live at: [snake.heyanabelle.com](https://snake.heyanabelle.com/)**
+
 ## Description
 
 This project implements a classic Snake game with real-time peer-to-peer multiplayer capabilities. Instead of relying on a central game server to manage state, it uses `netplayjs` to synchronize game logic across all connected players deterministically. A simple signaling server is used only for the initial discovery and connection establishment between peers via WebRTC.
