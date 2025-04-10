@@ -289,10 +289,11 @@ const App: React.FC = () => {
         return; // Avoid reconnecting if already connected
     }
 
-    const SIGNALING_SERVER_URI = 'ws://localhost:3001';
     console.log(`Connecting to WebSocket with Profile: ID=${profile.id}, Name=${profile.name}, Color=${profile.color}`);
-
-    // Connect to server, sending ID, Name, and Color
+    
+    // Update to use Heroku URL
+    const SIGNALING_SERVER_URI = 'https://snake-api-974c0cc98060.herokuapp.com';
+    
     socketRef.current = io(SIGNALING_SERVER_URI, {
         query: {
             id: profile.id,
