@@ -183,7 +183,6 @@ const App: React.FC = () => {
   const gameLoop = useCallback(() => {
     // More resilient check for game loop conditions
     const canDraw = canvasRef.current && gameAdapterRef.current;
-    const isSocketConnected = socketRef.current?.connected;
     
     if (!canDraw) {
       console.log("Game loop stopping: Canvas or game adapter missing");
