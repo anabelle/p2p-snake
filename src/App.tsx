@@ -181,43 +181,33 @@ const App: React.FC = () => {
 
   // --- Game Loop (Moved outside useEffect, wrapped in useCallback) ---
   const gameLoop = useCallback(() => {
-    // Ensure loop stops if component unmounts or disconnects
-    if (!gameAdapterRef.current || !canvasRef.current || !socketRef.current?.connected) {
-        // console.log("Game loop stopping: Adapter, canvas, or socket missing/disconnected.");
-        if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current); // Stop any pending frame
-        animationFrameRef.current = undefined; // Clear ref
-        return;
-    }
-
-    // 1. Send Local Input State to SERVER - REMOVED
-    // const currentLocalInput = localInputStateRef.current;
-    // if (socketRef.current) { // Check if socket exists before emitting
-    //   socketRef.current.emit('input', currentLocalInput); // Send { dx, dy }
-    // }
-
-    // 2. Client does NOT tick the simulation.
-
-    // 3. Draw the current state (updated by state-sync messages)
-    // Read gameState from the ref for the most up-to-date value
-    try {
-      if(gameAdapterRef.current && canvasRef.current) { // Ensure refs are valid
-        gameAdapterRef.current.draw(canvasRef.current, gameStateRef.current);
-      }
-    } catch (e) {
-      console.error("Error during gameAdapter.draw:", e); // Keep console.error
-      // Stop loop on draw error
+    // More resilient check for game loop conditions
+    const canDraw = canvasRef.current && gameAdapterRef.current;
+    const isSocketConnected = socketRef.current?.connected;
+    
+    if (!canDraw) {
+      console.log("Game loop stopping: Canvas or game adapter missing");
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = undefined;
       return;
+    }
+    
+    // Even if socket is disconnected, we can continue drawing the last known state
+    // This provides a smoother experience during reconnection attempts
+    
+    // Draw the current state (updated by state-sync messages)
+    try {
+      if (canvasRef.current && gameAdapterRef.current) {
+        gameAdapterRef.current.draw(canvasRef.current, gameStateRef.current);
+      }
+    } catch (e) {
+      console.error("Error during gameAdapter.draw:", e);
+      // Don't stop the loop on transient drawing errors - just try again next frame
     }
 
     // Request next frame
     animationFrameRef.current = requestAnimationFrame(gameLoop);
   // Dependencies: gameStateRef (though it's a ref, changes won't trigger re-render/re-memoization directly)
-  // Include things used inside that might change, like socketRef status indirectly via check?
-  // Refs themselves don't usually go in deps, but we read their .current properties.
-  // Add gameState? No, drawing reads from ref. Maybe localInputStateRef?
-  // Let's keep it simple, assuming refs are stable containers.
   }, []);
 
   // --- Game Adapter Initialization (Moved outside useEffect, wrapped in useCallback) ---
@@ -268,40 +258,64 @@ const App: React.FC = () => {
             name: profile.name,
             color: profile.color
         },
-        reconnectionAttempts: 3 // Optional: limit reconnection attempts
+        reconnectionAttempts: 5, // Increased from 3 to 5
+        reconnectionDelay: 1000, // Start with 1 second delay
+        reconnectionDelayMax: 5000, // Maximum 5 second delay
+        timeout: 10000 // Longer connection timeout
     });
     const socket = socketRef.current;
 
     socket.on('connect', () => {
         console.log('Connected to signaling server');
         setIsConnected(true);
-        // Now startGameAdapter is stable and defined in the component scope
+        
+        // Initialize game if needed - this will happen on both first connect and reconnects
         if (!gameAdapterRef.current) {
-            startGameAdapter(); // Call the memoized startGameAdapter
+            console.log('Initializing game adapter after connection');
+            // Ensure canvas exists before creating adapter
+            if (!canvasRef.current && gameContainerRef.current) {
+                console.log("Recreating canvas element after reconnection...");
+                const canvas = document.createElement('canvas');
+                canvas.width = canvasWidth;
+                canvas.height = canvasHeight;
+                gameContainerRef.current.appendChild(canvas);
+                canvasRef.current = canvas;
+            }
+            
+            // Start the game
+            startGameAdapter();
         }
     });
 
     socket.on('disconnect', (reason) => {
         console.log('Disconnected from signaling server:', reason);
         setIsConnected(false);
+        
         // Stop the game loop on disconnect
         if (animationFrameRef.current) {
             cancelAnimationFrame(animationFrameRef.current);
             animationFrameRef.current = undefined;
         }
-        // Clear adapter/canvas refs on disconnect?
+        
+        // Clear the game adapter but keep the canvas for reconnection
         gameAdapterRef.current = null;
+        
+        // Clear the canvas display but keep the reference
         if (canvasRef.current) {
             const ctx = canvasRef.current.getContext('2d');
             ctx?.clearRect(0, 0, canvasWidth, canvasHeight);
         }
-        socketRef.current = null; // Clear socket ref after disconnect handling
+        
+        // Don't set socketRef to null to allow auto-reconnection
+        // socketRef.current = null; // <-- Remove this line
     });
 
     socket.on('connect_error', (err) => {
         console.error('Signaling connection error:', err);
         setIsConnected(false);
-        socketRef.current = null; // Clear ref on connection error
+        
+        // Don't clear socket reference to allow auto-reconnection
+        // socketRef.current = null; // <-- Remove this line
     });
 
     // --- Listener for State Sync from Server ---
