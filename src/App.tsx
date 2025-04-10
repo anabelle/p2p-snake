@@ -504,13 +504,13 @@ const App: React.FC = () => {
       // Clear adapter ref
       gameAdapterRef.current = null;
       // Remove canvas if it was created by this effect instance
+      /* eslint-disable react-hooks/exhaustive-deps */
       const gameContainer = gameContainerRef.current; // Copy the ref value
       if (canvasCreated && canvasRef.current && gameContainer?.contains(canvasRef.current)) {
           console.log("Removing canvas element.");
           gameContainer.removeChild(canvasRef.current);
           canvasRef.current = null;
       }
-      console.log('Main effect cleanup complete.');
     };
   // Dependencies: connectWebSocket (stable), canvas dimensions
   }, [canvasHeight, canvasWidth, connectWebSocket]);
