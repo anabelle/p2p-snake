@@ -312,42 +312,68 @@ tbody tr:hover {
   box-sizing: border-box; /* Include padding in width */
 }
 
-/* Style the react-color SketchPicker container */
-.profile-modal .sketch-picker {
-  box-shadow: none !important; /* Remove default shadow */
-  padding: 0 !important; /* Remove default padding */
-  background: transparent !important; /* Make background transparent */
+/* Style the react-color CirclePicker container */
+.profile-modal .circle-picker {
+  margin: 10px 0;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 5px;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
-  width: 100% !important; /* Override default width */
-  /* Make color picker smaller */
-  transform: scale(0.85); /* Reduce scale further */
-  transform-origin: top left;
-  margin-bottom: 10px; /* Add space after the scaled down picker */
 }
 
-/* Make the color picker more compact */
+/* Improve CirclePicker accessibility */
+.profile-modal .circle-picker > span {
+  margin: 4px !important;
+}
+
+.profile-modal .circle-picker > span > div {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.profile-modal .circle-picker > span > div:hover {
+  transform: scale(1.15);
+}
+
+.profile-modal .circle-picker > span > div:focus {
+  outline: 2px solid var(--primary-color) !important;
+  box-shadow: 0 0 0 2px var(--primary-color) !important;
+}
+
+/* Remove all old SketchPicker styles */
+/* .profile-modal .sketch-picker {
+  box-shadow: none !important; 
+  padding: 0 !important; 
+  background: transparent !important; 
+  border-radius: 4px;
+  width: 100% !important; 
+  transform: scale(0.85); 
+  transform-origin: top left;
+  margin-bottom: 10px; 
+}
+
 .profile-modal .sketch-picker > div {
   margin-bottom: 4px !important;
   padding-bottom: 4px !important;
 }
 
-/* Make color picker's saturation box smaller */
 .profile-modal .sketch-picker > div:first-child {
-  height: 120px !important; /* Reduce height of the saturation box */
+  height: 120px !important; 
 }
 
-/* Reduce space between elements in the picker */
 .profile-modal .sketch-picker > div:not(:first-child) {
   padding: 4px !important;
 }
 
-/* Make preset colors more compact */
 .profile-modal .sketch-picker > div:last-child {
   padding-top: 0 !important;
   margin-top: 0 !important;
 }
 
-/* Specific overrides for SketchPicker elements for dark theme */
 .profile-modal .sketch-picker input {
   background-color: var(--input-bg-color, #3a3a3e) !important;
   color: var(--input-text-color, #e1e1e1) !important;
@@ -355,12 +381,10 @@ tbody tr:hover {
   border: none !important;
 }
 .profile-modal .sketch-picker > div:last-child > div:first-child > div:first-child {
-    /* Style the hex/rgb label container if needed */
 }
 .profile-modal .sketch-picker label {
-    color: var(--text-color-secondary, #aaa) !important; /* Make labels lighter */
-}
-
+    color: var(--text-color-secondary, #aaa) !important; 
+} */
 
 .profile-modal-actions {
   display: flex;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Modal from 'react-modal';
-import { SketchPicker, ColorResult } from 'react-color';
+import { CirclePicker, ColorResult } from 'react-color';
 import { UserProfile } from './../types'; // Correct path relative to src/components
 import { PLAYER_COLORS } from '../game/constants'; // For default color suggestion
 
@@ -154,12 +154,13 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
         <div className="form-group">
           <label htmlFor="color-picker">Color:</label>
           <div id="color-picker" role="application" aria-label="Color picker">
-            <SketchPicker
+            <CirclePicker
               color={color}
-              onChangeComplete={handleColorChange}
-              presetColors={PLAYER_COLORS} // Suggest default nice colors
-              disableAlpha={true}
-              width="100%" // Width will be controlled by CSS scaling
+              onChange={handleColorChange}
+              colors={PLAYER_COLORS}
+              width="100%"
+              circleSize={24}
+              circleSpacing={10}
             />
           </div>
         </div>
