@@ -1,11 +1,11 @@
 import { Point } from "./state/types";
 
 // Constants
-export const GRID_SIZE = { width: 30, height: 20 };
-export const CELL_SIZE = 20; // pixels
-export const GAME_SPEED_MS = 100; // Update game logic every 150ms
+export const GRID_SIZE = { width: 50, height: 30 };
+export const CELL_SIZE = 12; // Decreased cell size to fit more cells in roughly the same area
+export const GAME_SPEED_MS = 100; // Update game logic every 100ms
 export const FOOD_VALUE = 1;
-export const POWER_UP_SPAWN_INTERVAL = 10000; // Spawn power-up every 10 seconds (in ms)
+export const POWER_UP_SPAWN_INTERVAL = 5000; // Spawn power-up every 5 seconds (in ms)
 export const POWER_UP_GRID_DURATION = 5000; // ms on the grid
 export const POWER_UP_EFFECT_DURATION = 8000; // ms effect on snake
 export const POWERUP_DURATION_MS = 5000; // 5 seconds

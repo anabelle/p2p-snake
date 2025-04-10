@@ -5,7 +5,7 @@ import { NetplayAdapter } from './game/network/NetplayAdapter';
 import { GameState, PlayerStats } from './game/state/types'; // Import PlayerStats
 import io, { Socket } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
-import { GRID_SIZE, PLAYER_COLORS } from './game/constants'; // Import GRID_SIZE and PLAYER_COLORS
+import { GRID_SIZE, PLAYER_COLORS, CELL_SIZE } from './game/constants'; // Import GRID_SIZE and PLAYER_COLORS
 import { generateRandomColor } from './game/logic/prng'; // Import random color generator
 
 // Define the user profile structure
@@ -76,6 +76,10 @@ const App: React.FC = () => {
   const gameAdapterRef = useRef<NetplayAdapter | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameRef = useRef<number>();
+
+  // --- Calculate Canvas Size from Constants ---
+  const canvasWidth = GRID_SIZE.width * CELL_SIZE;
+  const canvasHeight = GRID_SIZE.height * CELL_SIZE;
 
   // --- React State ---
   const [isConnected, setIsConnected] = useState(false);
@@ -304,8 +308,9 @@ const App: React.FC = () => {
         if (!canvasRef.current) {
           // console.log("Creating canvas element...");
           const canvas = document.createElement('canvas');
-          canvas.width = NetplayAdapter.canvasSize.width;
-          canvas.height = NetplayAdapter.canvasSize.height;
+          // Use calculated dimensions
+          canvas.width = canvasWidth;
+          canvas.height = canvasHeight;
           // Style canvas?
           // canvas.style.border = '1px solid lightgrey';
           gameContainerRef.current.appendChild(canvas);
@@ -388,8 +393,8 @@ const App: React.FC = () => {
       <h1>Multiplayer Snake Game</h1>
 
       <div ref={gameContainerRef} id="game-canvas-container" style={{
-          width: NetplayAdapter.canvasSize.width,
-          height: NetplayAdapter.canvasSize.height,
+          width: canvasWidth,
+          height: canvasHeight,
           position: 'relative',
         }}>
          {!isConnected && 
@@ -440,6 +445,69 @@ const App: React.FC = () => {
                   );
                 })()}
               </div>
+            </div>
+            <div id="active-powerups" style={{ marginTop: '0.5rem' }}>
+              <strong>Active Effects:</strong>
+              {(() => {
+                // --- Add Debug Logging ---
+                console.log("Checking active power-ups:");
+                console.log("  Raw activePowerUps from state:", gameState.activePowerUps);
+                console.log("  Local Player ID:", localPlayerIdRef.current);
+                console.log("  Server Timestamp:", gameState.timestamp);
+                // --- End Debug Logging ---
+
+                // Use the timestamp from the received game state for comparison
+                const serverTime = gameState.timestamp;
+                const allActive = gameState.activePowerUps || []; // Ensure it's an array
+
+                const active = allActive.filter(ap => {
+                  const isLocal = ap.playerId === localPlayerIdRef.current;
+                  const isExpired = ap.expiresAt <= serverTime;
+                  // Log individual checks
+                  // console.log(`  Checking AP type=${ap.type}, player=${ap.playerId}, expires=${ap.expiresAt}, local=${isLocal}, expired=${isExpired}`);
+                  return isLocal && !isExpired; // Compare against server time
+                });
+
+                console.log("  Filtered Active Power-ups for local player:", active);
+
+                if (active.length === 0) {
+                  return <span style={{ fontStyle: 'italic', opacity: 0.7 }}> None</span>;
+                }
+
+                // Mapping from type to description (reuse from legend)
+                const descriptions: Record<string, string> = {
+                  SPEED: "Speed Boost",
+                  SLOW: "Slow Down",
+                  INVINCIBILITY: "Invincibility",
+                  DOUBLE_SCORE: "Double Score"
+                };
+
+                return active.map(ap => {
+                  let symbol = '?';
+                  let className = 'powerup-symbol';
+                  let description = descriptions[ap.type] || ap.type; // Get description or fallback to type name
+
+                  switch (ap.type) {
+                    case 'SPEED': symbol = 'S'; className += ' speed'; break;
+                    case 'SLOW': symbol = 'W'; className += ' slow'; break;
+                    case 'INVINCIBILITY': symbol = 'I'; className += ' invincibility'; break;
+                    case 'DOUBLE_SCORE': symbol = '2x'; className += ' double-score'; break;
+                  }
+                  // Calculate remaining duration roughly (optional)
+                  const expiresIn = Math.max(0, Math.round((ap.expiresAt - serverTime) / 1000));
+                  const title = `${description} (expires in ~${expiresIn}s)`;
+
+                  return (
+                    // Wrap icon and text in a div for better layout control if needed
+                    <div key={ap.type} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginLeft: '0.5rem' }}>
+                         <span className={className} title={title}>
+                           {symbol}
+                         </span>
+                         <span>{description} (~{expiresIn}s)</span> 
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
 
@@ -506,6 +574,19 @@ const App: React.FC = () => {
             </div>
           </div>
         </>
+      )}
+
+      {/* Power-up Legend Section */}
+      {isConnected && (
+        <div className="info-section" id="powerup-legend">
+          <h3>Power-Up Legend</h3>
+          <ul>
+            <li><span className="powerup-symbol speed">S</span> - Speed Boost: Temporarily increase your snake's speed.</li>
+            <li><span className="powerup-symbol slow">W</span> - Slow Down: Temporarily decrease your snake's speed.</li>
+            <li><span className="powerup-symbol invincibility">I</span> - Invincibility: Temporarily pass through other snakes and walls.</li>
+            <li><span className="powerup-symbol double-score">2x</span> - Double Score: Temporarily earn double points for eating food.</li>
+          </ul>
+        </div>
       )}
     </div>
   );

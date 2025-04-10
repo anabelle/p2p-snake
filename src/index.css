@@ -336,4 +336,40 @@ button:disabled {
 
 /* Removed .controls, .controls-help, .power-up-guide related styles as they seem specific and might be better handled in components */
 /* Removed default font families specified directly in body/code */
-/* Removed old button colors */ 
+/* Removed old button colors */
+
+/* Power-up Legend Styles */
+#powerup-legend {
+  margin-top: 1.5rem;
+}
+
+#powerup-legend ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+#powerup-legend li {
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.powerup-symbol {
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  line-height: 1.5em;
+  text-align: center;
+  font-weight: bold;
+  border-radius: 4px;
+  color: var(--powerup-symbol-text, #111); /* Default text color */
+  background-color: var(--powerup-symbol-bg, gold); /* Default background */
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+/* Specific Power-up Symbol Styles (can customize background/text color) */
+.powerup-symbol.speed { background-color: #64B5F6; color: white; } /* Light Blue */
+.powerup-symbol.slow { background-color: #FFB74D; color: white; } /* Orange */
+.powerup-symbol.invincibility { background-color: #BA68C8; color: white; } /* Purple */
+.powerup-symbol.double-score { background-color: #4DB6AC; color: white; } /* Teal */ 

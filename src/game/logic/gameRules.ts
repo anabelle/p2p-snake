@@ -3,7 +3,7 @@ import { mulberry32, getOccupiedPositions } from "./prng";
 import { checkFoodCollision, checkPowerUpCollision, hasCollidedWithSnake, hasCollidedWithWall } from "./collision";
 import { moveSnakeBody, growSnake, generateNewSnake } from "./snakeLogic";
 import { generateFood } from "./foodLogic";
-import { generatePowerUp, activatePowerUp, cleanupExpiredActivePowerUps, cleanupExpiredGridPowerUps, getScoreMultiplier, isInvincible } from "./powerUpLogic";
+import { generatePowerUp, activatePowerUp, cleanupExpiredActivePowerUps, cleanupExpiredGridPowerUps, getScoreMultiplier, isInvincible, getSpeedFactor } from "./powerUpLogic";
 
 // Define the structure for player inputs for a single tick
 export type PlayerInputs = Map<string, Direction>; // Map<playerId, intendedDirection>
@@ -186,10 +186,26 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
             }
         }
 
-        // Calculate next position and move snake (assume moveSnakeBody returns a new snake)
-        // Pass the gridSize for wrapping logic
-        currentSnake = moveSnakeBody(currentSnake, currentState.gridSize);
-        const movedHead = currentSnake.body[0];
+        // --- Check Speed Factor and Conditionally Move --- 
+        const speedFactor = getSpeedFactor(snake.id, nextActivePowerUps, currentTime);
+        let shouldMoveThisTick = true;
+        if (speedFactor < 1) { // Currently only handles SLOW (0.5)
+            // Move every 1 / speedFactor ticks. For 0.5, move every 2 ticks.
+            // Move on odd sequence numbers for simplicity.
+            if (currentState.sequence % Math.round(1 / speedFactor) === 0) {
+                shouldMoveThisTick = false;
+            }
+        }
+        // Note: SPEED power-up (factor > 1) doesn't require extra moves here,
+        // it's just faster relative to slowed snakes.
+
+        if (shouldMoveThisTick) {
+            // Calculate next position and move snake
+            currentSnake = moveSnakeBody(currentSnake, currentState.gridSize);
+        }
+        // --- End Conditional Move --- 
+
+        const movedHead = currentSnake.body[0]; // Head position (might be same as last tick if !shouldMoveThisTick)
 
         // Invincibility check (using potentially updated active powerups)
         const invincible = isInvincible(snake.id, nextActivePowerUps, currentTime);
@@ -218,38 +234,45 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
         // Food Collision Check (use potentially updated food list)
         const eatenFood = checkFoodCollision(movedHead, nextFood);
         if (eatenFood) {
-            console.log(`Snake ${snake.id} ate food!`);
-            foodToRemove.push(eatenFood);
-            currentSnake = growSnake(currentSnake); // Assume returns new snake
-            const scoreMultiplier = getScoreMultiplier(snake.id, nextActivePowerUps, currentTime);
-            // Update score immutably on the copied snake
-            const points = eatenFood.value * scoreMultiplier;
-            currentSnake = { ...currentSnake, score: currentSnake.score + points };
-            
-            // Also update in player stats
-            if (nextPlayerStats[snake.id]) {
-                nextPlayerStats[snake.id] = {
-                    ...nextPlayerStats[snake.id],
-                    score: nextPlayerStats[snake.id].score + points
-                };
+            // Only grow/score if the snake actually moved into the food this tick
+            if (shouldMoveThisTick) {
+                 console.log(`Snake ${snake.id} ate food!`);
+                 foodToRemove.push(eatenFood);
+                 currentSnake = growSnake(currentSnake); // Assume returns new snake
+                 const scoreMultiplier = getScoreMultiplier(snake.id, nextActivePowerUps, currentTime);
+                 // Update score immutably on the copied snake
+                 const points = eatenFood.value * scoreMultiplier;
+                 currentSnake = { ...currentSnake, score: currentSnake.score + points };
+                
+                 // Also update in player stats
+                 if (nextPlayerStats[snake.id]) {
+                    nextPlayerStats[snake.id] = {
+                        ...nextPlayerStats[snake.id],
+                        score: nextPlayerStats[snake.id].score + points
+                    };
+                 }
             }
         }
 
         // Power-up Collision Check (use potentially updated powerup list)
         const collectedPowerUp = checkPowerUpCollision(movedHead, nextPowerUps);
         if (collectedPowerUp) {
-            console.log(`Snake ${snake.id} collected ${collectedPowerUp.type}!`);
-            powerUpsToRemove.push(collectedPowerUp);
-            const newActive = activatePowerUp(currentSnake, collectedPowerUp, currentTime);
-            newActivePowerUps.push(newActive);
+             // Only activate if the snake actually moved into the power-up this tick
+             if (shouldMoveThisTick) {
+                console.log(`Snake ${snake.id} collected ${collectedPowerUp.type}!`);
+                powerUpsToRemove.push(collectedPowerUp);
+                const newActive = activatePowerUp(currentSnake, collectedPowerUp, currentTime);
+                newActivePowerUps.push(newActive);
+             }
         }
 
         // Update score in playerStats from each snake's current score
+        // (Do this regardless of movement, as score might change from previous ticks)
         if (nextPlayerStats[snake.id]) {
             nextPlayerStats[snake.id].score = currentSnake.score;
         }
 
-        return currentSnake; // Return the (potentially) modified snake copy
+        return currentSnake; // Return the (potentially modified) snake copy
     });
     // Always assign the result of map
     nextSnakes = updatedSnakes;
@@ -353,6 +376,7 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
         snakes: nextSnakes,
         food: nextFood,
         timestamp: currentTime,
+        sequence: currentState.sequence + 1, // Increment sequence number
         powerUpCounter: nextPowerUpCounter, // Store the updated counter
         playerCount: nextPlayerCount, // Add player count here
         playerStats: nextPlayerStats // Add updated player stats

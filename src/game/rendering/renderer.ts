@@ -139,54 +139,78 @@ const drawSnakeEyes = (ctx: CanvasRenderingContext2D, head: { x: number, y: numb
 
 // Helper to draw a single food item
 const drawFood = (ctx: CanvasRenderingContext2D, food: Food) => {
-    ctx.fillStyle = 'lime'; // Bright color for food
+    const centerX = food.position.x * CELL_SIZE + CELL_SIZE / 2;
+    const centerY = food.position.y * CELL_SIZE + CELL_SIZE / 2;
+    const appleRadius = CELL_SIZE / 2.8; // Make apple slightly smaller than cell
+    const stemWidth = CELL_SIZE / 8;
+    const stemHeight = CELL_SIZE / 4;
+
+    // Draw apple body (red circle)
+    ctx.fillStyle = 'red';
     ctx.beginPath();
-    ctx.arc(
-        food.position.x * CELL_SIZE + CELL_SIZE / 2, 
-        food.position.y * CELL_SIZE + CELL_SIZE / 2,
-        CELL_SIZE / 2.5, // Slightly smaller than cell
-        0,
-        Math.PI * 2
-    );
+    ctx.arc(centerX, centerY, appleRadius, 0, Math.PI * 2);
     ctx.fill();
+
+    // Draw stem (small green rectangle on top)
+    ctx.fillStyle = 'green';
+    ctx.fillRect(
+        centerX - stemWidth / 2,
+        centerY - appleRadius - stemHeight + 2, // Position stem slightly above circle edge
+        stemWidth,
+        stemHeight
+    );
 };
 
 // Helper to draw a single power-up item
 const drawPowerUp = (ctx: CanvasRenderingContext2D, powerUp: PowerUp) => {
-    // Simple representation: Pulsing star or different shapes/colors based on type
-    ctx.fillStyle = 'gold'; // Color for power-ups
-    const centerX = powerUp.position.x * CELL_SIZE + CELL_SIZE / 2;
-    const centerY = powerUp.position.y * CELL_SIZE + CELL_SIZE / 2;
-    const radius = CELL_SIZE / 3;
+    const rectX = powerUp.position.x * CELL_SIZE;
+    const rectY = powerUp.position.y * CELL_SIZE;
+    const centerX = rectX + CELL_SIZE / 2;
+    const centerY = rectY + CELL_SIZE / 2;
 
-    // Draw a simple star shape for now
-    ctx.beginPath();
-    ctx.moveTo(centerX + radius, centerY);
-    for (let i = 1; i <= 5; i++) {
-        const angle = Math.PI / 2.5 * i;
-        const outerX = centerX + radius * Math.cos(angle);
-        const outerY = centerY + radius * Math.sin(angle);
-        ctx.lineTo(outerX, outerY);
-        const innerAngle = angle + Math.PI / 5;
-        const innerRadius = radius / 2;
-        const innerX = centerX + innerRadius * Math.cos(innerAngle);
-        const innerY = centerY + innerRadius * Math.sin(innerAngle);
-        ctx.lineTo(innerX, innerY);
+    let bgColor = 'gold'; // Default fallback
+    let symbol = '?';
+    let textColor = 'black'; // Default text color
+
+    // Determine background color and symbol based on type
+    switch (powerUp.type) {
+        case 'SPEED': 
+            bgColor = '#64B5F6'; // Light Blue (matches legend CSS)
+            symbol = 'S'; 
+            textColor = 'white';
+            break;
+        case 'SLOW': 
+            bgColor = '#FFB74D'; // Orange (matches legend CSS)
+            symbol = 'W'; 
+            textColor = 'white';
+            break;
+        case 'INVINCIBILITY': 
+            bgColor = '#BA68C8'; // Purple (matches legend CSS)
+            symbol = 'I'; 
+            textColor = 'white';
+            break;
+        case 'DOUBLE_SCORE': 
+            bgColor = '#4DB6AC'; // Teal (matches legend CSS)
+            symbol = '2x'; 
+            textColor = 'white';
+            break;
     }
-    ctx.closePath();
-    ctx.fill();
 
-    // Indicate type (e.g., with a letter)
-    ctx.fillStyle = 'black';
-    ctx.font = `${CELL_SIZE * 0.6}px Arial`;
+    // Draw background rectangle
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(rectX, rectY, CELL_SIZE, CELL_SIZE);
+    
+    // Optional: Add a subtle border
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(rectX, rectY, CELL_SIZE, CELL_SIZE);
+
+    // Draw the symbol text
+    ctx.fillStyle = textColor;
+    // Adjust font size slightly for '2x'
+    const fontSize = symbol === '2x' ? CELL_SIZE * 0.5 : CELL_SIZE * 0.6;
+    ctx.font = `bold ${fontSize}px Arial`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    let symbol = '?';
-    switch (powerUp.type) {
-        case 'SPEED': symbol = 'S'; break;
-        case 'SLOW': symbol = 'W'; break;
-        case 'INVINCIBILITY': symbol = 'I'; break;
-        case 'DOUBLE_SCORE': symbol = '2x'; break;
-    }
     ctx.fillText(symbol, centerX, centerY);
 }; 
