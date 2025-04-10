@@ -2,6 +2,54 @@
 
 A real-time multiplayer snake game using peer-to-peer architecture with WebRTC.
 
+## Description
+
+An in-depth overview of the project. Explain the purpose, the features, and perhaps the motivation behind it.
+
+## Getting Started
+
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+
+### Prerequisites
+
+What things you need to install the software and how to install them:
+
+*   Node.js (v18 or later recommended)
+*   npm or yarn
+
+```bash
+# Example using npm
+npm install npm@latest -g
+```
+
+### Installing
+
+A step-by-step series of examples that tell you how to get a development environment running:
+
+1.  Clone the repo
+    ```bash
+    git clone https://github.com/yourusername/p2p-snake-game.git
+    cd p2p-snake-game
+    ```
+2.  Install NPM packages
+    ```bash
+    npm install
+    # or
+    # yarn install
+    ```
+
+### Running the Application
+
+How to run the development server:
+
+```bash
+npm start
+# or
+# yarn start
+```
+
+This will usually open the application in your default web browser. If not, navigate to `http://localhost:3000` (or the port specified in the output).
+
 ## Features
 
 - **Peer-to-Peer Multiplayer**: Connect directly with other players without a central server (except for initial signaling)
@@ -98,4 +146,5 @@ MIT
 - [React](https://reactjs.org/)
 - [WebRTC](https://webrtc.org/)
 - [Socket.IO](https://socket.io/)
-- [simple-peer](https://github.com/feross/simple-peer) 
+- [simple-peer](https://github.com/feross/simple-peer)
+- [PrimeAcademy/readme-template](https://github.com/PrimeAcademy/readme-template) for README structure ideas. 

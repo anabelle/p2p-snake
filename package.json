@@ -60,5 +60,12 @@
     "react-app-rewired": "^2.2.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.3"
+  },
+  "jest": {
+    "coverageReporters": [
+      "text",
+      "text-summary",
+      "lcov"
+    ]
   }
 }
