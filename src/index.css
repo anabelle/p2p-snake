@@ -35,6 +35,42 @@ canvas {
 
 .controls {
   margin: 20px 0;
+  text-align: center;
+}
+
+.controls-help {
+  margin: 20px 0;
+  max-width: 500px;
+}
+
+.power-up-guide h3 {
+  margin-bottom: 5px;
+}
+
+.power-up-guide ul {
+  list-style-type: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.power-up-guide li {
+  display: flex;
+  align-items: center;
+  margin: 5px;
+  padding: 5px 10px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+}
+
+.power-up-color {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  margin-right: 5px;
 }
 
 button {
@@ -47,10 +83,31 @@ button {
   cursor: pointer;
   font-size: 16px;
   font-weight: bold;
+  transition: background-color 0.2s, transform 0.1s;
 }
 
 button:hover {
   background-color: #21a1c7;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.start-button {
+  background-color: #4caf50; /* Green */
+}
+
+.start-button:hover {
+  background-color: #388e3c;
+}
+
+.pause-button {
+  background-color: #f44336; /* Red */
+}
+
+.pause-button:hover {
+  background-color: #d32f2f;
 }
 
 .modal {
@@ -72,4 +129,66 @@ button:hover {
   border: 2px solid white;
   width: 80%;
   max-width: 500px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.error-message {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #f44336;
+  color: white;
+  padding: 15px 20px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  z-index: 1000;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  animation: slideDown 0.3s ease-out;
+  max-width: 90%;
+  width: 400px;
+}
+
+.error-message p {
+  margin: 0;
+  flex-grow: 1;
+}
+
+.error-message button {
+  background-color: transparent;
+  color: white;
+  border: 1px solid white;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+  margin: 0;
+}
+
+.error-message button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes slideDown {
+  from {
+    transform: translate(-50%, -50px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
 } 

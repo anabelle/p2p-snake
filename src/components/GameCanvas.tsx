@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
-import { GameState, Snake, Food, PowerUp, Point } from '../utils/types';
-import { CELL_SIZE } from '../utils/gameUtils';
+import { GameState, Snake, Food, PowerUp, Point, Direction } from "../game/state/types";
+import { CELL_SIZE } from '../game/constants';
 
 interface GameCanvasProps {
   gameState: GameState;
