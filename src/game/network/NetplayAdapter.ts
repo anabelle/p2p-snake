@@ -1,7 +1,6 @@
 import { GameState } from "../state/types";
 import { GRID_SIZE, CELL_SIZE } from "../constants";
 import { drawGame } from "../rendering/renderer";
-import * as netplayjs from 'netplayjs'; // Still needed for JsonValue type
 
 // NOTE: This class NO LONGER inherits from netplayjs.Game
 // It's a client-side helper for state deserialization and drawing.
