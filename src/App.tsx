@@ -54,8 +54,8 @@ const App: React.FC = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Input State (remains the same)
-  const localInputStateRef = useRef({ dx: 0, dy: 0 });
-  const pressedKeysRef = useRef<Set<string>>(new Set());
+  // const localInputStateRef = useRef({ dx: 0, dy: 0 }); // No longer needed for direction
+  // const pressedKeysRef = useRef<Set<string>>(new Set()); // No longer needed for direction
   // State for touch controls
   const touchStartPos = useRef<{ x: number, y: number } | null>(null);
 
@@ -63,24 +63,21 @@ const App: React.FC = () => {
   useEffect(() => {
     // --- Keyboard Listeners ---
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Only process if connected? Maybe allow input buffering? For now, process always.
       // console.log(`KEYDOWN Event: key=${event.key}`);
-      let changed = false;
-      let newState = { ...localInputStateRef.current };
+      let direction: { dx: number; dy: number } | null = null;
       let isArrowKey = false;
-      if (!pressedKeysRef.current.has(event.key)) {
-          pressedKeysRef.current.add(event.key);
-          // Map arrow keys to dx/dy for sending
-          switch (event.key) {
-              case 'ArrowUp':    newState = { dx: 0, dy: 1 }; changed = true; isArrowKey = true; break;
-              case 'ArrowDown':  newState = { dx: 0, dy: -1 }; changed = true; isArrowKey = true; break;
-              case 'ArrowLeft':  newState = { dx: -1, dy: 0 }; changed = true; isArrowKey = true; break;
-              case 'ArrowRight': newState = { dx: 1, dy: 0 }; changed = true; isArrowKey = true; break;
-          }
+
+      switch (event.key) {
+        case 'ArrowUp':    direction = { dx: 0, dy: 1 }; isArrowKey = true; break;
+        case 'ArrowDown':  direction = { dx: 0, dy: -1 }; isArrowKey = true; break;
+        case 'ArrowLeft':  direction = { dx: -1, dy: 0 }; isArrowKey = true; break;
+        case 'ArrowRight': direction = { dx: 1, dy: 0 }; isArrowKey = true; break;
       }
-      if (changed) {
-          localInputStateRef.current = newState;
-          // console.log("KEYDOWN - Input Ref updated to:", localInputStateRef.current);
+
+      if (direction && socketRef.current && socketRef.current.connected) {
+        // Send input directly to the server
+        socketRef.current.emit('input', direction);
+        // console.log("KEYDOWN - Sent input:", direction);
       }
 
       // Prevent default scrolling behavior for arrow keys
@@ -89,45 +86,11 @@ const App: React.FC = () => {
       }
     };
 
-    const handleKeyUp = (event: KeyboardEvent) => {
-      // console.log(`KEYUP Event: key=${event.key}`);
-      let changed = false;
-      let newState = { dx: 0, dy: 0 }; // Default to no movement on key up
-
-      if (pressedKeysRef.current.has(event.key)) {
-          pressedKeysRef.current.delete(event.key);
-          changed = true; // Input definitely changed
-
-          // Check remaining pressed keys to determine current direction
-          if (pressedKeysRef.current.has('ArrowLeft')) newState.dx = -1;
-          else if (pressedKeysRef.current.has('ArrowRight')) newState.dx = 1;
-
-          if (pressedKeysRef.current.has('ArrowUp')) newState.dy = 1;
-          else if (pressedKeysRef.current.has('ArrowDown')) newState.dy = -1;
-
-           // Prevent diagonal by prioritizing horizontal if both are pressed? Or let server decide?
-           // Let's prioritize last pressed or stick with combined for now, server logic handles it.
-           if (newState.dx !== 0 && newState.dy !== 0) {
-               // Simple priority: Last key pressed might still be held. If arrow up/down was just released, horizontal takes precedence if held.
-               if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-                  if(pressedKeysRef.current.has('ArrowLeft') || pressedKeysRef.current.has('ArrowRight')) newState.dy = 0;
-               } else { // Left/Right released
-                  if(pressedKeysRef.current.has('ArrowUp') || pressedKeysRef.current.has('ArrowDown')) newState.dx = 0;
-               }
-           }
-
-      }
-
-      // Update ref only if the resulting state is different from current
-      // Or always update on keyup to signal "stop"? Let's always update for now.
-      if (changed) {
-           localInputStateRef.current = newState;
-           // console.log("KEYUP - Input Ref updated to:", localInputStateRef.current);
-      }
-    };
+    // KeyUp is no longer needed for directional control
+    // const handleKeyUp = (event: KeyboardEvent) => { ... };
 
     window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+    // window.addEventListener('keyup', handleKeyUp); // Remove KeyUp listener
 
     // --- Touch Listeners for Swipe Controls ---
     const gameArea = gameContainerRef.current; // Capture ref value
@@ -163,27 +126,32 @@ const App: React.FC = () => {
         if (angle >= -45 && angle < 45) {
           detectedDirection = { dx: 1, dy: 0 }; // Right
         } else if (angle >= 45 && angle < 135) {
-          detectedDirection = { dx: 0, dy: -1 }; // Down (screen coordinates)
+          detectedDirection = { dx: 0, dy: -1 }; // Down (screen coordinates are Y-down)
         } else if (angle >= 135 || angle < -135) {
           detectedDirection = { dx: -1, dy: 0 }; // Left
         } else if (angle >= -135 && angle < -45) {
-          detectedDirection = { dx: 0, dy: 1 }; // Up (screen coordinates)
+          detectedDirection = { dx: 0, dy: 1 }; // Up (screen coordinates are Y-down)
         }
 
-        if (detectedDirection) {
-          // Don't allow reversing direction immediately
-          const currentInput = localInputStateRef.current;
-          const isOpposite =
-                (detectedDirection.dx !== 0 && detectedDirection.dx === -currentInput.dx) ||
-                (detectedDirection.dy !== 0 && detectedDirection.dy === -currentInput.dy);
+        // Send swipe input directly if valid and connected
+        if (detectedDirection && socketRef.current && socketRef.current.connected) {
+            // // Original logic to prevent reversing - maybe let server handle this?
+            // // const currentInput = localInputStateRef.current;
+            // // const isOpposite =
+            // //       (detectedDirection.dx !== 0 && detectedDirection.dx === -currentInput.dx) ||
+            // //       (detectedDirection.dy !== 0 && detectedDirection.dy === -currentInput.dy);
+            // // if (!isOpposite) {
+            // //     socketRef.current.emit('input', detectedDirection);
+            // //     console.log("SWIPE Detected & Sent - Angle:", angle, " Direction:", detectedDirection);
+            // // } else {
+            // //     console.log("SWIPE Ignored - Opposite direction");
+            // // }
 
-          if (!isOpposite) {
-              localInputStateRef.current = detectedDirection;
-               console.log("SWIPE Detected - Angle:", angle, " Direction:", detectedDirection);
-          } else {
-              console.log("SWIPE Ignored - Opposite direction");
-          }
-        } else {
+            // Send directly, let server validate/handle opposite direction logic
+            socketRef.current.emit('input', detectedDirection);
+            // console.log("SWIPE Detected & Sent - Angle:", angle, " Direction:", detectedDirection);
+
+        } else if (!detectedDirection) {
              console.log("SWIPE Ignored - Angle not in defined range:", angle);
         }
       }
@@ -201,7 +169,7 @@ const App: React.FC = () => {
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
+      // window.removeEventListener('keyup', handleKeyUp); // Ensure KeyUp listener removal is also removed
       if (gameArea) {
         console.log("Removing touch listeners...");
         gameArea.removeEventListener('touchstart', handleTouchStart);
@@ -221,11 +189,11 @@ const App: React.FC = () => {
         return;
     }
 
-    // 1. Send Local Input State to SERVER
-    const currentLocalInput = localInputStateRef.current;
-    if (socketRef.current) { // Check if socket exists before emitting
-      socketRef.current.emit('input', currentLocalInput); // Send { dx, dy }
-    }
+    // 1. Send Local Input State to SERVER - REMOVED
+    // const currentLocalInput = localInputStateRef.current;
+    // if (socketRef.current) { // Check if socket exists before emitting
+    //   socketRef.current.emit('input', currentLocalInput); // Send { dx, dy }
+    // }
 
     // 2. Client does NOT tick the simulation.
 
