@@ -40,12 +40,12 @@ export const drawGame = (ctx: CanvasRenderingContext2D, state: GameState, localP
         drawSnake(ctx, snake, isLocalSnake);
     });
 
-    // Draw player count
-    ctx.fillStyle = "white";
-    ctx.font = "16px Arial";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "top";
-    ctx.fillText(`Players: ${state.playerCount}`, 10, 10);
+    // Draw player count - REMOVED, handled by React component badge
+    // ctx.fillStyle = "white";
+    // ctx.font = "16px Arial";
+    // ctx.textAlign = "left";
+    // ctx.textBaseline = "top";
+    // ctx.fillText(`Players: ${state.playerCount}`, 10, 10);
 };
 
 // Helper to draw a single snake

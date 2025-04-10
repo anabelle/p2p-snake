@@ -8,6 +8,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { GRID_SIZE, PLAYER_COLORS, CELL_SIZE } from './game/constants'; // Import GRID_SIZE and PLAYER_COLORS
 import { generateRandomColor } from './game/logic/prng'; // Import random color generator
 
+import './App.css'; // Import the CSS file
+
 // Define the user profile structure
 interface UserProfile {
   id: string;
@@ -41,8 +43,7 @@ const loadUserProfile = (): UserProfile => {
   // console.log('No valid user profile found. Prompting for new profile...');
   const id = uuidv4();
   let name = prompt("Enter your name (leave blank for default):")?.trim() || '';
-  let color = prompt(`Enter your preferred color hex (e.g., #33FF57) or leave blank for random:
-Available: ${PLAYER_COLORS.join(', ')}`)?.trim() || '';
+  let color = prompt(`Enter your preferred color hex (e.g., #33FF57) or leave blank for random:\nAvailable: ${PLAYER_COLORS.join(', ')}`)?.trim() || '';
 
   // Validate or set defaults
   if (!name) {
@@ -396,7 +397,7 @@ const App: React.FC = () => {
           // Use calculated dimensions
           canvas.width = canvasWidth;
           canvas.height = canvasHeight;
-          // Style canvas?
+          // Style canvas? Remove inline border
           // canvas.style.border = '1px solid lightgrey';
           gameContainerRef.current.appendChild(canvas);
           canvasRef.current = canvas;
@@ -480,26 +481,27 @@ const App: React.FC = () => {
       <div ref={gameContainerRef} id="game-canvas-container" style={{
           width: canvasWidth,
           height: canvasHeight,
-          position: 'relative',
+          ['--canvas-width' as string]: `${canvasWidth}px` 
         }}>
+         {isConnected && gameState.playerCount > 0 && (
+           <div className="player-count-badge">
+              Players: {gameState.playerCount}
+           </div>
+         )}
          {!isConnected && 
-            <div style={{
-              width: '100%', height: '100%', display: 'flex', 
-              alignItems: 'center', justifyContent: 'center', 
-              backgroundColor: 'var(--card-bg-color)', borderRadius: '8px' 
-            }}>
+            <div className="connecting-overlay">
                 Connecting...
             </div>
          }
       </div>
       
       {isConnected && gameAdapterRef.current && (
-        <>
+        <div className="info-sections-wrapper">
           <div className="info-section" id="your-snake-info">
             <h3>Your Snake</h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div>
               <span><strong>Name:</strong> {userProfileRef.current?.name || localPlayerIdRef.current.substring(0, 6)}</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>
                 <strong>Color:</strong>
                 {(() => {
                   const yourPlayerStats = gameState.playerStats?.[localPlayerIdRef.current];
@@ -529,9 +531,9 @@ const App: React.FC = () => {
                     <span style={{ color: 'var(--text-color)', opacity: 0.7, fontStyle: 'italic' }}> (Waiting...)</span>
                   );
                 })()}
-              </div>
+              </span>
             </div>
-            <div id="active-powerups" style={{ marginTop: '0.5rem' }}>
+            <div id="active-powerups">
               <strong>Active Effects:</strong>
               {(() => {
                 // --- Add Debug Logging ---
@@ -583,8 +585,7 @@ const App: React.FC = () => {
                   const title = `${description} (expires in ~${expiresIn}s)`;
 
                   return (
-                    // Wrap icon and text in a div for better layout control if needed
-                    <div key={ap.type} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginLeft: '0.5rem' }}>
+                    <div key={ap.type}>
                          <span className={className} title={title}>
                            {symbol}
                          </span>
@@ -603,9 +604,9 @@ const App: React.FC = () => {
                 <thead>
                   <tr>
                     <th>Player</th>
-                    <th style={{ textAlign: 'center' }}>Score</th>
-                    <th style={{ textAlign: 'center' }}>Deaths</th>
-                    <th style={{ textAlign: 'center' }}>Status</th>
+                    <th>Score</th>
+                    <th>Deaths</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -624,7 +625,7 @@ const App: React.FC = () => {
                             className={player.id === localPlayerIdRef.current ? 'highlight-row' : ''}
                           >
                             <td>
-                              <div style={{ display: 'flex', alignItems: 'center' }}>
+                              <div>
                                 <span 
                                   className="player-color-swatch" 
                                   style={{ backgroundColor: player.color }}
@@ -632,13 +633,13 @@ const App: React.FC = () => {
                                 {player.name || player.id.substring(0, 6)} {player.id === localPlayerIdRef.current ? '(You)' : ''}
                               </div>
                             </td>
-                            <td style={{ textAlign: 'center' }}>
+                            <td>
                               {player.score}
                             </td>
-                            <td style={{ textAlign: 'center' }}>
+                            <td>
                               {player.deaths}
                             </td>
-                            <td style={{ textAlign: 'center' }} className={player.isConnected ? 'status-online' : 'status-offline'}>
+                            <td className={player.isConnected ? 'status-online' : 'status-offline'}>
                               {player.isConnected ? 'Online' : 'Offline'}
                             </td>
                           </tr>
@@ -648,7 +649,7 @@ const App: React.FC = () => {
                     // If playerStats is empty
                     return (
                       <tr>
-                        <td colSpan={4} style={{ textAlign: 'center', fontStyle: 'italic', opacity: 0.7 }}>
+                        <td colSpan={4}>
                           {isConnected ? 'Waiting for players...' : 'Connecting...'}
                         </td>
                       </tr>
@@ -658,7 +659,7 @@ const App: React.FC = () => {
               </table>
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {/* Power-up Legend Section */}
