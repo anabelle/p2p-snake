@@ -262,6 +262,7 @@ tbody tr:hover {
   align-items: center;
   justify-content: center;
   z-index: 1000; /* Ensure it's above other content */
+  padding: 15px; /* Add padding to ensure space around modal on small screens */
 }
 
 .profile-modal {
@@ -272,8 +273,12 @@ tbody tr:hover {
   color: var(--text-color); /* Use existing variable */
   min-width: 300px;
   max-width: 90%;
+  max-height: calc(100vh - 30px); /* Set max height to screen height minus padding */
+  overflow-y: auto; /* Enable scrolling */
   outline: none;
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  /* Improve accessibility by ensuring proper focus management */
+  position: relative; /* For positioning scroll indicators if needed */
 }
 
 .profile-modal h2 {
@@ -314,6 +319,32 @@ tbody tr:hover {
   background: transparent !important; /* Make background transparent */
   border-radius: 4px;
   width: 100% !important; /* Override default width */
+  /* Make color picker smaller */
+  transform: scale(0.85); /* Reduce scale further */
+  transform-origin: top left;
+  margin-bottom: 10px; /* Add space after the scaled down picker */
+}
+
+/* Make the color picker more compact */
+.profile-modal .sketch-picker > div {
+  margin-bottom: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+/* Make color picker's saturation box smaller */
+.profile-modal .sketch-picker > div:first-child {
+  height: 120px !important; /* Reduce height of the saturation box */
+}
+
+/* Reduce space between elements in the picker */
+.profile-modal .sketch-picker > div:not(:first-child) {
+  padding: 4px !important;
+}
+
+/* Make preset colors more compact */
+.profile-modal .sketch-picker > div:last-child {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
 }
 
 /* Specific overrides for SketchPicker elements for dark theme */
@@ -336,6 +367,11 @@ tbody tr:hover {
   justify-content: flex-end;
   gap: 10px;
   margin-top: 15px; /* Add some space above buttons */
+  position: sticky; /* Make buttons sticky at bottom for better access */
+  bottom: 0;
+  background: var(--background-color); /* Match modal background */
+  padding: 10px 0; /* Add padding */
+  z-index: 5; /* Ensure buttons appear above scrollable content */
 }
 
 /* Basic Button Styling (adapt to your existing button styles) */
@@ -346,6 +382,8 @@ tbody tr:hover {
   cursor: pointer;
   font-weight: bold;
   transition: opacity 0.2s ease;
+  min-height: 44px; /* Improve touch target size for accessibility */
+  min-width: 44px; /* Ensure minimum touch target size */
 }
 
 .button-primary {

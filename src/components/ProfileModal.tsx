@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Modal from 'react-modal';
 import { SketchPicker, ColorResult } from 'react-color';
 import { UserProfile } from './../types'; // Correct path relative to src/components
@@ -31,6 +31,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   const [name, setName] = useState('');
   const [color, setColor] = useState(PLAYER_COLORS[0]); // Default color
   const [isDirty, setIsDirty] = useState(false); // Track if form has changed
+  
+  // Ref for the modal title to focus on open
+  const modalTitleRef = useRef<HTMLHeadingElement>(null);
 
   // Store initial state to compare for dirtiness
   const [initialName, setInitialName] = useState('');
@@ -107,17 +110,33 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
 
   const isNameValid = name.trim().length > 0;
 
+  // Focus the modal title when modal opens
+  const handleAfterOpen = () => {
+    // Focus the modal title for accessibility
+    if (modalTitleRef.current) {
+      modalTitleRef.current.focus();
+    }
+  };
+
   return (
     <Modal
       isOpen={isOpen}
       onRequestClose={handleRequestClose}
+      onAfterOpen={handleAfterOpen}
       contentLabel="User Profile"
       className="profile-modal" // Add CSS class for styling
       overlayClassName="profile-modal-overlay" // Add CSS class for styling
       ariaHideApp={process.env.NODE_ENV !== 'test'} // Prevent warning in tests
+      aria-modal="true"
+      role="dialog"
+      shouldCloseOnEsc={false}
+      shouldCloseOnOverlayClick={false}
+      shouldReturnFocusAfterClose={true}
     >
-      <h2>{initialProfile ? 'Edit Profile' : 'Welcome! Create your profile'}</h2>
-      <div className="profile-modal-content">
+      <h2 id="profile-modal-title" ref={modalTitleRef} tabIndex={-1}>
+        {initialProfile ? 'Edit Profile' : 'Welcome! Create your profile'}
+      </h2>
+      <div className="profile-modal-content" aria-labelledby="profile-modal-title">
         <div className="form-group">
           <label htmlFor="profileName">Name:</label>
           <input
@@ -125,29 +144,35 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
             id="profileName"
             value={name}
             onChange={handleNameChange} // Use handler
-            // onChange={(e) => setName(e.target.value)}
             placeholder="Enter your name"
             aria-required="true" // Indicate name is required
             aria-invalid={!isNameValid} // Indicate invalid state if name is empty
+            aria-describedby={!isNameValid ? "name-error" : undefined}
           />
-           {!isNameValid && <p style={{ color: 'red', fontSize: '0.8em', marginTop: '4px' }}>Name is required.</p>}
+          {!isNameValid && <p id="name-error" style={{ color: 'red', fontSize: '0.8em', marginTop: '4px' }} role="alert">Name is required.</p>}
         </div>
         <div className="form-group">
-          <label>Color:</label> {/* No htmlFor needed as SketchPicker is complex */}
-          <SketchPicker
-            color={color}
-            onChangeComplete={handleColorChange}
-            presetColors={PLAYER_COLORS} // Suggest default nice colors
-             // Disable alpha if you only want solid colors
-            disableAlpha={true}
-            width="90%" // Adjust width as needed
-          />
+          <label htmlFor="color-picker">Color:</label>
+          <div id="color-picker" role="application" aria-label="Color picker">
+            <SketchPicker
+              color={color}
+              onChangeComplete={handleColorChange}
+              presetColors={PLAYER_COLORS} // Suggest default nice colors
+              disableAlpha={true}
+              width="100%" // Width will be controlled by CSS scaling
+            />
+          </div>
         </div>
       </div>
       <div className="profile-modal-actions">
-        {/* Disable save button if name is invalid */}
-        <button onClick={handleSave} className="button-primary" disabled={!isNameValid}>Save</button>
-        <button onClick={handleRequestClose} className="button-secondary">Cancel</button>
+        <button 
+          onClick={handleSave} 
+          className="button-primary" 
+          disabled={!isNameValid}
+          aria-disabled={!isNameValid}
+        >
+          Save
+        </button>
       </div>
     </Modal>
   );
