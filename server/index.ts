@@ -39,7 +39,6 @@ const profileUpdateQueue: ProfileUpdate[] = [];
 // Remove mockCanvas
 
 function initializeGame() {
-    console.log("Initializing server game state...");
     // Create initial state directly
     const initialSeed = Date.now(); // Use time for initial seed
     const initialRandomFunc = mulberry32(initialSeed);
@@ -71,7 +70,6 @@ function initializeGame() {
     initialState.rngSeed = initialRandomFunc() * 4294967296;
 
     currentGameState = initialState;
-    console.log("Server game state initialized.");
 }
 
 initializeGame(); // Initialize on server start
@@ -83,12 +81,10 @@ io.on('connection', (socket: Socket) => {
   const playerColor = socket.handshake.query.color as string; // Read color
 
   if (!playerId || !playerName || !playerColor) { // Validate all are present
-    console.warn('Player connected without ID, Name, or Color. Disconnecting.', socket.handshake.query);
     socket.disconnect(true);
     return;
   }
 
-  console.log(`Player connected: ID=${playerId}, Name=${playerName}, Color=${playerColor} (${socket.id})`);
   connectedPlayers.set(playerId, socket);
   playerInputs.set(playerId, { dx: 0, dy: 0 }); // Initialize input
 
@@ -101,7 +97,6 @@ io.on('connection', (socket: Socket) => {
   }
 
   if (currentGameState.playerStats[playerId]) {
-    console.log(`Reconnecting existing player: ${playerName} (${playerId})`);
     currentGameState.playerStats[playerId] = {
       ...currentGameState.playerStats[playerId],
       isConnected: true,
@@ -109,7 +104,6 @@ io.on('connection', (socket: Socket) => {
       // Color is handled by generateNewSnake or player preference later
     };
   } else {
-     console.log(`New player joined: ${playerName} (${playerId})`);
      // Initial stats for a completely new player
      currentGameState.playerStats[playerId] = {
          id: playerId,
@@ -130,9 +124,8 @@ io.on('connection', (socket: Socket) => {
     if (connectedPlayers.has(playerId) && // Ensure player is still connected
         typeof inputData?.dx === 'number' && typeof inputData?.dy === 'number') {
       playerInputs.set(playerId, inputData);
-      // console.log(`Received input from ${playerId}:`, inputData);
+      // //console.log(`Received input from ${playerId}:`, inputData);
     } else {
-        console.warn(`Invalid or late input received from ${playerId}:`, inputData);
     }
   });
 
@@ -140,12 +133,12 @@ io.on('connection', (socket: Socket) => {
   socket.on('updateProfile', (data: { name?: string; color?: string }) => {
     // Validate data and player existence
     if (!currentGameState.playerStats || !currentGameState.playerStats[playerId]) {
-        console.warn(`Received updateProfile from unknown or disconnected player: ${playerId}`);
+        //console.warn(`Received updateProfile from unknown or disconnected player: ${playerId}`);
         return;
     }
     // Validate incoming data structure and types
     if (!data || typeof data.name !== 'string' || typeof data.color !== 'string') {
-        console.warn(`Received invalid updateProfile data structure from ${playerId}:`, data);
+        //console.warn(`Received invalid updateProfile data structure from ${playerId}:`, data);
         return;
     }
     const newName = data.name.trim();
@@ -153,18 +146,17 @@ io.on('connection', (socket: Socket) => {
 
     // Validate non-empty name and color format
     if (!newName || !newColor) {
-        console.warn(`Received empty name or color in updateProfile from ${playerId}:`, data);
+        //console.warn(`Received empty name or color in updateProfile from ${playerId}:`, data);
         return;
     }
     const hexColorRegex = /^#[0-9A-F]{6}$/i;
     if (!hexColorRegex.test(newColor)) {
-        console.warn(`Received invalid color format in updateProfile from ${playerId}:`, newColor);
+        //console.warn(`Received invalid color format in updateProfile from ${playerId}:`, newColor);
         return; // Reject invalid color
     }
 
     // Add validated update to the queue
     profileUpdateQueue.push({ playerId, name: newName, color: newColor });
-    console.log(`Queued profile update for ${playerId}: Name=${newName}, Color=${newColor}`);
 
     // // --- OLD CODE: Don't update state directly here --- 
     // const currentStats = currentGameState.playerStats[playerId];
@@ -187,7 +179,6 @@ io.on('connection', (socket: Socket) => {
 
   // Handle disconnection
   socket.on('disconnect', () => {
-    console.log(`Player disconnected: ${playerId} (${socket.id})`);
     connectedPlayers.delete(playerId);
     playerInputs.delete(playerId);
     
@@ -196,7 +187,6 @@ io.on('connection', (socket: Socket) => {
     
     // Mark player as disconnected in playerStats but keep their data
     if (currentGameState.playerStats && currentGameState.playerStats[playerId]) {
-      console.log(`Marking player as disconnected: ${playerId}`);
       currentGameState.playerStats[playerId] = {
         ...currentGameState.playerStats[playerId],
         isConnected: false
@@ -214,7 +204,7 @@ let lastTickTime = performance.now();
 setInterval(() => {
     // if (!currentGameState) return; // Should always be initialized now
     if (connectedPlayers.size === 0) {
-        // console.log("No players connected, skipping tick.");
+        // //console.log("No players connected, skipping tick.");
         // Optional: Reset game? Pause?
         lastTickTime = performance.now(); // Reset timer if paused
         return;
@@ -226,7 +216,6 @@ setInterval(() => {
 
     // --- Process Profile Update Queue --- 
     if (profileUpdateQueue.length > 0) {
-        console.log(`Processing ${profileUpdateQueue.length} profile updates...`);
         profileUpdateQueue.forEach(update => {
             if (currentGameState.playerStats && currentGameState.playerStats[update.playerId]) {
                 const stats = currentGameState.playerStats[update.playerId];
@@ -245,10 +234,10 @@ setInterval(() => {
                     updated = true;
                 }
                 if (updated) {
-                     console.log(`Applied queued update for ${update.playerId}: Name=${update.name}, Color=${update.color}`);
+                     //console.log(`Applied queued update for ${update.playerId}: Name=${update.name}, Color=${update.color}`);
                 }
             } else {
-                 console.warn(`Skipping queued update for unknown/disconnected player: ${update.playerId}`);
+                 //console.warn(`Skipping queued update for unknown/disconnected player: ${update.playerId}`);
             }
         });
         // Clear the queue after processing
@@ -282,9 +271,7 @@ setInterval(() => {
         
         // Debug check - log player stats if empty but players are connected
         if (Object.keys(currentGameState.playerStats).length === 0 && currentPlayerIDSet.size > 0) {
-            console.log("WARNING: playerStats is empty but we have players:", currentPlayerIDSet.size);
-            console.log("Connected players:", Array.from(currentPlayerIDSet));
-            console.log("Snake count:", currentGameState.snakes.length);
+            //console.log("WARNING: playerStats is empty but we have players:", currentPlayerIDSet.size);
             
             // Force initialize playerStats from snakes if missing
             if (currentGameState.snakes.length > 0) {
@@ -304,7 +291,7 @@ setInterval(() => {
                             deaths: 0,
                             isConnected: currentPlayerIDSet.has(snake.id)
                         };
-                        console.log(`Added missing player stats for ${snake.id} (Name: ${nameFromQuery})`);
+                        //console.log(`Added missing player stats for ${snake.id} (Name: ${nameFromQuery})`);
                     }
                 });
                 currentGameState.playerStats = updatedPlayerStats;
@@ -319,12 +306,12 @@ setInterval(() => {
 
     // 3. Broadcast the new state to all connected clients
     io.emit('state-sync', currentGameState);
-    // console.log(`Tick ${currentGameState.sequence}: Sent state sync to ${connectedPlayers.size} players.`);
+    // //console.log(`Tick ${currentGameState.sequence}: Sent state sync to ${connectedPlayers.size} players.`);
 
 }, GAME_LOOP_INTERVAL_MS);
 
 // --- Start Server ---
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
-  console.log(`Signaling & Game Server listening on *:${PORT}`);
+  //console.log(`Signaling & Game Server listening on *:${PORT}`);
 }); 
