@@ -162,13 +162,9 @@ describe('Game Rules - updateGame', () => {
       const nextState = updateGame(baseState, inputs, currentTime, currentPlayerIDs);
       
       expect(getOccupiedPositionsMock).toHaveBeenCalled();
-      // Expect 2 calls: 1 for AI snake (if players > 0), 1 for p1
       expect(generateNewSnakeMock).toHaveBeenCalledTimes(2); 
-      // Verify p1 call specifically
       expect(generateNewSnakeMock).toHaveBeenCalledWith('p1', GRID_SIZE, expect.any(Array), expect.any(Function), undefined);
-      // Expect 2 snakes: AI + p1
       expect(nextState.snakes).toHaveLength(2); 
-      // Find the p1 snake specifically
       const p1Snake = nextState.snakes.find(s => s.id === 'p1');
       expect(p1Snake).toEqual(mockNewSnake);
       expect(nextState.playerCount).toBe(1);
@@ -189,13 +185,12 @@ describe('Game Rules - updateGame', () => {
 
       const nextState = updateGame(initialState, inputs, currentTime, currentPlayerIDs);
 
-      // Expect 2 snakes: p1 and the AI snake (since p1 is connected)
       expect(nextState.snakes).toHaveLength(2);
       expect(nextState.snakes.some(s => s.id === 'p1')).toBe(true);
-      expect(nextState.snakes.some(s => s.id === AI_SNAKE_ID)).toBe(true); // AI snake should be added/kept
+      expect(nextState.snakes.some(s => s.id === AI_SNAKE_ID)).toBe(true);
       expect(nextState.playerCount).toBe(1);
       expect(nextState.playerStats['p1'].isConnected).toBe(true);
-      expect(nextState.playerStats['p2']).toBeDefined(); // Stats should be kept
+      expect(nextState.playerStats['p2']).toBeDefined();
       expect(nextState.playerStats['p2'].isConnected).toBe(false);
     });
     
@@ -221,7 +216,6 @@ describe('Game Rules - updateGame', () => {
 
         const nextState = updateGame(initialState, inputs, currentTime, currentPlayerIDs);
 
-        // Expect 2 snakes: p1 (rejoined) and the AI snake
         expect(nextState.snakes).toHaveLength(2);
         const p1Snake = nextState.snakes.find(s => s.id === 'p1');
         expect(p1Snake).toBeDefined();
@@ -255,14 +249,10 @@ describe('Game Rules - updateGame', () => {
       const nextState = updateGame(initialState, inputs, currentTime, currentPlayerIDs);
       
       expect(getOccupiedPositionsMock).toHaveBeenCalled();
-      // Expect 2 calls: 1 for AI, 1 for p1
       expect(generateNewSnakeMock).toHaveBeenCalledTimes(2);
-      // Check the call for p1 specifically used the preferred color
       expect(generateNewSnakeMock).toHaveBeenCalledWith('p1', GRID_SIZE, expect.any(Array), expect.any(Function), '#ABCDEF');
-      // Check the call for the AI snake (game logic hardcodes "#FF5500")
       expect(generateNewSnakeMock).toHaveBeenCalledWith(AI_SNAKE_ID, GRID_SIZE, expect.any(Array), expect.any(Function), "#FF5500"); // Corrected color
       
-      // Verify the created AI snake got a color (mock returns default color, but game logic passes hardcoded one)
       const aiSnake = nextState.snakes.find(s => s.id === AI_SNAKE_ID);
       expect(aiSnake?.color).toBeDefined(); 
     });
@@ -671,11 +661,7 @@ describe('Game Rules - updateGame', () => {
         it('should NOT generate new powerup if chance fails', () => {
             const inputs: PlayerInputs = new Map();
             const currentPlayerIDs = new Set(['p1']);
-            // Find the correct snake reference - likely defined in a higher scope like 'snake1'
-            // Let's assume it's 'snake' for now, defined in the describe block setup.
-            // If 'snake' is not defined, this test will fail to compile/run.
-             // Ensure 'snake' is defined, e.g., const snake = createMockSnake('p1', [{ x: 5, y: 5 }]);
-            const snake = createMockSnake('p1', [{ x: 5, y: 5 }]); // Add snake definition
+             const snake = createMockSnake('p1', [{ x: 5, y: 5 }]); // Add snake definition
             const powerUpItem: PowerUp = { id: 'pu1', type: PowerUpType.SPEED, position: { x: 6, y: 5 }, expiresAt: currentTime + 1000 }; // Existing PU
             const stateWithPowerup = createInitialState(
                 [snake],
