@@ -81,8 +81,8 @@ function initializeGame() {
         id: AI_SNAKE_ID,
         name: "AI Snake",
         color: "#FF5500", // Consistent color for AI
-        score: 0,
-        deaths: 0,
+        score: currentGameState?.playerStats?.[AI_SNAKE_ID]?.score || 0, // Preserve score on server restart
+        deaths: currentGameState?.playerStats?.[AI_SNAKE_ID]?.deaths || 0, // Preserve deaths on server restart
         isConnected: true
     };
 
@@ -239,20 +239,9 @@ let lastTickTime = performance.now();
 setInterval(() => {
     // if (!currentGameState) return; // Should always be initialized now
     if (connectedPlayers.size === 0) {
-        // Don't skip ticks even with no human players
-        // AI snake should keep running for when players connect
-        // Just update the timestamp
-        lastTickTime = performance.now();
-        
-        // Still run the game tick with empty player set
-        const now = performance.now();
-        const logicalTime = currentGameState.timestamp + (now - lastTickTime);
-        lastTickTime = now;
-        
-        // Run with empty inputs but ensure AI snake is kept
-        const emptyInputs = new Map<string, Direction>();
-        const emptyPlayerSet = new Set<string>();
-        currentGameState = updateGame(currentGameState, emptyInputs, logicalTime, emptyPlayerSet);
+        // No players connected, let the server sleep
+        // Skip game ticks and AI processing to save resources
+        lastTickTime = performance.now(); // Just update the timestamp for when players reconnect
         return;
     }
 

@@ -37,8 +37,8 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
     const existingSnakeIDs = new Set(currentState.snakes.map(s => s.id));
     let snakesChanged = false;
 
-    // Add AI snake if it doesn't exist
-    if (!existingSnakeIDs.has(AI_SNAKE_ID)) {
+    // Add AI snake if it doesn't exist AND there are real players connected
+    if (!existingSnakeIDs.has(AI_SNAKE_ID) && currentPlayerIDs.size > 0) {
         const occupied = getOccupiedPositions({ snakes: nextSnakes, food: nextFood, powerUps: nextPowerUps });
         
         // Create an AI snake with a distinct color
@@ -54,18 +54,31 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
         nextSnakes = [...nextSnakes, aiSnake];
         snakesChanged = true;
         
-        // Initialize AI player stats
+        // Initialize AI player stats - Preserve death count if it exists
+        const existingAIStats = nextPlayerStats[AI_SNAKE_ID];
         nextPlayerStats[AI_SNAKE_ID] = {
             id: AI_SNAKE_ID,
             name: "AI Snake",
             color: aiSnake.color,
-            score: 0,
-            deaths: 0,
+            score: existingAIStats ? existingAIStats.score : 0, // Keep existing score when respawning
+            // Keep existing death count when respawning
+            deaths: existingAIStats ? existingAIStats.deaths : 0,
             isConnected: true
         };
         
+        // If we have existing stats and score, restore it to the snake
+        if (existingAIStats && existingAIStats.score > 0) {
+            aiSnake.score = existingAIStats.score;
+        }
+        
         // Update RNG seed after AI snake generation
         nextRngSeed = randomFunc() * 4294967296;
+    }
+    
+    // Remove AI snake if no actual players are connected
+    if (existingSnakeIDs.has(AI_SNAKE_ID) && currentPlayerIDs.size === 0) {
+        nextSnakes = nextSnakes.filter(snake => snake.id !== AI_SNAKE_ID);
+        snakesChanged = true;
     }
 
     // Add new players
@@ -147,9 +160,10 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
     // Remove players who left
     const originalSnakeCount = nextSnakes.length;
     
-    // We don't want to remove the AI snake, so filter it out of disconnected snakes
+    // Get disconnected snakes - AI snake is disconnected when no players are connected
     const disconnectedSnakes = nextSnakes.filter(snake => 
-        !currentPlayerIDs.has(snake.id) && snake.id !== AI_SNAKE_ID
+        (!currentPlayerIDs.has(snake.id) && snake.id !== AI_SNAKE_ID) || 
+        (snake.id === AI_SNAKE_ID && currentPlayerIDs.size === 0)
     );
 
     // Update disconnected snake stats before removing them
@@ -164,9 +178,9 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
         }
     }
 
-    // Now filter out the disconnected snakes, but keep the AI snake
+    // Now filter out the disconnected snakes
     nextSnakes = nextSnakes.filter(snake => 
-        currentPlayerIDs.has(snake.id) || snake.id === AI_SNAKE_ID
+        (currentPlayerIDs.has(snake.id) || (snake.id === AI_SNAKE_ID && currentPlayerIDs.size > 0))
     );
     
     if (nextSnakes.length !== originalSnakeCount) {
@@ -176,8 +190,17 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
 
     // Update connected status for players
     for (const playerId of Object.keys(nextPlayerStats)) {
-        // AI snake is always connected
-        if (playerId === AI_SNAKE_ID) continue;
+        // AI snake is only connected when real players are present
+        if (playerId === AI_SNAKE_ID) {
+            const aiConnected = currentPlayerIDs.size > 0;
+            if (nextPlayerStats[playerId].isConnected !== aiConnected) {
+                nextPlayerStats[playerId] = {
+                    ...nextPlayerStats[playerId],
+                    isConnected: aiConnected
+                };
+            }
+            continue;
+        }
         
         const isConnected = currentPlayerIDs.has(playerId);
         if (nextPlayerStats[playerId].isConnected !== isConnected) {
