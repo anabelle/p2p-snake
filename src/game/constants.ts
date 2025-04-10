@@ -6,7 +6,7 @@ export const FOOD_VALUE = 1;
 export const POWER_UP_SPAWN_INTERVAL = 5000; // Spawn power-up every 5 seconds (in ms)
 export const POWERUP_SPAWN_CHANCE = 0.01; // Chance (0 to 1) to spawn power-up per tick
 export const POWER_UP_GRID_DURATION = 5000; // ms on the grid
-export const POWER_UP_EFFECT_DURATION = 8000; // ms effect on snake
+export const POWER_UP_EFFECT_DURATION = 60000; // ms effect on snake (1 minute)
 export const POWERUP_DURATION_MS = 5000; // 5 seconds
 
 // Define a list of high-contrast, visually distinct colors for players
