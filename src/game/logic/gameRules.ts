@@ -141,7 +141,7 @@ export const updateGame = (currentState: GameState, inputs: PlayerInputs, curren
             } else if (existingSnake && nextPlayerStats[playerId]) {
                 // Sync score between snake and playerStats (in case they got out of sync)
                 if (existingSnake.score !== nextPlayerStats[playerId].score) {
-                    //console.log(`Syncing score for ${playerId}: Snake=${existingSnake.score}, Stats=${nextPlayerStats[playerId].score}`);
+                    console.log(`Syncing score for ${playerId}: Snake=${existingSnake.score}, Stats=${nextPlayerStats[playerId].score}`);
                     // Prefer the higher score to avoid losing progress
                     const highestScore = Math.max(existingSnake.score, nextPlayerStats[playerId].score);
                     existingSnake.score = highestScore;
