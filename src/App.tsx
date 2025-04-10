@@ -1,79 +1,30 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as netplayjs from 'netplayjs'; // Re-add for type casting
+import Modal from 'react-modal'; // Import Modal
 import { NetplayAdapter } from './game/network/NetplayAdapter';
 // Types might still be needed for state-sync
 import { GameState, PlayerStats } from './game/state/types'; // Import PlayerStats
+import { UserProfile } from './types'; // Import UserProfile type
 import io, { Socket } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 import { GRID_SIZE, PLAYER_COLORS, CELL_SIZE } from './game/constants'; // Import GRID_SIZE and PLAYER_COLORS
-import { generateRandomColor } from './game/logic/prng'; // Import random color generator
+import ProfileModal from './components/ProfileModal'; // Import the modal component
 
 import './App.css'; // Import the CSS file
 
-// Define the user profile structure
-interface UserProfile {
-  id: string;
-  name: string;
-  color: string;
+// Bind modal to app element (important for accessibility)
+if (typeof window !== 'undefined') {
+    Modal.setAppElement(document.getElementById('root') || document.body);
 }
-
-// Function to get a random color from the predefined list
-const getRandomPlayerColor = (): string => {
-  return PLAYER_COLORS[Math.floor(Math.random() * PLAYER_COLORS.length)];
-};
-
-// Function to load or create user profile
-const loadUserProfile = (): UserProfile => {
-  const storedProfile = localStorage.getItem('snakeUserProfile');
-  if (storedProfile) {
-    try {
-      const profile = JSON.parse(storedProfile);
-      // Basic validation
-      if (profile.id && profile.name && profile.color) {
-        // console.log('Loaded user profile from localStorage:', profile);
-        return profile;
-      }
-    } catch (e) {
-      console.error('Failed to parse user profile from localStorage:', e); // Keep console.error
-      localStorage.removeItem('snakeUserProfile'); // Clear invalid data
-    }
-  }
-
-  // No valid profile found, create a new one
-  // console.log('No valid user profile found. Prompting for new profile...');
-  const id = uuidv4();
-  let name = prompt("Enter your name (leave blank for default):")?.trim() || '';
-  let color = prompt(`Enter your preferred color hex (e.g., #33FF57) or leave blank for random:\nAvailable: ${PLAYER_COLORS.join(', ')}`)?.trim() || '';
-
-  // Validate or set defaults
-  if (!name) {
-    name = `Player_${id.substring(0, 4)}`; // Default name using part of UUID
-    // console.log(`Using default name: ${name}`);
-  }
-
-  // Basic hex color validation
-  const hexColorRegex = /^#[0-9A-F]{6}$/i;
-  if (!color || !hexColorRegex.test(color)) {
-    color = getRandomPlayerColor(); // Default random color
-     // console.log(`Using random color: ${color}`);
-  } else {
-     // console.log(`Using chosen color: ${color}`);
-  }
-
-
-  const newProfile: UserProfile = { id, name, color };
-  localStorage.setItem('snakeUserProfile', JSON.stringify(newProfile));
-  // console.log('Created and saved new user profile:', newProfile);
-  return newProfile;
-};
-
 
 const App: React.FC = () => {
   const gameContainerRef = useRef<HTMLDivElement>(null);
   // Core component refs
   const socketRef = useRef<Socket | null>(null);
-  const localPlayerIdRef = useRef<string>(''); // Will be set from profile
-  const userProfileRef = useRef<UserProfile | null>(null); // Store the loaded profile
+  // localPlayerIdRef is now set *after* profile is confirmed
+  const localPlayerIdRef = useRef<string>('');
+  // userProfileRef is deprecated, use state instead
+  // const userProfileRef = useRef<UserProfile | null>(null);
   const gameAdapterRef = useRef<NetplayAdapter | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameRef = useRef<number>();
@@ -98,6 +49,10 @@ const App: React.FC = () => {
       playerStats: {}
   });
   const gameStateRef = useRef<GameState>(gameState); // Ref to hold current game state
+
+  // --- Profile State ---
+  const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Input State (remains the same)
   const localInputStateRef = useRef({ dx: 0, dy: 0 });
@@ -257,58 +212,127 @@ const App: React.FC = () => {
     };
   }, [canvasHeight, canvasWidth]); // Re-run if canvas size changes to re-attach listeners
 
-  // --- Centralized WebSocket Logic ---
-  useEffect(() => {
-    // --- Load Profile FIRST ---
-    const profile = loadUserProfile();
-    userProfileRef.current = profile;
-    localPlayerIdRef.current = profile.id; // Set the ref ID here
-    // --- End Profile Loading ---
+  // --- Game Loop (Moved outside useEffect, wrapped in useCallback) ---
+  const gameLoop = useCallback(() => {
+    // Ensure loop stops if component unmounts or disconnects
+    if (!gameAdapterRef.current || !canvasRef.current || !socketRef.current?.connected) {
+        // console.log("Game loop stopping: Adapter, canvas, or socket missing/disconnected.");
+        if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current); // Stop any pending frame
+        animationFrameRef.current = undefined; // Clear ref
+        return;
+    }
+
+    // 1. Send Local Input State to SERVER
+    const currentLocalInput = localInputStateRef.current;
+    if (socketRef.current) { // Check if socket exists before emitting
+      socketRef.current.emit('input', currentLocalInput); // Send { dx, dy }
+    }
+
+    // 2. Client does NOT tick the simulation.
+
+    // 3. Draw the current state (updated by state-sync messages)
+    // Read gameState from the ref for the most up-to-date value
+    try {
+      if(gameAdapterRef.current && canvasRef.current) { // Ensure refs are valid
+        gameAdapterRef.current.draw(canvasRef.current, gameStateRef.current);
+      }
+    } catch (e) {
+      console.error("Error during gameAdapter.draw:", e); // Keep console.error
+      // Stop loop on draw error
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = undefined;
+      return;
+    }
+
+    // Request next frame
+    animationFrameRef.current = requestAnimationFrame(gameLoop);
+  // Dependencies: gameStateRef (though it's a ref, changes won't trigger re-render/re-memoization directly)
+  // Include things used inside that might change, like socketRef status indirectly via check?
+  // Refs themselves don't usually go in deps, but we read their .current properties.
+  // Add gameState? No, drawing reads from ref. Maybe localInputStateRef?
+  // Let's keep it simple, assuming refs are stable containers.
+  }, []);
+
+  // --- Game Adapter Initialization (Moved outside useEffect, wrapped in useCallback) ---
+  const startGameAdapter = useCallback(() => {
+    // console.log(`startGameAdapter called. gameContainerRef.current: ${!!gameContainerRef.current}, canvasRef.current: ${!!canvasRef.current}`);
+    if (!gameAdapterRef.current && gameContainerRef.current && canvasRef.current) {
+      // console.log("Initializing Client NetplayAdapter...");
+      try {
+        // Ensure localPlayerIdRef.current has a value before creating adapter
+        if (!localPlayerIdRef.current) {
+            console.error("Cannot start adapter: localPlayerId is not set.");
+            return;
+        }
+        gameAdapterRef.current = new NetplayAdapter(canvasRef.current, localPlayerIdRef.current);
+        // console.log(`Client NetplayAdapter instance created.`);
+
+        // Start the game loop
+        console.log("Starting client game loop...");
+        gameLoop(); // Call the memoized gameLoop
+
+      } catch (e) {
+        console.error("Error creating NetplayAdapter instance:", e);
+        return;
+      }
+    } else {
+      // console.log(`startGameAdapter did not proceed. Adapter: ${!!gameAdapterRef.current}, Container: ${!!gameContainerRef.current}, Canvas: ${!!canvasRef.current}`);
+    }
+  // Dependencies: gameLoop needs to be included as it's called.
+  // localPlayerIdRef is read, but refs don't usually go in deps.
+  }, [gameLoop]);
+
+  // --- WebSocket Connection Function ---
+  const connectWebSocket = useCallback((profile: UserProfile) => {
+    if (socketRef.current) {
+        console.log('WebSocket already connected or connecting.');
+        return; // Avoid reconnecting if already connected
+    }
 
     const SIGNALING_SERVER_URI = 'ws://localhost:3001';
-    // console.log(`Local Player ID: ${localPlayerIdRef.current}, Name: ${profile.name}, Color: ${profile.color}`);
+    console.log(`Connecting to WebSocket with Profile: ID=${profile.id}, Name=${profile.name}, Color=${profile.color}`);
 
     // Connect to server, sending ID, Name, and Color
     socketRef.current = io(SIGNALING_SERVER_URI, {
-      query: {
-        id: profile.id,
-        name: profile.name,
-        color: profile.color
-      }
+        query: {
+            id: profile.id,
+            name: profile.name,
+            color: profile.color
+        },
+        reconnectionAttempts: 3 // Optional: limit reconnection attempts
     });
     const socket = socketRef.current;
 
     socket.on('connect', () => {
-      // console.log('Connected to signaling server');
-      setIsConnected(true);
-      // Optional: Emit join explicitly if needed by server logic beyond query param
-      // socket.emit('join', { id: localPlayerIdRef.current });
-
-      // Start the game adapter and rendering loop immediately upon connection
-      if (!gameAdapterRef.current) {
-        startGameAdapter();
-      }
+        console.log('Connected to signaling server');
+        setIsConnected(true);
+        // Now startGameAdapter is stable and defined in the component scope
+        if (!gameAdapterRef.current) {
+            startGameAdapter(); // Call the memoized startGameAdapter
+        }
     });
 
-    socket.on('disconnect', () => {
-      // console.log('Disconnected from signaling server');
-      setIsConnected(false);
-      // Stop the game loop on disconnect
-      if (animationFrameRef.current) {
-          cancelAnimationFrame(animationFrameRef.current);
-          animationFrameRef.current = undefined;
-      }
-      // Optionally clear adapter/canvas refs?
-      gameAdapterRef.current = null;
-      if (canvasRef.current) {
-         canvasRef.current.remove();
-         canvasRef.current = null;
-      }
+    socket.on('disconnect', (reason) => {
+        console.log('Disconnected from signaling server:', reason);
+        setIsConnected(false);
+        // Stop the game loop on disconnect
+        if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = undefined;
+        }
+        // Clear adapter/canvas refs on disconnect?
+        gameAdapterRef.current = null;
+        if (canvasRef.current) {
+            const ctx = canvasRef.current.getContext('2d');
+            ctx?.clearRect(0, 0, canvasWidth, canvasHeight);
+        }
+        socketRef.current = null; // Clear socket ref after disconnect handling
     });
 
     socket.on('connect_error', (err) => {
-        console.error('Signaling connection error:', err); // Keep console.error
+        console.error('Signaling connection error:', err);
         setIsConnected(false);
+        socketRef.current = null; // Clear ref on connection error
     });
 
     // --- Listener for State Sync from Server ---
@@ -370,90 +394,105 @@ const App: React.FC = () => {
             });
         }
 
-        // Update React state to trigger re-render
+        // Update main game state for rendering snakes, food, etc.
         setGameState(serverState);
 
-        // Update user profile color if server assigned a different one
-        const playerStats = serverState.playerStats?.[localPlayerIdRef.current];
-        if (playerStats && playerStats.color !== userProfileRef.current?.color) {
-            // console.log(`Server assigned color ${playerStats.color}, updating local profile.`);
-            userProfileRef.current = { ...userProfileRef.current!, color: playerStats.color };
-            localStorage.setItem('snakeUserProfile', JSON.stringify(userProfileRef.current));
-        }
+        // --- Refined Profile Sync Logic --- 
+        // Always check server state for the authoritative profile info after connect/update
+        const playerStatsFromServer = serverState.playerStats?.[localPlayerIdRef.current];
+        
+        setCurrentUserProfile(currentProfile => {
+            // Only proceed if we have both local profile and server stats for this player
+            if (playerStatsFromServer && currentProfile) {
+                const serverName = playerStatsFromServer.name; // Could be string | undefined
+                const serverColor = playerStatsFromServer.color; // Is string
+                let changed = false;
+                let updatedProfile = { ...currentProfile };
 
-        // Removed: gameAdapterRef.current.deserialize(...) call
+                // Check if name needs updating from server
+                if (serverName !== currentProfile.name) { // Comparison handles undefined correctly
+                    console.log(`Server name (${serverName}) differs from local (${currentProfile.name}). Updating local profile.`);
+                    // Use nullish coalescing to provide default empty string if serverName is undefined
+                    updatedProfile.name = serverName ?? ''; 
+                    changed = true;
+                }
+
+                // Check if color needs updating from server (color is non-optional)
+                if (serverColor !== currentProfile.color) {
+                    console.log(`Server color (${serverColor}) differs from local (${currentProfile.color}). Updating local profile.`);
+                    updatedProfile.color = serverColor;
+                    changed = true;
+                }
+
+                // If any changes were detected, update localStorage and return the new profile state
+                if (changed) {
+                    localStorage.setItem('snakeUserProfile', JSON.stringify(updatedProfile));
+                    return updatedProfile;
+                }
+            }
+            // If no server stats, no local profile, or no changes needed, return the current profile
+            return currentProfile; 
+        });
     });
+  // Dependencies updated to include the stable startGameAdapter
+  }, [setCurrentUserProfile, canvasWidth, canvasHeight, startGameAdapter]);
 
-    // --- Game Adapter Initialization (Client-side only) ---
-    const startGameAdapter = () => {
-      // console.log(`startGameAdapter called. gameContainerRef.current: ${!!gameContainerRef.current}`);
-      if (!gameAdapterRef.current && gameContainerRef.current) {
-        // console.log("Initializing Client NetplayAdapter...");
-
-        // Create canvas if it doesn't exist
-        if (!canvasRef.current) {
-          // console.log("Creating canvas element...");
-          const canvas = document.createElement('canvas');
-          // Use calculated dimensions
-          canvas.width = canvasWidth;
-          canvas.height = canvasHeight;
-          // Style canvas? Remove inline border
-          // canvas.style.border = '1px solid lightgrey';
-          gameContainerRef.current.appendChild(canvas);
-          canvasRef.current = canvas;
-          // console.log("Canvas element created and appended.");
+  // --- Centralized Setup Effect (Handles profile load, WebSocket connection, canvas) ---
+  useEffect(() => {
+    // --- Load Profile or Trigger Modal --- 
+    const loadAndInitialize = () => {
+        const storedProfile = localStorage.getItem('snakeUserProfile');
+        let profile: UserProfile | null = null;
+        if (storedProfile) {
+            try {
+                const parsed = JSON.parse(storedProfile);
+                // Basic validation
+                if (parsed.id && parsed.name && parsed.color) {
+                    profile = parsed;
+                    console.log('Loaded user profile from localStorage:', profile);
+                } else {
+                    console.warn('Invalid profile structure in localStorage. Clearing.');
+                    localStorage.removeItem('snakeUserProfile');
+                }
+            } catch (e) {
+                console.error('Failed to parse user profile from localStorage:', e);
+                localStorage.removeItem('snakeUserProfile'); // Clear invalid data
+            }
         }
 
-        try {
-          // Create adapter (constructor simplified in NetplayAdapter.ts)
-          gameAdapterRef.current = new NetplayAdapter(canvasRef.current, localPlayerIdRef.current);
-          // console.log(`Client NetplayAdapter instance created.`);
-        } catch (e) {
-          console.error("Error creating NetplayAdapter instance:", e); // Keep console.error
-          return; // Don't start loop if adapter fails
+        if (profile) {
+            // Profile exists, set state and connect
+            localPlayerIdRef.current = profile.id;
+            setCurrentUserProfile(profile);
+            connectWebSocket(profile); // Call the memoized function
+        } else {
+            // No valid profile, open modal
+            console.log('No valid user profile found. Opening creation modal...');
+            setIsProfileModalOpen(true);
         }
-
-        // console.log("Starting client game loop...");
-        gameLoop(); // Start the loop *after* adapter is successfully created
-      } else {
-        // console.log(`startGameAdapter did not proceed. Adapter: ${!!gameAdapterRef.current}, Container: ${!!gameContainerRef.current}`);
-      }
     };
 
-    // --- Game Loop (Client: Send Input, Draw Received State) ---
-    const gameLoop = () => {
-      // Ensure loop stops if component unmounts or disconnects
-      if (!gameAdapterRef.current || !canvasRef.current || !socketRef.current?.connected) {
-          // console.log("Game loop stopping: Adapter, canvas, or socket missing/disconnected.");
-          animationFrameRef.current = undefined; // Clear ref
-          return;
-      }
+    // --- Canvas Creation --- (Moved from separate effect to ensure order)
+    let canvasCreated = false;
+    if (!canvasRef.current && gameContainerRef.current) {
+         console.log("Creating canvas element...");
+         const canvas = document.createElement('canvas');
+         canvas.width = canvasWidth;
+         canvas.height = canvasHeight;
+         gameContainerRef.current.appendChild(canvas);
+         canvasRef.current = canvas;
+         canvasCreated = true;
+         console.log("Canvas element created and appended.");
+    }
 
-      // 1. Send Local Input State to SERVER
-      const currentLocalInput = localInputStateRef.current;
-      socketRef.current.emit('input', currentLocalInput); // Send { dx, dy }
+    // --- Start Initial Load/Connection ---
+    loadAndInitialize();
 
-      // 2. Client does NOT tick the simulation.
+    // --- Game Loop is now started by startGameAdapter triggered by connectWebSocket ---
 
-      // 3. Draw the current state (updated by state-sync messages)
-      // Read gameState from the ref for the most up-to-date value
-      try {
-        // Pass gameState from the ref to draw function
-        gameAdapterRef.current.draw(canvasRef.current, gameStateRef.current);
-      } catch (e) {
-        console.error("Error during gameAdapter.draw:", e); // Keep console.error
-        // Stop loop on draw error
-        animationFrameRef.current = undefined;
-        return;
-      }
-
-      // Request next frame
-      animationFrameRef.current = requestAnimationFrame(gameLoop);
-    };
-
-    // Cleanup function for main useEffect
+    // --- Cleanup function for this effect ---
     return () => {
-      // console.log('Cleaning up App component...');
+      console.log('Cleaning up App component main effect...');
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = undefined;
@@ -461,22 +500,85 @@ const App: React.FC = () => {
       // Disconnect WebSocket
       socketRef.current?.disconnect();
       socketRef.current = null;
-      // Clear refs
+      // Clear adapter ref
       gameAdapterRef.current = null;
-      canvasRef.current = null; // Still clear the ref
-      // console.log('Cleanup complete.');
+      // Remove canvas if it was created by this effect instance
+      if (canvasCreated && canvasRef.current && gameContainerRef.current?.contains(canvasRef.current)) {
+          console.log("Removing canvas element.");
+          gameContainerRef.current.removeChild(canvasRef.current);
+          canvasRef.current = null;
+      }
+      console.log('Main effect cleanup complete.');
     };
-  }, []); // Main effect runs once on mount, cleanup on unmount
+  // Dependencies: connectWebSocket (stable), canvas dimensions
+  }, [canvasHeight, canvasWidth, connectWebSocket]);
 
   // Effect to keep gameStateRef updated with the latest gameState
   useEffect(() => {
     gameStateRef.current = gameState;
   }, [gameState]);
 
+  // --- Profile Modal Handlers ---
+  const handleOpenProfileModal = () => {
+    setIsProfileModalOpen(true);
+  };
+
+  const handleCloseProfileModal = () => {
+    setIsProfileModalOpen(false);
+  };
+
+  const handleSaveProfile = (profileData: UserProfile) => {
+    let profileToSave: UserProfile;
+    const isNewUser = !currentUserProfile; // Check if we are creating a new profile
+
+    if (isNewUser) {
+        // Creating a new profile
+        const newId = uuidv4();
+        profileToSave = { ...profileData, id: newId };
+        console.log('Saving new profile:', profileToSave);
+    } else {
+        // Updating existing profile
+        profileToSave = { ...currentUserProfile!, ...profileData }; // Merge changes, keep existing ID
+        console.log('Updating existing profile:', profileToSave);
+    }
+
+    // Save to localStorage
+    localStorage.setItem('snakeUserProfile', JSON.stringify(profileToSave));
+
+    // Update state IMMEDIATELY for local responsiveness
+    // Note: state-sync might overwrite this shortly if server hasn't processed yet, but it should eventually converge
+    setCurrentUserProfile(profileToSave);
+    localPlayerIdRef.current = profileToSave.id; // Ensure ref has the ID
+
+    // Close the modal
+    setIsProfileModalOpen(false);
+
+    // Connect or Update Server
+    if (isNewUser) {
+        // If it was a new user, establish the WebSocket connection now
+        connectWebSocket(profileToSave);
+    } else if (socketRef.current?.connected) {
+        // If updating and connected, notify the server
+        const updatePayload = { name: profileToSave.name, color: profileToSave.color };
+        console.log('Emitting profile update to server:', updatePayload);
+        socketRef.current.emit('updateProfile', updatePayload);
+    } else {
+        console.warn('Profile updated, but socket is not connected. Update will be sent on next connection (if implemented)');
+    }
+  };
+
   // Render function
   return (
     <div className="game-container">
       <h1>Multiplayer Snake Game</h1>
+
+      {/* Profile Modal */}
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onRequestClose={handleCloseProfileModal}
+        onSave={handleSaveProfile}
+        initialProfile={currentUserProfile} // Pass current profile for editing, or null for creation
+      />
 
       <div ref={gameContainerRef} id="game-canvas-container" style={{
           width: canvasWidth,
@@ -495,41 +597,36 @@ const App: React.FC = () => {
          }
       </div>
       
-      {isConnected && gameAdapterRef.current && (
+      {isConnected && gameAdapterRef.current && currentUserProfile && ( // Ensure profile is loaded
         <div className="info-sections-wrapper">
           <div className="info-section" id="your-snake-info">
             <h3>Your Snake</h3>
-            <div>
-              <span><strong>Name:</strong> {userProfileRef.current?.name || localPlayerIdRef.current.substring(0, 6)}</span>
+            {/* Make Name and Color clickable */}
+            <div className="editable-profile-item" onClick={handleOpenProfileModal} title="Click to edit profile">
+              <span><strong>Name:</strong> {currentUserProfile.name}</span>
+            </div>
+            <div className="editable-profile-item" onClick={handleOpenProfileModal} title="Click to edit profile">
               <span>
                 <strong>Color:</strong>
                 {(() => {
-                  const yourPlayerStats = gameState.playerStats?.[localPlayerIdRef.current];
-                  const color = yourPlayerStats?.color;
+                  // Use currentUserProfile.color as the primary source
+                  const color = currentUserProfile.color;
+                  // Fallback check needed? Server sync should update currentUserProfile.
+                  // const yourPlayerStats = gameState.playerStats?.[localPlayerIdRef.current];
+                  // const color = yourPlayerStats?.color || currentUserProfile.color; // Prioritize stats?
 
                   if (color) {
                     return (
-                      <span 
-                        className="player-color-swatch" 
-                        style={{ backgroundColor: color }} 
+                      <span
+                        className="player-color-swatch"
+                        style={{ backgroundColor: color, cursor: 'pointer' }} // Add cursor pointer
                       />
                     );
                   } else {
-                     // Check snake state as fallback if stats somehow missing color initially
-                     const yourSnake = gameState.snakes.find(snake => snake.id === localPlayerIdRef.current);
-                     if (yourSnake?.color) {
-                      return (
-                         <span 
-                           className="player-color-swatch" 
-                           style={{ backgroundColor: yourSnake.color }} 
-                         />
-                      );
-                     }
+                     return (
+                       <span style={{ color: 'var(--text-color)', opacity: 0.7, fontStyle: 'italic' }}> (Waiting...)</span>
+                     );
                   }
-                  
-                  return (
-                    <span style={{ color: 'var(--text-color)', opacity: 0.7, fontStyle: 'italic' }}> (Waiting...)</span>
-                  );
                 })()}
               </span>
             </div>

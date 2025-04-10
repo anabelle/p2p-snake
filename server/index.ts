@@ -23,6 +23,14 @@ let currentGameState: GameState;
 const connectedPlayers = new Map<string, Socket>(); // Map player ID to Socket instance
 const playerInputs = new Map<string, { dx: number; dy: number }>(); // Map player ID to last input {dx, dy}
 
+// --- Queue for pending profile updates ---
+interface ProfileUpdate { 
+  playerId: string;
+  name: string;
+  color: string;
+}
+const profileUpdateQueue: ProfileUpdate[] = [];
+
 // Remove ShimPlayer and createShimPlayer - not needed without adapter
 // interface ShimPlayer { getID: () => string; }
 // const createShimPlayer = (id: string): ShimPlayer => ({ getID: () => id });
@@ -128,6 +136,55 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
+  // --- Handle Profile Updates (Queue the request) --- 
+  socket.on('updateProfile', (data: { name?: string; color?: string }) => {
+    // Validate data and player existence
+    if (!currentGameState.playerStats || !currentGameState.playerStats[playerId]) {
+        console.warn(`Received updateProfile from unknown or disconnected player: ${playerId}`);
+        return;
+    }
+    // Validate incoming data structure and types
+    if (!data || typeof data.name !== 'string' || typeof data.color !== 'string') {
+        console.warn(`Received invalid updateProfile data structure from ${playerId}:`, data);
+        return;
+    }
+    const newName = data.name.trim();
+    const newColor = data.color.trim(); // Trim color too just in case
+
+    // Validate non-empty name and color format
+    if (!newName || !newColor) {
+        console.warn(`Received empty name or color in updateProfile from ${playerId}:`, data);
+        return;
+    }
+    const hexColorRegex = /^#[0-9A-F]{6}$/i;
+    if (!hexColorRegex.test(newColor)) {
+        console.warn(`Received invalid color format in updateProfile from ${playerId}:`, newColor);
+        return; // Reject invalid color
+    }
+
+    // Add validated update to the queue
+    profileUpdateQueue.push({ playerId, name: newName, color: newColor });
+    console.log(`Queued profile update for ${playerId}: Name=${newName}, Color=${newColor}`);
+
+    // // --- OLD CODE: Don't update state directly here --- 
+    // const currentStats = currentGameState.playerStats[playerId];
+    // let updated = false;
+    // if (currentStats.name !== newName) {
+    //     currentStats.name = newName;
+    //     updated = true;
+    // }
+    // if (currentStats.color !== newColor) {
+    //     currentStats.color = newColor;
+    //     updated = true;
+    //     // Also update the active snake's color if it exists
+    //     const snake = currentGameState.snakes.find(s => s.id === playerId);
+    //     if (snake) {
+    //         snake.color = newColor;
+    //     }
+    // }
+    // if (updated) { ... } else { ... }
+  });
+
   // Handle disconnection
   socket.on('disconnect', () => {
     console.log(`Player disconnected: ${playerId} (${socket.id})`);
@@ -167,6 +224,37 @@ setInterval(() => {
     const logicalTime = currentGameState.timestamp + (now - lastTickTime); // Use actual elapsed time?
     lastTickTime = now;
 
+    // --- Process Profile Update Queue --- 
+    if (profileUpdateQueue.length > 0) {
+        console.log(`Processing ${profileUpdateQueue.length} profile updates...`);
+        profileUpdateQueue.forEach(update => {
+            if (currentGameState.playerStats && currentGameState.playerStats[update.playerId]) {
+                const stats = currentGameState.playerStats[update.playerId];
+                let updated = false;
+                if (stats.name !== update.name) {
+                    stats.name = update.name;
+                    updated = true;
+                }
+                if (stats.color !== update.color) {
+                    stats.color = update.color;
+                    // Also update the active snake's color if it exists
+                    const snake = currentGameState.snakes.find(s => s.id === update.playerId);
+                    if (snake) {
+                        snake.color = update.color;
+                    }
+                    updated = true;
+                }
+                if (updated) {
+                     console.log(`Applied queued update for ${update.playerId}: Name=${update.name}, Color=${update.color}`);
+                }
+            } else {
+                 console.warn(`Skipping queued update for unknown/disconnected player: ${update.playerId}`);
+            }
+        });
+        // Clear the queue after processing
+        profileUpdateQueue.length = 0; 
+    }
+
     // 1. Prepare inputs map for updateGame
     const currentTickPlayerInputs: PlayerInputs = new Map();
     const currentPlayerIDSet = new Set(connectedPlayers.keys());
@@ -187,8 +275,9 @@ setInterval(() => {
         // playerInputs.delete(pId); // No, keep last known input
     });
 
-    // 2. Call updateGame directly
+    // 2. Call updateGame directly (with state potentially modified by queue processing)
     try {
+        const stateBeforeUpdate = currentGameState; // Keep ref for potential error logging
         currentGameState = updateGame(currentGameState, currentTickPlayerInputs, logicalTime, currentPlayerIDSet);
         
         // Debug check - log player stats if empty but players are connected
@@ -223,11 +312,12 @@ setInterval(() => {
         }
     } catch (e) {
         console.error("!!! Error during updateGame on server:", e);
+        // Consider reverting state or logging the state before update
+        // console.error("State before error:", stateBeforeUpdate);
         return; // Stop this tick on error
     }
 
     // 3. Broadcast the new state to all connected clients
-    // Use io.emit for broadcast
     io.emit('state-sync', currentGameState);
     // console.log(`Tick ${currentGameState.sequence}: Sent state sync to ${connectedPlayers.size} players.`);
 

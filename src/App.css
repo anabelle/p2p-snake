@@ -248,4 +248,141 @@ tbody tr:hover {
 *:focus-visible {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
+}
+
+/* Basic Modal Styling */
+.profile-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000; /* Ensure it's above other content */
+}
+
+.profile-modal {
+  background: var(--background-color); /* Use existing variable */
+  padding: 20px 30px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color); /* Use existing variable */
+  color: var(--text-color); /* Use existing variable */
+  min-width: 300px;
+  max-width: 90%;
+  outline: none;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.profile-modal h2 {
+  margin-top: 0;
+  color: var(--primary-color); /* Use existing variable */
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.profile-modal-content {
+  margin-bottom: 20px;
+}
+
+.profile-modal .form-group {
+  margin-bottom: 15px;
+}
+
+.profile-modal .form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.profile-modal .form-group input[type="text"] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--input-bg-color, #2a2a2e); /* Adjusted default for dark theme */
+  color: var(--input-text-color, #e1e1e1); /* Adjusted default for dark theme */
+  box-sizing: border-box; /* Include padding in width */
+}
+
+/* Style the react-color SketchPicker container */
+.profile-modal .sketch-picker {
+  box-shadow: none !important; /* Remove default shadow */
+  padding: 0 !important; /* Remove default padding */
+  background: transparent !important; /* Make background transparent */
+  border-radius: 4px;
+  width: 100% !important; /* Override default width */
+}
+
+/* Specific overrides for SketchPicker elements for dark theme */
+.profile-modal .sketch-picker input {
+  background-color: var(--input-bg-color, #3a3a3e) !important;
+  color: var(--input-text-color, #e1e1e1) !important;
+  box-shadow: inset 0 0 0 1px var(--border-color, #555) !important; 
+  border: none !important;
+}
+.profile-modal .sketch-picker > div:last-child > div:first-child > div:first-child {
+    /* Style the hex/rgb label container if needed */
+}
+.profile-modal .sketch-picker label {
+    color: var(--text-color-secondary, #aaa) !important; /* Make labels lighter */
+}
+
+
+.profile-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px; /* Add some space above buttons */
+}
+
+/* Basic Button Styling (adapt to your existing button styles) */
+.profile-modal-actions button {
+  padding: 8px 15px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: opacity 0.2s ease;
+}
+
+.button-primary {
+  background-color: var(--primary-color); /* Use existing variable */
+  color: white;
+}
+.button-primary:hover {
+  opacity: 0.9;
+}
+
+.button-secondary {
+  background-color: var(--secondary-button-bg, #555); /* Adjusted default for dark theme */
+  color: var(--secondary-button-text, #e1e1e1); /* Adjusted default for dark theme */
+}
+.button-secondary:hover {
+  opacity: 0.9;
+}
+
+
+/* Make profile items clickable */
+.editable-profile-item {
+  cursor: pointer;
+  /* display: inline-block; /* Let's use block for better layout */
+  display: block; /* Makes the whole row clickable */
+  padding: 4px 8px; /* Add some padding */
+  margin: 2px 0; /* Add vertical margin */
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.editable-profile-item:hover {
+  background-color: rgba(255, 255, 255, 0.1); /* Subtle hover effect */
+}
+
+/* Ensure swatch within clickable area also has pointer */
+.editable-profile-item .player-color-swatch {
+   cursor: pointer; 
+   /* Add vertical-align if needed depending on surrounding text */
+   vertical-align: middle;
 } 
