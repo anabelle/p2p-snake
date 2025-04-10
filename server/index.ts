@@ -18,7 +18,7 @@ const httpServer = createServer((req: IncomingMessage, res: ServerResponse) => {
     // Redirect browsers to the main game site
     if (userAgent.includes('Mozilla') || userAgent.includes('Chrome') || userAgent.includes('Safari')) {
       res.writeHead(302, {
-        'Location': 'https://snake.huellaspyp.com'
+        'Location': 'https://snake.heyanabelle.com'
       });
       res.end();
       return;
