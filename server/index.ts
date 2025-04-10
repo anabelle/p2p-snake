@@ -1,5 +1,5 @@
 import { Server, Socket } from 'socket.io';
-import { createServer } from 'http';
+import { createServer, IncomingMessage, ServerResponse } from 'http';
 // Remove NetplayAdapter import - server manages state directly
 // import { NetplayAdapter } from '../src/game/network/NetplayAdapter';
 import { GameState, Direction, PlayerStats } from '../src/game/state/types';
@@ -9,7 +9,26 @@ import { generateFood } from '../src/game/logic/foodLogic'; // Need for initial 
 import { getOccupiedPositions, mulberry32 } from '../src/game/logic/prng'; // Need for initial food
 
 // --- Server Setup ---
-const httpServer = createServer();
+// Create HTTP server with request handler for browser redirects
+const httpServer = createServer((req: IncomingMessage, res: ServerResponse) => {
+  // Check if it's a browser request to the root URL
+  if (req.url === '/' || req.url === '') {
+    const userAgent = req.headers['user-agent'] || '';
+    // Redirect browsers to the main game site
+    if (userAgent.includes('Mozilla') || userAgent.includes('Chrome') || userAgent.includes('Safari')) {
+      res.writeHead(302, {
+        'Location': 'https://snake.huellaspyp.com'
+      });
+      res.end();
+      return;
+    }
+  }
+  
+  // For all other requests (including Socket.IO), proceed normally
+  res.writeHead(404);
+  res.end();
+});
+
 const io = new Server(httpServer, {
   cors: {
     origin: "*", // Allow all origins for development
