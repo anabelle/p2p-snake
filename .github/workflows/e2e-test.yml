@@ -2,7 +2,7 @@ name: E2E Tests
 
 on:
   workflow_run:
-    workflows: ["Unit Tests"] # Trigger after "Unit Tests" workflow completes
+    workflows: ['Unit Tests'] # Trigger after "Unit Tests" workflow completes
     types:
       - completed
     branches:
@@ -17,7 +17,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-           ref: ${{ github.event.workflow_run.head_sha }} # Checkout the specific commit tested
+          ref: ${{ github.event.workflow_run.head_sha }} # Checkout the specific commit tested
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -37,4 +37,4 @@ jobs:
           build: npm run build
           start: npm run start:dev
           wait-on: 'http://localhost:3000'
-          wait-on-timeout: 120 
+          wait-on-timeout: 120

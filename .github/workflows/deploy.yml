@@ -2,7 +2,7 @@ name: Deploy Frontend # Name for the Deploy workflow (will appear on deploy badg
 
 on:
   workflow_run:
-    workflows: ["E2E Tests"] # Trigger after the "E2E Tests" workflow completes
+    workflows: ['E2E Tests'] # Trigger after the "E2E Tests" workflow completes
     types:
       - completed
     branches:
@@ -20,7 +20,7 @@ jobs:
         # Checks out the commit that triggered the 'CI Tests' workflow
         uses: actions/checkout@v4
         with:
-           ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -51,4 +51,4 @@ jobs:
           FTP_HOST: ${{ secrets.FTP_HOST }}
         run: |
           cd deploy
-          lftp -e "set ftp:ssl-allow no; set ftp:list-options -a; set dns:order \"AAAA A\"; mirror -RLve --delete --parallel=5 . .; quit" -u $FTP_USER,$FTP_PASS $FTP_HOST 
+          lftp -e "set ftp:ssl-allow no; set ftp:list-options -a; set dns:order \"AAAA A\"; mirror -RLve --delete --parallel=5 . .; quit" -u $FTP_USER,$FTP_PASS $FTP_HOST

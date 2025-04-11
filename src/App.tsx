@@ -12,6 +12,7 @@ import { useGameLoop } from './hooks/useGameLoop'; // Import the game loop hook
 import { useGameAdapter } from './hooks/useGameAdapter'; // Import the game adapter hook
 import { useGameStateSync } from './hooks/useGameStateSync'; // Import the new state sync hook
 import { useGameControls } from './hooks/useGameControls'; // Import the new controls hook
+import useCanvasElement from './hooks/useCanvasElement'; // Import the new hook
 
 import './App.css'; // Import the CSS file
 
@@ -22,11 +23,18 @@ if (typeof window !== 'undefined') {
 
 const App: React.FC = () => {
   const gameContainerRef = useRef<HTMLDivElement>(null); // Ref for touch events and canvas container
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  // const canvasRef = useRef<HTMLCanvasElement | null>(null); // Removed: Now managed by useCanvasElement
 
   // --- Calculate Canvas Size from Constants ---
   const canvasWidth = GRID_SIZE.width * CELL_SIZE;
   const canvasHeight = GRID_SIZE.height * CELL_SIZE;
+
+  // --- Use the new Canvas Element Hook ---
+  const { canvasRef } = useCanvasElement({
+    width: canvasWidth,
+    height: canvasHeight,
+    containerRef: gameContainerRef // Pass the container ref
+  });
 
   // --- WebSocket Hook Integration ---
   const {
@@ -55,7 +63,7 @@ const App: React.FC = () => {
 
   // --- Use Game Adapter Hook ---
   const gameAdapterRef = useGameAdapter({
-    canvasRef,
+    canvasRef, // Pass the ref from useCanvasElement
     localPlayerId,
     isConnected,
     profileStatus
@@ -90,7 +98,7 @@ const App: React.FC = () => {
       }
     }
     // No need to request next frame here, the hook handles it
-  }, [gameAdapterRef, gameStateRef]); // Added gameStateRef dependency
+  }, [gameAdapterRef, gameStateRef, canvasRef]); // Added canvasRef dependency
 
   // --- Use the Game Loop Hook ---
   useGameLoop(drawFrame, isGameLoopActive);
@@ -110,40 +118,14 @@ const App: React.FC = () => {
     }
   }, [profileStatus, openProfileModal]);
 
-  // --- Centralized Setup Effect (Simplified: mainly for canvas and cleanup) ---
+  // --- New Simple Effect for WebSocket Cleanup ---
   useEffect(() => {
-    // --- Canvas Creation (Remains the same) ---
-    let canvasElementCreated = false;
-    const container = gameContainerRef.current; // Capture ref value here
-
-    if (!canvasRef.current && container) {
-      // Use captured value
-      console.log('Creating initial canvas element on mount...');
-      const canvas = document.createElement('canvas');
-      canvas.width = canvasWidth;
-      canvas.height = canvasHeight;
-      container.appendChild(canvas); // Use captured value
-      canvasRef.current = canvas;
-      canvasElementCreated = true;
-    }
-
-    // --- Cleanup function for this main setup effect (Simplified) ---
+    // Return the disconnect function directly for cleanup
     return () => {
-      console.log('Main App effect cleanup (unmount)');
-      disconnectWebSocket(); // Still disconnect WebSocket
-
-      // Use the captured container variable in cleanup
-      if (canvasElementCreated && canvasRef.current && container?.contains(canvasRef.current)) {
-        console.log('Removing initial canvas element on unmount.');
-        try {
-          container.removeChild(canvasRef.current); // Use captured value
-        } catch (error) {
-          console.error('Error removing canvas during unmount cleanup:', error);
-        }
-        canvasRef.current = null;
-      }
+      console.log('App unmounting, ensuring WebSocket disconnects...');
+      disconnectWebSocket();
     };
-  }, [disconnectWebSocket, canvasHeight, canvasWidth]); // Removed connectWebSocket dependency
+  }, [disconnectWebSocket]); // Only depends on the disconnect function
 
   // --- Render function (Structure remains the same as original) ---
   return (
