@@ -7,7 +7,7 @@ describe('App Initialization and Profile', () => {
   });
 
   it('should load the page and have the correct title', () => {
-    cy.title().should('eq', 'P2P Snake Game');
+    cy.title().should('eq', 'Multiplayer Snake Game');
   });
 
   context('First Visit (No Profile)', () => {

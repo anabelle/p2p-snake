@@ -1,5 +1,5 @@
-# Setup script for P2P Snake Game
-Write-Host "Setting up P2P Snake Game..." -ForegroundColor Green
+# Setup script for Multiplayer Snake Game
+Write-Host "Setting up Multiplayer Snake Game..." -ForegroundColor Green
 
 # Install dependencies
 Write-Host "Installing dependencies..." -ForegroundColor Cyan
