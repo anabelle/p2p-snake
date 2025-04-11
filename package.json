@@ -40,7 +40,8 @@
     "start:server": "tsx server/index.ts",
     "start:dev": "cross-env REACT_APP_SIGNALING_SERVER_URL=http://localhost:3001 concurrently \"npm run start:server\" \"npm run start\"",
     "heroku-postbuild": "npm run build",
-    "cypress:open": "cypress open"
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run"
   },
   "eslintConfig": {
     "extends": [

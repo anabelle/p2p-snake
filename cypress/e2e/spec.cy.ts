@@ -68,6 +68,37 @@ describe('App Initialization and Profile', () => {
       cy.get('#your-snake-info .editable-profile-item').first().should('contain', initialProfile.name);
     });
 
+    it('should display the game canvas with correct dimensions', () => {
+      // Calculate expected dimensions based on actual constants
+      const expectedWidth = 50 * 12; // GRID_SIZE.width * CELL_SIZE
+      const expectedHeight = 30 * 12; // GRID_SIZE.height * CELL_SIZE (Corrected)
+
+      cy.get('#game-canvas-container canvas')
+        .should('be.visible')
+        .and('have.attr', 'width', expectedWidth.toString())
+        .and('have.attr', 'height', expectedHeight.toString()); // Corrected assertion
+    });
+
+    it('should display the player rankings section', () => {
+      cy.get('#player-rankings').should('be.visible');
+      cy.get('#player-rankings h3').should('contain', 'Player Rankings');
+      cy.get('#player-rankings table').should('be.visible');
+      // Check for table headers
+      cy.get('#player-rankings table thead th').should('have.length', 4);
+      cy.get('#player-rankings table thead th').eq(0).should('contain', 'Player');
+      cy.get('#player-rankings table thead th').eq(1).should('contain', 'Score');
+    });
+
+    it('should display the power-up legend section', () => {
+      cy.get('#powerup-legend').should('be.visible');
+      cy.get('#powerup-legend h3').should('contain', 'Power-Up Legend');
+      cy.get('#powerup-legend ul').should('be.visible');
+      // Check for at least one list item
+      cy.get('#powerup-legend ul li').should('have.length.greaterThan', 0);
+      // Check for specific power-up text
+      cy.get('#powerup-legend ul li').first().should('contain', 'Speed Boost');
+    });
+
     it('should allow editing the existing profile', () => {
       // Check that the profile modal is NOT visible initially
       cy.get('.profile-modal').should('not.exist');
@@ -102,6 +133,18 @@ describe('App Initialization and Profile', () => {
       
       // Also check canvas is still present
       cy.get('#game-canvas-container').should('be.visible').find('canvas').should('exist');
+    });
+
+    it('should handle arrow key presses for input', () => {
+      // Focus the container or body to ensure key events are captured
+      // cy.get('#game-canvas-container').focus(); // Focusing div might not work, window is usually the target
+
+      // Trigger an arrow key press on the window
+      cy.window().trigger('keydown', { key: 'ArrowRight' });
+
+      // Basic assertion: Ensure the app didn't crash and key elements are still present
+      cy.get('#game-canvas-container canvas').should('be.visible');
+      cy.get('#your-snake-info').should('be.visible'); 
     });
   });
 });
