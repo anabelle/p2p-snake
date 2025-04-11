@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
-import { useWebSocket } from './useWebSocket'; // Assuming the hook is in the same directory
+import { useWebSocket } from './useWebSocket'; // Revert to original path
 import { UserProfile } from '../types'; // Adjust path as necessary
 import io from 'socket.io-client';
 
@@ -113,5 +113,199 @@ describe('useWebSocket Hook', () => {
     // For now, we know io() was called, which creates the socket.
   });
 
-  // Add more tests here for connection, disconnection, errors, state sync, etc.
+  it('should set isConnected to true when the socket connect event fires', () => {
+    const { result } = renderHook(() => useWebSocket());
+
+    act(() => {
+      result.current.connect(mockProfile);
+    });
+
+    // Simulate the connect event
+    act(() => {
+      // Find the 'connect' handler attached in the test setup and call it
+      const connectHandler = mockSocketInstance.on.mock.calls.find(
+        (call: [string, Function]) => call[0] === 'connect'
+      )?.[1];
+      if (connectHandler) {
+        connectHandler();
+      } else {
+        throw new Error('Connect handler not found');
+      }
+    });
+
+    expect(result.current.isConnected).toBe(true);
+  });
+
+  it('should set isConnected to false and clear state on disconnect event', () => {
+    const { result } = renderHook(() => useWebSocket());
+
+    // Connect first
+    act(() => {
+      result.current.connect(mockProfile);
+      // Simulate connection succeeding
+      mockSocketInstance.on.mock.calls.find(
+        (call: [string, Function]) => call[0] === 'connect'
+      )?.[1]();
+    });
+
+    // Ensure initially connected
+    expect(result.current.isConnected).toBe(true);
+
+    // Simulate the disconnect event
+    act(() => {
+      const disconnectHandler = mockSocketInstance.on.mock.calls.find(
+        (call: [string, Function]) => call[0] === 'disconnect'
+      )?.[1];
+      if (disconnectHandler) {
+        disconnectHandler('io server disconnect'); // Pass a reason
+      } else {
+        throw new Error('Disconnect handler not found');
+      }
+    });
+
+    expect(result.current.isConnected).toBe(false);
+    expect(result.current.latestGameState).toBeNull();
+    // Note: socket ref might still exist due to potential reconnect logic in socket.io
+  });
+
+  it('should set isConnected to false and clear state on connect_error event', () => {
+    const { result } = renderHook(() => useWebSocket());
+
+    act(() => {
+      result.current.connect(mockProfile);
+    });
+
+    // Simulate the connect_error event
+    act(() => {
+      const connectErrorHandler = mockSocketInstance.on.mock.calls.find(
+        (call: [string, Function]) => call[0] === 'connect_error'
+      )?.[1];
+      if (connectErrorHandler) {
+        connectErrorHandler(new Error('Connection failed')); // Pass an error
+      } else {
+        throw new Error('Connect error handler not found');
+      }
+    });
+
+    expect(result.current.isConnected).toBe(false);
+    expect(result.current.latestGameState).toBeNull();
+  });
+
+  it('should update latestGameState when state-sync event fires', () => {
+    const { result } = renderHook(() => useWebSocket());
+    const mockGameState = {
+      snakes: [],
+      food: [],
+      powerUps: [],
+      activePowerUps: [],
+      gridSize: { width: 10, height: 10 },
+      timestamp: 123,
+      sequence: 1,
+      rngSeed: 456,
+      playerCount: 0,
+      powerUpCounter: 0,
+      playerStats: {}
+    };
+
+    act(() => {
+      result.current.connect(mockProfile);
+    });
+
+    // Simulate the state-sync event
+    act(() => {
+      const stateSyncHandler = mockSocketInstance.on.mock.calls.find(
+        (call: [string, Function]) => call[0] === 'state-sync'
+      )?.[1];
+      if (stateSyncHandler) {
+        stateSyncHandler(mockGameState);
+      } else {
+        throw new Error('state-sync handler not found');
+      }
+    });
+
+    expect(result.current.latestGameState).toEqual(mockGameState);
+  });
+
+  it('should not connect if already connected (socketRef exists)', () => {
+    const { result } = renderHook(() => useWebSocket());
+
+    // First connection
+    act(() => {
+      result.current.connect(mockProfile);
+    });
+    expect(mockIo).toHaveBeenCalledTimes(1);
+
+    // Attempt second connection
+    act(() => {
+      result.current.connect(mockProfile);
+    });
+    // io() should not be called again
+    expect(mockIo).toHaveBeenCalledTimes(1);
+  });
+
+  it('should call socket.disconnect, clear listeners, and reset state when disconnect function is called', () => {
+    const { result } = renderHook(() => useWebSocket());
+
+    // Connect first
+    act(() => {
+      result.current.connect(mockProfile);
+      // Simulate connection succeeding and receiving state
+      mockSocketInstance.on.mock.calls.find(
+        (call: [string, Function]) => call[0] === 'connect'
+      )?.[1]();
+      mockSocketInstance.on.mock.calls.find(
+        (call: [string, Function]) => call[0] === 'state-sync'
+      )?.[1]({ some: 'state' });
+    });
+
+    expect(result.current.isConnected).toBe(true);
+    expect(result.current.latestGameState).not.toBeNull();
+    expect(mockSocketInstance.disconnect).not.toHaveBeenCalled();
+
+    // Call the hook's disconnect function
+    act(() => {
+      result.current.disconnect();
+    });
+
+    // Verify socket actions
+    expect(mockSocketInstance.disconnect).toHaveBeenCalledTimes(1);
+    // Check that .off was called for each event type
+    expect(mockSocketInstance.off).toHaveBeenCalledWith('connect');
+    expect(mockSocketInstance.off).toHaveBeenCalledWith('disconnect');
+    expect(mockSocketInstance.off).toHaveBeenCalledWith('connect_error');
+    expect(mockSocketInstance.off).toHaveBeenCalledWith('state-sync');
+
+    // Verify state reset
+    expect(result.current.isConnected).toBe(false);
+    expect(result.current.latestGameState).toBeNull();
+    expect(result.current.socket).toBeNull(); // Explicit disconnect should null the ref
+  });
+
+  it('should clean up listeners and disconnect socket on unmount', () => {
+    // Render the hook first
+    const { result, unmount } = renderHook(() => useWebSocket());
+
+    // Connect first
+    act(() => {
+      // Use the connect function from the rendered hook instance
+      result.current.connect(mockProfile);
+    });
+
+    // Ensure the mockSocketInstance reference is correct *before* unmount
+    // Re-assign based on the latest call to io(), assuming connect worked
+    if (mockIo.mock.results.length > 0) {
+      mockSocketInstance = mockIo.mock.results[mockIo.mock.results.length - 1].value;
+    }
+
+    // Call unmount
+    unmount();
+
+    // Verify cleanup actions on the *last known* mock socket instance
+    expect(mockSocketInstance.disconnect).toHaveBeenCalledTimes(1);
+    // Check that .off was called for each event type
+    expect(mockSocketInstance.off).toHaveBeenCalledWith('connect');
+    expect(mockSocketInstance.off).toHaveBeenCalledWith('disconnect');
+    expect(mockSocketInstance.off).toHaveBeenCalledWith('connect_error');
+    expect(mockSocketInstance.off).toHaveBeenCalledWith('state-sync');
+  });
 });

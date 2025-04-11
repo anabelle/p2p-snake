@@ -264,5 +264,36 @@ describe('UserInfoSection', () => {
     expect(screen.getByText('None')).toBeInTheDocument();
   });
 
+  it('should display the raw type name for unknown active effects', () => {
+    const now = Date.now();
+    const unknownType = 'UNKNOWN_EFFECT' as PowerUpType;
+    const powerUp: ActivePowerUp = {
+      playerId: 'p1',
+      type: unknownType,
+      expiresAt: now + 5000
+    };
+    const gameState: Partial<GameState> = {
+      ...mockGameStateBase,
+      timestamp: now,
+      activePowerUps: [powerUp]
+    };
+
+    render(
+      <UserInfoSection
+        currentUserProfile={mockProfile}
+        syncedGameState={gameState as GameState | null}
+        localPlayerId='p1'
+        openProfileModal={mockOpenModal}
+      />
+    );
+
+    expect(screen.getByText('Active Effects:')).toBeInTheDocument();
+    const effectContainerDiv = screen.getByTestId(`active-effect-${unknownType}`);
+    expect(effectContainerDiv).toBeInTheDocument();
+    // Expect the raw type name to be displayed since it's not in `descriptions`
+    expect(effectContainerDiv).toHaveTextContent(`${unknownType} (~5s)`);
+    expect(effectContainerDiv).toHaveAttribute('title', `${unknownType} (~5s)`);
+  });
+
   // Add more tests here later...
 });

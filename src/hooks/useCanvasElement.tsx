@@ -18,6 +18,9 @@ const useCanvasElement = ({ width, height, containerRef }: UseCanvasElementProps
       const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
+      // Add role and aria-label for accessibility and testing
+      canvas.setAttribute('role', 'img');
+      canvas.setAttribute('aria-label', 'Game Board'); // Default accessible name
       container.appendChild(canvas);
       canvasRef.current = canvas;
       canvasElementCreated = true;
@@ -37,6 +40,10 @@ const useCanvasElement = ({ width, height, containerRef }: UseCanvasElementProps
         } catch (error) {
           console.error('useCanvasElement: Error removing canvas during cleanup:', error);
         }
+        // Remove logging
+        // console.log('Cleanup - canvasRef.current:', canvasRef.current);
+        // console.log('Cleanup - canvasToRemove:', canvasToRemove);
+        // console.log('Cleanup - condition check:', canvasRef.current === canvasToRemove);
         // Setting canvasRef.current to null here is redundant if the component unmounts,
         // but good practice if the effect re-runs due to dependency changes.
         if (canvasRef.current === canvasToRemove) {

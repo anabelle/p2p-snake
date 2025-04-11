@@ -10,7 +10,13 @@ import {
   PowerUpType,
   PlayerStats
 } from '../state/types';
-import { GRID_SIZE, FOOD_VALUE, PLAYER_COLORS, POWER_UP_EFFECT_DURATION } from '../constants';
+import {
+  GRID_SIZE,
+  FOOD_VALUE,
+  PLAYER_COLORS,
+  POWER_UP_EFFECT_DURATION,
+  POWERUP_SPAWN_CHANCE
+} from '../constants';
 import * as snakeLogic from './snakeLogic';
 import * as foodLogic from './foodLogic';
 import * as powerUpLogic from './powerUpLogic';
@@ -19,11 +25,6 @@ import * as prng from './prng';
 import { AI_SNAKE_ID } from './aiSnake';
 
 // --- Mocks ---
-jest.mock('./prng', () => ({
-  ...jest.requireActual('./prng'), // Keep mulberry32
-  generateRandomPosition: jest.fn(),
-  getOccupiedPositions: jest.fn()
-}));
 jest.mock('./snakeLogic', () => ({
   ...jest.requireActual('./snakeLogic'),
   generateNewSnake: jest.fn(),
@@ -112,7 +113,6 @@ describe('Game Rules - updateGame', () => {
   const currentTime = 1000;
   const generateNewSnakeMock = snakeLogic.generateNewSnake as jest.Mock;
   const moveSnakeBodyMock = snakeLogic.moveSnakeBody as jest.Mock;
-  const getOccupiedPositionsMock = prng.getOccupiedPositions as jest.Mock;
   const generateFoodMock = foodLogic.generateFood as jest.Mock;
   const generatePowerUpMock = powerUpLogic.generatePowerUp as jest.Mock;
   const isInvincibleMock = powerUpLogic.isInvincible as jest.Mock;
@@ -120,12 +120,14 @@ describe('Game Rules - updateGame', () => {
   const checkFoodCollisionMock = collision.checkFoodCollision as jest.Mock;
   const checkPowerUpCollisionMock = collision.checkPowerUpCollision as jest.Mock;
   const getSpeedFactorMock = powerUpLogic.getSpeedFactor as jest.Mock;
+  let getOccupiedPositionsSpy: jest.SpyInstance; // Declare spy variable
 
   beforeEach(() => {
     jest.clearAllMocks();
     baseState = createInitialState();
     // Default mock implementations
-    getOccupiedPositionsMock.mockReturnValue([]);
+    // Use spyOn for getOccupiedPositions
+    getOccupiedPositionsSpy = jest.spyOn(prng, 'getOccupiedPositions').mockReturnValue([]);
     generateNewSnakeMock.mockImplementation((id, gs, occ, rf, color) =>
       createMockSnake(id, [{ x: 0, y: 0 }])
     );
@@ -158,6 +160,10 @@ describe('Game Rules - updateGame', () => {
   afterEach(() => {
     // Restore any globally spied-on functions after each test
     jest.restoreAllMocks();
+    // Explicitly restore our spy if it exists
+    if (getOccupiedPositionsSpy) {
+      getOccupiedPositionsSpy.mockRestore();
+    }
   });
 
   // --- Player Joining/Leaving ---
@@ -168,11 +174,11 @@ describe('Game Rules - updateGame', () => {
       moveSnakeBodyMock.mockImplementation((snake) => snake);
       const mockNewSnake = createMockSnake('p1', [{ x: 1, y: 1 }]);
       generateNewSnakeMock.mockReturnValue(mockNewSnake);
-      getOccupiedPositionsMock.mockReturnValue([]);
+      getOccupiedPositionsSpy.mockReturnValue([]);
 
       const nextState = updateGame(baseState, inputs, currentTime, currentPlayerIDs);
 
-      expect(getOccupiedPositionsMock).toHaveBeenCalled();
+      expect(getOccupiedPositionsSpy).toHaveBeenCalled();
       expect(generateNewSnakeMock).toHaveBeenCalledTimes(2);
       expect(generateNewSnakeMock).toHaveBeenCalledWith(
         'p1',
@@ -260,11 +266,11 @@ describe('Game Rules - updateGame', () => {
         // Default AI snake generation (game logic passes a hardcoded color)
         return createMockSnake(id, [{ x: 0, y: 0 }]);
       });
-      getOccupiedPositionsMock.mockReturnValue([]);
+      getOccupiedPositionsSpy.mockReturnValue([]);
 
       const nextState = updateGame(initialState, inputs, currentTime, currentPlayerIDs);
 
-      expect(getOccupiedPositionsMock).toHaveBeenCalled();
+      expect(getOccupiedPositionsSpy).toHaveBeenCalled();
       expect(generateNewSnakeMock).toHaveBeenCalledTimes(2);
       expect(generateNewSnakeMock).toHaveBeenCalledWith(
         'p1',
@@ -888,7 +894,7 @@ describe('Game Rules - updateGame', () => {
         { p1: { id: 'p1', color: 'red', score: 0, deaths: 0, isConnected: true } }
       );
       checkPowerUpCollisionMock.mockReturnValue(null);
-      // getOccupiedPositionsMock is setup in beforeEach
+      // getOccupiedPositionsSpy is setup in beforeEach
 
       const nextState = updateGame(stateWithPowerup, inputs, currentTime, currentPlayerIDs);
 
@@ -901,6 +907,59 @@ describe('Game Rules - updateGame', () => {
       // Counter only increments on successful spawn, so it stays 0 here.
       expect(nextState.powerUpCounter).toBe(0);
     });
+
+    it('should generate a power-up when conditions are met', () => {
+      // Arrange
+      const initialState = createInitialState(); // Start with no powerups
+
+      // Spy on mulberry32 and make it return a controllable mock generator
+      const mulberrySpy = jest.spyOn(prng, 'mulberry32');
+      const mockRandomGenerator = jest.fn();
+      mulberrySpy.mockReturnValue(mockRandomGenerator);
+
+      // Control the sequence of numbers returned by the mock generator
+      // First call inside updateGame (line 36: seed update) return default
+      mockRandomGenerator.mockReturnValueOnce(0.5);
+      // Second call (line 441: spawn check) should trigger spawn
+      mockRandomGenerator.mockReturnValueOnce(POWERUP_SPAWN_CHANCE / 2);
+      // Subsequent calls (e.g., line 459 seed update, food/powerup placement) return default
+      mockRandomGenerator.mockReturnValue(0.5);
+
+      const mockPowerUp: PowerUp = {
+        id: 'newPU',
+        type: PowerUpType.DOUBLE_SCORE,
+        position: { x: 15, y: 15 },
+        expiresAt: currentTime + 20000
+      };
+
+      generatePowerUpMock.mockReturnValue(mockPowerUp);
+      // We still need getOccupiedPositions mocked as it's called before generatePowerUp - Handled by beforeEach
+
+      // Act
+      const nextState = updateGame(initialState, new Map(), currentTime, new Set());
+
+      // Assert
+      expect(mulberrySpy).toHaveBeenCalledWith(initialState.rngSeed); // Was the generator created with the right seed?
+      expect(mockRandomGenerator).toHaveBeenCalled(); // Was the generator function called?
+      // Use prng.getOccupiedPositions directly, as it's spied on in beforeEach
+      expect(prng.getOccupiedPositions).toHaveBeenCalled();
+      expect(generatePowerUpMock).toHaveBeenCalledTimes(1);
+      expect(generatePowerUpMock).toHaveBeenCalledWith(
+        initialState.gridSize,
+        [], // Result from getOccupiedPositions spy
+        expect.any(Function), // The actual mockRandomGenerator instance
+        currentTime,
+        initialState.powerUpCounter // Initial counter value (0)
+      );
+      expect(nextState.powerUps).toHaveLength(1);
+      expect(nextState.powerUps[0]).toEqual(mockPowerUp);
+      expect(nextState.powerUpCounter).toBe(initialState.powerUpCounter + 1);
+
+      // Restore spies
+      mulberrySpy.mockRestore();
+    });
+
+    // Test power-up cleanup
   });
 
   // --- State & RNG ---
@@ -1197,7 +1256,7 @@ describe('Game Rules - updateGame', () => {
         if (id === AI_SNAKE_ID) return newAISnakeMock;
         return createMockSnake(id, [{ x: 9, y: 9 }]);
       });
-      getOccupiedPositionsMock.mockReturnValue([]); // Clear occupied positions for respawn
+      getOccupiedPositionsSpy.mockReturnValue([]); // Clear occupied positions for respawn
 
       // --- Tick 2: AI Snake Respawns ---
       const stateAfterRespawn = updateGame(

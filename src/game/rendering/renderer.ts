@@ -53,7 +53,11 @@ export const drawGame = (
 };
 
 // Helper to draw a single snake
-const drawSnake = (ctx: CanvasRenderingContext2D, snake: Snake, isLocalSnake: boolean = false) => {
+export const drawSnake = (
+  ctx: CanvasRenderingContext2D,
+  snake: Snake,
+  isLocalSnake: boolean = false
+) => {
   if (snake.body.length === 0) return;
 
   // Draw body segments
@@ -82,7 +86,7 @@ const drawSnake = (ctx: CanvasRenderingContext2D, snake: Snake, isLocalSnake: bo
 };
 
 // Helper to draw snake eyes based on direction
-const drawSnakeEyes = (
+export const drawSnakeEyes = (
   ctx: CanvasRenderingContext2D,
   head: { x: number; y: number },
   direction: Direction
@@ -125,7 +129,7 @@ const drawSnakeEyes = (
 };
 
 // Helper to draw a single food item
-const drawFood = (ctx: CanvasRenderingContext2D, food: Food) => {
+export const drawFood = (ctx: CanvasRenderingContext2D, food: Food) => {
   const centerX = food.position.x * CELL_SIZE + CELL_SIZE / 2;
   const centerY = food.position.y * CELL_SIZE + CELL_SIZE / 2;
   const appleRadius = CELL_SIZE / 2.8; // Make apple slightly smaller than cell
@@ -149,7 +153,7 @@ const drawFood = (ctx: CanvasRenderingContext2D, food: Food) => {
 };
 
 // Helper to draw a single power-up item
-const drawPowerUp = (ctx: CanvasRenderingContext2D, powerUp: PowerUp) => {
+export const drawPowerUp = (ctx: CanvasRenderingContext2D, powerUp: PowerUp) => {
   const rectX = powerUp.position.x * CELL_SIZE;
   const rectY = powerUp.position.y * CELL_SIZE;
   const centerX = rectX + CELL_SIZE / 2;

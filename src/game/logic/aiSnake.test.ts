@@ -178,6 +178,90 @@ describe('AI Snake Logic', () => {
     expect(Object.values(Direction)).toContain(direction3);
   });
 
+  test('AI prefers horizontal movement when xDiff > yDiff', () => {
+    // AI at (5,5), Food at (10, 6) -> xDiff=5, yDiff=1. Should prefer RIGHT.
+    const gameState = createTestGameState([{ x: 5, y: 5 }], Direction.UP, [
+      { position: { x: 10, y: 6 }, value: 1 }
+    ]);
+    const aiDirection = getAIDirection(gameState);
+    expect(aiDirection).toBe(Direction.RIGHT); // Covers line 165
+  });
+
+  test('AI moves vertically (DOWN) as secondary when horizontal (RIGHT) is blocked', () => {
+    // AI at (5,5), Food at (10, 6) -> Prefers RIGHT, then DOWN.
+    // Block RIGHT with another snake body part.
+    const gameState = createTestGameState([{ x: 5, y: 5 }], Direction.UP, [
+      { position: { x: 10, y: 6 }, value: 1 }
+    ]);
+    // Add blocker snake
+    gameState.snakes.push({
+      id: 'blocker',
+      color: 'blue',
+      direction: Direction.LEFT,
+      score: 0,
+      activePowerUps: [],
+      body: [{ x: 6, y: 5 }] // Block cell to the right
+    });
+    const aiDirection = getAIDirection(gameState);
+    expect(aiDirection).toBe(Direction.DOWN); // Covers line 171
+  });
+
+  test('AI prefers vertical movement UP when yDiff > xDiff and UP is valid', () => {
+    // AI at (5, 10), Food at (6, 5) -> xDiff=1, yDiff=-5. Prefers UP.
+    const gameState = createTestGameState([{ x: 5, y: 10 }], Direction.LEFT, [
+      { position: { x: 6, y: 5 }, value: 1 }
+    ]);
+    const aiDirection = getAIDirection(gameState);
+    expect(aiDirection).toBe(Direction.UP); // Covers line 178
+  });
+
+  test('AI prefers vertical movement DOWN when yDiff > xDiff and DOWN is valid', () => {
+    // AI at (5, 5), Food at (6, 10) -> xDiff=1, yDiff=5. Prefers DOWN.
+    const gameState = createTestGameState([{ x: 5, y: 5 }], Direction.RIGHT, [
+      { position: { x: 6, y: 10 }, value: 1 }
+    ]);
+    const aiDirection = getAIDirection(gameState);
+    expect(aiDirection).toBe(Direction.DOWN); // Covers line 180
+  });
+
+  test('AI moves horizontally (LEFT) as secondary when vertical (UP) is blocked', () => {
+    // AI at (6, 10), Food at (5, 5) -> Prefers UP, then LEFT.
+    // Block UP.
+    const gameState = createTestGameState([{ x: 6, y: 10 }], Direction.DOWN, [
+      { position: { x: 5, y: 5 }, value: 1 }
+    ]);
+    // Add blocker
+    gameState.snakes.push({
+      id: 'blocker',
+      color: 'blue',
+      direction: Direction.LEFT,
+      score: 0,
+      activePowerUps: [],
+      body: [{ x: 6, y: 9 }] // Block cell UP
+    });
+    const aiDirection = getAIDirection(gameState);
+    expect(aiDirection).toBe(Direction.LEFT); // Covers line 183
+  });
+
+  test('AI moves horizontally (RIGHT) as secondary when vertical (UP) is blocked', () => {
+    // AI at (5, 10), Food at (6, 5) -> Prefers UP, then RIGHT.
+    // Block UP.
+    const gameState = createTestGameState([{ x: 5, y: 10 }], Direction.DOWN, [
+      { position: { x: 6, y: 5 }, value: 1 }
+    ]);
+    // Add blocker
+    gameState.snakes.push({
+      id: 'blocker',
+      color: 'blue',
+      direction: Direction.LEFT,
+      score: 0,
+      activePowerUps: [],
+      body: [{ x: 5, y: 9 }] // Block cell UP
+    });
+    const aiDirection = getAIDirection(gameState);
+    expect(aiDirection).toBe(Direction.RIGHT); // Covers line 185
+  });
+
   test('AI snake occasionally makes mistakes that could lead to collisions', () => {
     // Create a mock snake with a long body to increase mistake probability
     const aiSnake: Snake = {

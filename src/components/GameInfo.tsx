@@ -39,16 +39,16 @@ const GameInfo: React.FC<GameInfoProps> = ({ gameState, localPlayerId, connected
   return (
     <div className='game-info'>
       <h2>Snake Game</h2>
-      <div>
+      <div data-testid='score-display'>
         <strong>Your Score:</strong> {localSnake ? localSnake.score : 0}
       </div>
-      <div>
+      <div data-testid='players-connected-display'>
         <strong>Players Connected:</strong> {connectedPlayers}
       </div>
-      <div>
+      <div data-testid='powerups-display'>
         <strong>Active Power-ups:</strong> {formatPowerUps()}
       </div>
-      <div aria-live='polite' className='visually-hidden'>
+      <div aria-live='polite' role='status' className='visually-hidden'>
         Game state updated. Your score: {localSnake ? localSnake.score : 0}.
         {localSnake &&
           localSnake.activePowerUps.length > 0 &&

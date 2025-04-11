@@ -78,6 +78,7 @@
     "@types/simple-peer": "^9.11.8",
     "@types/uuid": "^9.0.8",
     "buffer": "^6.0.3",
+    "canvas": "^2.11.2",
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
     "cypress": "^14.3.0",

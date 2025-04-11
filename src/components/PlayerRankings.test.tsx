@@ -62,14 +62,14 @@ describe('PlayerRankings', () => {
           name: 'Alice',
           color: 'red',
           score: 100,
-          deaths: 1,
+          deaths: undefined as any,
           isConnected: true
         },
         player2: {
           id: 'player2',
           name: 'Bob',
           color: 'blue',
-          score: 150,
+          score: null as any,
           deaths: 0,
           isConnected: true
         },
@@ -93,26 +93,46 @@ describe('PlayerRankings', () => {
     );
 
     const rows = screen.getAllByRole('row');
-    // Header + 3 players = 4 rows
     expect(rows).toHaveLength(4);
 
-    // Row 0 is the header
-    const bobRow = rows[1];
-    const aliceRow = rows[2];
-    const charlieRow = rows[3];
+    // Row 0 is the header - Order might change due to score change
+    // Bob now has score 0 (due to null), Alice 100, Charlie 50
+    // Expected order: Alice (100), Charlie (50), Bob (0)
+    const aliceRow = rows[1];
+    const charlieRow = rows[2];
+    const bobRow = rows[3];
 
     // Check sorting and content within each row
-    expect(within(bobRow).getByText(/^Bob$/)).toBeInTheDocument();
-    expect(within(bobRow).getByText('150')).toBeInTheDocument();
-    expect(within(aliceRow).getByText(/^Alice/)).toBeInTheDocument(); // Match start for "Alice (You)"
+    // Check Alice (score 100, deaths 0)
+    expect(within(aliceRow).getByText(/^Alice/)).toBeInTheDocument();
     expect(within(aliceRow).getByText('100')).toBeInTheDocument();
+    expect(within(aliceRow).getByText('0')).toBeInTheDocument(); // Deaths should default to 0
+    expect(within(aliceRow).getByText('Online')).toHaveClass('status-online');
+
+    // Check Charlie (score 50, deaths 2)
     expect(within(charlieRow).getByText(/^Charlie$/)).toBeInTheDocument();
     expect(within(charlieRow).getByText('50')).toBeInTheDocument();
-
-    // Check status indicators using within
-    expect(within(bobRow).getByText('Online')).toHaveClass('status-online');
-    expect(within(aliceRow).getByText('Online')).toHaveClass('status-online');
+    expect(within(charlieRow).getByText('2')).toBeInTheDocument();
     expect(within(charlieRow).getByText('Offline')).toHaveClass('status-offline');
+
+    // Check Bob (score 0, deaths 0)
+    expect(within(bobRow).getByText(/^Bob$/)).toBeInTheDocument();
+    // Find cells within Bob's row
+    const bobCells = within(bobRow).getAllByRole('cell');
+    expect(bobCells).toHaveLength(4); // Player, Score, Deaths, Status
+    // Check Score cell (index 1)
+    expect(bobCells[1]).toHaveTextContent('0'); // Score should default to 0
+    // Check Deaths cell (index 2)
+    expect(bobCells[2]).toHaveTextContent('0'); // Deaths should be 0
+    // Check Status cell (index 3)
+    expect(bobCells[3]).toHaveTextContent('Online');
+    expect(bobCells[3]).toHaveClass('status-online');
+
+    // Remove the less specific checks
+    // expect(within(bobRow).getByText('0')).toBeInTheDocument();
+    // const bobDeathsCell = within(bobRow).getAllByText('0')[1];
+    // expect(bobDeathsCell).toBeInTheDocument();
+    // expect(within(bobRow).getByText('Online')).toHaveClass('status-online');
   });
 
   test('highlights the local player row', () => {
@@ -124,14 +144,14 @@ describe('PlayerRankings', () => {
           name: 'Alice',
           color: 'red',
           score: 100,
-          deaths: 1,
+          deaths: undefined as any,
           isConnected: true
         },
         player2: {
           id: 'player2',
           name: 'Bob',
           color: 'blue',
-          score: 150,
+          score: null as any,
           deaths: 0,
           isConnected: true
         }
@@ -175,14 +195,14 @@ describe('PlayerRankings', () => {
           name: 'Alice',
           color: 'red',
           score: 100,
-          deaths: 1,
+          deaths: undefined as any,
           isConnected: true
         },
         player2: {
           id: 'player2',
           name: 'Bob',
           color: 'blue',
-          score: 150,
+          score: null as any,
           deaths: 0,
           isConnected: true
         }

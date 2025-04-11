@@ -1,4 +1,5 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
+import { act } from 'react';
 import { useGameLoop } from './useGameLoop'; // Hook doesn't exist yet
 
 // Tell Jest to use fake timers
@@ -53,9 +54,12 @@ describe('useGameLoop', () => {
     const mockDraw = jest.fn();
     let isActive = true;
 
-    const { rerender } = renderHook(({ active }) => useGameLoop(mockDraw, active), {
-      initialProps: { active: isActive }
-    });
+    const { rerender } = renderHook(
+      ({ active }: { active: boolean }) => useGameLoop(mockDraw, active),
+      {
+        initialProps: { active: isActive }
+      }
+    );
 
     // Advance time, expect calls
     act(() => {
