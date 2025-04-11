@@ -3,7 +3,6 @@ import Modal from 'react-modal'; // Import Modal
 import { NetplayAdapter } from './game/network/NetplayAdapter';
 // Types might still be needed for state-sync
 import { GameState, Direction } from './game/state/types';
-import { UserProfile } from './types'; // Import UserProfile type
 import { GRID_SIZE, CELL_SIZE } from './game/constants';
 import ProfileModal from './components/ProfileModal'; // Import the modal component
 import { useGameInput } from './hooks/useGameInput'; // Import the new hook
