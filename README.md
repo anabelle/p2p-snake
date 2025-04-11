@@ -2,9 +2,9 @@
 
 <!-- Badges -->
 
-[![Unit Tests](https://github.com/anabelle/p2p-snake/actions/workflows/build-deploy.yml/badge.svg?branch=main&event=push&job=unit-test)](https://github.com/anabelle/p2p-snake/actions/workflows/build-deploy.yml)
-[![E2E Tests](https://github.com/anabelle/p2p-snake/actions/workflows/build-deploy.yml/badge.svg?branch=main&event=push&job=e2e-test)](https://github.com/anabelle/p2p-snake/actions/workflows/build-deploy.yml)
-[![Deploy](https://github.com/anabelle/p2p-snake/actions/workflows/build-deploy.yml/badge.svg?branch=main&event=push&job=deploy)](https://github.com/anabelle/p2p-snake/actions/workflows/build-deploy.yml)
+[![Unit Tests](https://github.com/anabelle/p2p-snake/actions/workflows/unit-test.yml/badge.svg?branch=main)](https://github.com/anabelle/p2p-snake/actions/workflows/unit-test.yml)
+[![E2E Tests](https://github.com/anabelle/p2p-snake/actions/workflows/e2e-test.yml/badge.svg?branch=main)](https://github.com/anabelle/p2p-snake/actions/workflows/e2e-test.yml)
+[![Deploy](https://github.com/anabelle/p2p-snake/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/anabelle/p2p-snake/actions/workflows/deploy.yml)
 
 A real-time multiplayer snake game with an always-active AI opponent.
 

@@ -1,0 +1,54 @@
+name: Deploy Frontend # Name for the Deploy workflow (will appear on deploy badge)
+
+on:
+  workflow_run:
+    workflows: ["E2E Tests"] # Trigger after the "E2E Tests" workflow completes
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Only run deployment if the triggering workflow was successful
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    environment: production
+
+    steps:
+      - name: Checkout code
+        # Checks out the commit that triggered the 'CI Tests' workflow
+        uses: actions/checkout@v4
+        with:
+           ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend for deployment
+        run: npm run build
+
+      - name: Install lftp
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lftp
+
+      - name: Prepare deployment files
+        run: |
+          mkdir -p deploy
+          cp -r build/* deploy/
+
+      - name: Deploy via FTP
+        env:
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASS: ${{ secrets.FTP_PASS }}
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+        run: |
+          cd deploy
+          lftp -e "set ftp:ssl-allow no; set ftp:list-options -a; set dns:order \"AAAA A\"; mirror -RLve --delete --parallel=5 . .; quit" -u $FTP_USER,$FTP_PASS $FTP_HOST 
