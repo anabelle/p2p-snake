@@ -1,5 +1,7 @@
 # Multiplayer Snake Game
 
+[![Build and Deploy Frontend](https://github.com/anabelle/p2p-snake/actions/workflows/build-deploy.yml/badge.svg)](https://github.com/anabelle/p2p-snake/actions/workflows/build-deploy.yml)
+
 A real-time multiplayer snake game with an always-active AI opponent.
 
 **Play it live at: [snake.heyanabelle.com](https://snake.heyanabelle.com/)**
