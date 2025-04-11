@@ -1,4 +1,4 @@
-name: Build and Deploy Frontend
+name: CI and Deploy Frontend
 
 on:
   push:
@@ -6,38 +6,72 @@ on:
       - main
 
 jobs:
-  deploy:
+  unit-test:
     runs-on: ubuntu-latest
-    environment: production
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18
-
-      - name: Configure Git
-        run: |
-          git config --global user.email "git@8manos.com"
-          git config --global user.name "Auto Build"
+          cache: 'npm' # Add caching
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci # Use npm ci for faster, more reliable installs
 
-      - name: Run tests
+      - name: Run unit tests
         run: npm run test:ci
+
+  e2e-test:
+    runs-on: ubuntu-latest
+    needs: unit-test # Run after unit tests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # E2E tests need the app to be built and served
+      - name: Build frontend for E2E
+        run: npm run build
 
       - name: Run Cypress E2E tests
         uses: cypress-io/github-action@v6
         with:
-          start: npm run start:dev # Correct command to start the dev server
-          wait-on: 'http://localhost:3000' # URL to wait for
-          # browser: chrome # Optional: specify browser (defaults to Electron)
+          build: npm run build # Re-added build command as required by cypress-io/github-action v6
+          start: npm run start:dev # Check if this correctly serves the build
+          wait-on: 'http://localhost:3000'
+          wait-on-timeout: 120 # Increase wait timeout
 
-      - name: Build frontend
+  deploy:
+    runs-on: ubuntu-latest
+    needs: e2e-test # Run after E2E tests
+    environment: production
+    if: github.ref == 'refs/heads/main' # Only deploy from main branch
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend for deployment
         run: npm run build
 
       - name: Install lftp
@@ -57,4 +91,4 @@ jobs:
           FTP_HOST: ${{ secrets.FTP_HOST }}
         run: |
           cd deploy
-          lftp -e "set ftp:ssl-allow no; mirror -RLve . .;" -u $FTP_USER,$FTP_PASS $FTP_HOST
+          lftp -e "set ftp:ssl-allow no; set ftp:list-options -a; set dns:order \"AAAA A\"; mirror -RLve --delete --parallel=5 . .; quit" -u $FTP_USER,$FTP_PASS $FTP_HOST

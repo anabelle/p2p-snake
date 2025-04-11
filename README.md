@@ -1,6 +1,10 @@
 # Multiplayer Snake Game
 
-[![Build and Deploy Frontend](https://github.com/anabelle/p2p-snake/actions/workflows/build-deploy.yml/badge.svg)](https://github.com/anabelle/p2p-snake/actions/workflows/build-deploy.yml)
+<!-- Badges -->
+
+[![Unit Tests](https://github.com/anabelle/p2p-snake/actions/workflows/build-deploy.yml/badge.svg?branch=main&event=push&job=unit-test)](https://github.com/anabelle/p2p-snake/actions/workflows/build-deploy.yml)
+[![E2E Tests](https://github.com/anabelle/p2p-snake/actions/workflows/build-deploy.yml/badge.svg?branch=main&event=push&job=e2e-test)](https://github.com/anabelle/p2p-snake/actions/workflows/build-deploy.yml)
+[![Deploy](https://github.com/anabelle/p2p-snake/actions/workflows/build-deploy.yml/badge.svg?branch=main&event=push&job=deploy)](https://github.com/anabelle/p2p-snake/actions/workflows/build-deploy.yml)
 
 A real-time multiplayer snake game with an always-active AI opponent.
 
