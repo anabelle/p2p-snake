@@ -33,7 +33,7 @@ jobs:
       - name: Run Cypress E2E tests
         uses: cypress-io/github-action@v6
         with:
-          start: npm start:dev # Command to start the dev server
+          start: npm run start:dev # Correct command to start the dev server
           wait-on: 'http://localhost:3000' # URL to wait for
           # browser: chrome # Optional: specify browser (defaults to Electron)
       
