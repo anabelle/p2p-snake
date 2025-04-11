@@ -13,6 +13,7 @@ import { useGameAdapter } from './hooks/useGameAdapter'; // Import the game adap
 import { useGameStateSync } from './hooks/useGameStateSync'; // Import the new state sync hook
 import { useGameControls } from './hooks/useGameControls'; // Import the new controls hook
 import useCanvasElement from './hooks/useCanvasElement'; // Import the new hook
+import UserInfoSection from './components/UserInfoSection'; // Import the new component
 
 import './App.css'; // Import the CSS file
 
@@ -160,64 +161,12 @@ const App: React.FC = () => {
 
       {isConnected && currentUserProfile && profileStatus === 'loaded' && (
         <div className='info-sections-wrapper'>
-          <div className='info-section' id='your-snake-info'>
-            <h3>Your Snake</h3>
-            <div
-              className='editable-profile-item'
-              onClick={openProfileModal}
-              title='Click to edit profile'
-            >
-              <span>
-                <strong>Name:</strong> {currentUserProfile.name}
-              </span>
-            </div>
-            <div
-              className='editable-profile-item'
-              onClick={openProfileModal}
-              title='Click to edit profile'
-            >
-              <span>
-                <strong>Color: </strong>
-                <span
-                  className='player-color-swatch'
-                  style={{ backgroundColor: currentUserProfile.color }}
-                />
-              </span>
-            </div>
-            <div id='active-powerups'>
-              <strong>Active Effects:</strong>
-              {(() => {
-                if (!syncedGameState?.activePowerUps || !syncedGameState.timestamp) {
-                  return <span style={{ fontStyle: 'italic', opacity: 0.7 }}> None</span>;
-                }
-                const serverTime = syncedGameState.timestamp;
-                const active = syncedGameState.activePowerUps.filter(
-                  (ap) => ap.playerId === localPlayerId && ap.expiresAt > serverTime
-                );
-                if (active.length === 0) {
-                  return <span style={{ fontStyle: 'italic', opacity: 0.7 }}> None</span>;
-                }
-                const descriptions: Record<string, string> = {
-                  SPEED: 'Speed Boost',
-                  SLOW: 'Slow Down',
-                  INVINCIBILITY: 'Invincibility',
-                  DOUBLE_SCORE: 'Double Score'
-                };
-                return active.map((ap) => {
-                  const expiresIn = Math.max(0, Math.round((ap.expiresAt - serverTime) / 1000));
-                  const description = descriptions[ap.type] || ap.type;
-                  const title = `${description} (~${expiresIn}s)`;
-                  return (
-                    <div key={`${ap.playerId}-${ap.type}-${ap.expiresAt}`} title={title}>
-                      <span>
-                        {description} (~{expiresIn}s)
-                      </span>
-                    </div>
-                  );
-                });
-              })()}
-            </div>
-          </div>
+          <UserInfoSection
+            currentUserProfile={currentUserProfile}
+            syncedGameState={syncedGameState}
+            localPlayerId={localPlayerId}
+            openProfileModal={openProfileModal}
+          />
 
           <div className='info-section' id='player-rankings'>
             <h3>Player Rankings</h3>
