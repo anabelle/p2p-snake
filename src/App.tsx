@@ -2,13 +2,13 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Modal from 'react-modal'; // Import Modal
 import { NetplayAdapter } from './game/network/NetplayAdapter';
 // Types might still be needed for state-sync
-import { GameState } from './game/state/types';
+import { GameState, Direction } from './game/state/types';
 import { UserProfile } from './types'; // Import UserProfile type
 import io, { Socket } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 import { GRID_SIZE, CELL_SIZE } from './game/constants';
 import ProfileModal from './components/ProfileModal'; // Import the modal component
-import { DirectionInput, mapKeyCodeToDirection } from './utils/inputUtils';
+import { useGameInput } from './hooks/useGameInput'; // Import the new hook
 
 import './App.css'; // Import the CSS file
 
@@ -18,7 +18,7 @@ if (typeof window !== 'undefined') {
 }
 
 const App: React.FC = () => {
-  const gameContainerRef = useRef<HTMLDivElement>(null);
+  const gameContainerRef = useRef<HTMLDivElement>(null); // Ref for touch events
   // Core component refs
   const socketRef = useRef<Socket | null>(null);
   // localPlayerIdRef is now set *after* profile is confirmed
@@ -55,128 +55,40 @@ const App: React.FC = () => {
   const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
-  // Input State (remains the same)
-  // const localInputStateRef = useRef({ dx: 0, dy: 0 }); // No longer needed for direction
-  // const pressedKeysRef = useRef<Set<string>>(new Set()); // No longer needed for direction
-  // State for touch controls
-  const touchStartPos = useRef<{ x: number; y: number } | null>(null);
+  // --- Input Handling ---
+  // const touchStartPos = useRef<{ x: number; y: number } | null>(null); // Removed: Managed by hook
 
-  // Input Event Listeners
-  useEffect(() => {
-    // --- Keyboard Listeners ---
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Ignore keydowns if the target is an input, textarea, or select element
-      const target = event.target as HTMLElement;
-      if (
-        target &&
-        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')
-      ) {
-        return;
+  // Callback for the useGameInput hook
+  const handleDirectionChange = useCallback((direction: Direction) => {
+    if (socketRef.current && socketRef.current.connected) {
+      let inputToSend: { dx: number; dy: number } | null = null;
+      switch (direction) {
+        case Direction.UP:
+          inputToSend = { dx: 0, dy: 1 };
+          break;
+        case Direction.DOWN:
+          inputToSend = { dx: 0, dy: -1 };
+          break;
+        case Direction.LEFT:
+          inputToSend = { dx: -1, dy: 0 };
+          break;
+        case Direction.RIGHT:
+          inputToSend = { dx: 1, dy: 0 };
+          break;
       }
-
-      const direction: DirectionInput | null = mapKeyCodeToDirection(event.key);
-
-      if (direction && socketRef.current && socketRef.current.connected) {
-        socketRef.current.emit('input', direction);
+      if (inputToSend) {
+        socketRef.current.emit('input', inputToSend);
       }
-
-      // Prevent default scrolling behavior for known movement keys ONLY if not in an input
-      if (direction) {
-        event.preventDefault();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
-    // --- Touch Listeners for Swipe Controls ---
-    const gameArea = gameContainerRef.current; // Capture ref value
-
-    const handleTouchStart = (event: TouchEvent) => {
-      if (event.touches.length === 1) {
-        // Only handle single touch swipes
-        touchStartPos.current = { x: event.touches[0].clientX, y: event.touches[0].clientY };
-        // Prevent default scroll/zoom behavior triggered by touchstart
-        // event.preventDefault(); // May prevent clicking UI elements inside? Test this.
-      }
-    };
-
-    const handleTouchMove = (event: TouchEvent) => {
-      // Prevent scrolling while dragging finger
-      event.preventDefault();
-    };
-
-    const handleTouchEnd = (event: TouchEvent) => {
-      if (!touchStartPos.current || event.changedTouches.length === 0) return;
-
-      const touchEndPos = {
-        x: event.changedTouches[0].clientX,
-        y: event.changedTouches[0].clientY
-      };
-      const dx = touchEndPos.x - touchStartPos.current.x;
-      const dy = touchEndPos.y - touchStartPos.current.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-
-      const swipeThreshold = 30; // Minimum distance for a swipe
-
-      if (distance > swipeThreshold) {
-        // Check if swipe distance is significant
-        const angle = (Math.atan2(dy, dx) * 180) / Math.PI; // Angle in degrees
-        let detectedDirection: { dx: number; dy: number } | null = null;
-
-        // Determine direction based on angle ranges (adjust ranges as needed)
-        if (angle >= -45 && angle < 45) {
-          detectedDirection = { dx: 1, dy: 0 }; // Right
-        } else if (angle >= 45 && angle < 135) {
-          detectedDirection = { dx: 0, dy: -1 }; // Down (screen coordinates are Y-down)
-        } else if (angle >= 135 || angle < -135) {
-          detectedDirection = { dx: -1, dy: 0 }; // Left
-        } else if (angle >= -135 && angle < -45) {
-          detectedDirection = { dx: 0, dy: 1 }; // Up (screen coordinates are Y-down)
-        }
-
-        // Send swipe input directly if valid and connected
-        if (detectedDirection && socketRef.current && socketRef.current.connected) {
-          // // Original logic to prevent reversing - maybe let server handle this?
-          // // const currentInput = localInputStateRef.current;
-          // // const isOpposite =
-          // //       (detectedDirection.dx !== 0 && detectedDirection.dx === -currentInput.dx) ||
-          // //       (detectedDirection.dy !== 0 && detectedDirection.dy === -currentInput.dy);
-          // // if (!isOpposite) {
-          // //     socketRef.current.emit('input', detectedDirection);
-          // //     console.log("SWIPE Detected & Sent - Angle:", angle, " Direction:", detectedDirection);
-          // // } else {
-          // //     console.log("SWIPE Ignored - Opposite direction");
-          // // }
-
-          // Send directly, let server validate/handle opposite direction logic
-          socketRef.current.emit('input', detectedDirection);
-          // console.log("SWIPE Detected & Sent - Angle:", angle, " Direction:", detectedDirection);
-        } else if (!detectedDirection) {
-          console.log('SWIPE Ignored - Angle not in defined range:', angle);
-        }
-      }
-
-      touchStartPos.current = null; // Reset start position
-    };
-
-    if (gameArea) {
-      console.log('Attaching touch listeners...');
-      // Use { passive: false } to allow preventDefault inside listeners
-      gameArea.addEventListener('touchstart', handleTouchStart, { passive: false });
-      gameArea.addEventListener('touchmove', handleTouchMove, { passive: false });
-      gameArea.addEventListener('touchend', handleTouchEnd, { passive: true }); // touchend doesn't need preventDefault usually
     }
+  }, []); // Dependencies: socketRef is stable, no need to include
 
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      if (gameArea) {
-        console.log('Removing touch listeners...');
-        gameArea.removeEventListener('touchstart', handleTouchStart);
-        gameArea.removeEventListener('touchmove', handleTouchMove);
-        gameArea.removeEventListener('touchend', handleTouchEnd);
-      }
-    };
-  }, [canvasHeight, canvasWidth]); // Re-run if canvas size changes to re-attach listeners
+  // Use the custom hook for both keyboard and touch input
+  useGameInput(gameContainerRef, handleDirectionChange); // Pass the ref
+
+  // Input Event Listeners (Removed - Handled entirely by useGameInput hook)
+  // useEffect(() => {
+  //   // ... old touch listener code removed ...
+  // }, []);
 
   // --- Game Loop (Moved outside useEffect, wrapped in useCallback) ---
   const gameLoop = useCallback(() => {
