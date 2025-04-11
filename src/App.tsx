@@ -1,15 +1,17 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, /* useState, */ useCallback } from 'react';
 import Modal from 'react-modal'; // Import Modal
 // import { NetplayAdapter } from './game/network/NetplayAdapter';
 // Types might still be needed for state-sync
-import { GameState, Direction } from './game/state/types';
+import {} from /* GameState, */ /* Direction */ './game/state/types'; // Removed unused Direction
 import { GRID_SIZE, CELL_SIZE } from './game/constants';
 import ProfileModal from './components/ProfileModal'; // Import the modal component
-import { useGameInput } from './hooks/useGameInput'; // Import the new hook
+// import { useGameInput } from './hooks/useGameInput'; // Removed
 import { useWebSocket } from './hooks/useWebSocket'; // Import the WebSocket hook
 import { useUserProfile } from './hooks/useUserProfile'; // Import the new profile hook
 import { useGameLoop } from './hooks/useGameLoop'; // Import the game loop hook
 import { useGameAdapter } from './hooks/useGameAdapter'; // Import the game adapter hook
+import { useGameStateSync } from './hooks/useGameStateSync'; // Import the new state sync hook
+import { useGameControls } from './hooks/useGameControls'; // Import the new controls hook
 
 import './App.css'; // Import the CSS file
 
@@ -59,43 +61,15 @@ const App: React.FC = () => {
     profileStatus
   });
 
+  // --- Game State Synchronization (New Hook) ---
+  const { syncedGameState, gameStateRef } = useGameStateSync(latestGameState);
+
   // --- React State ---
-  const [localGameState, setLocalGameState] = useState<GameState | null>(null); // Initialize as null
-  const gameStateRef = useRef<GameState | null>(localGameState); // Ref for game loop
+  // const [localGameState, setLocalGameState] = useState<GameState | null>(null); // Removed
+  // const gameStateRef = useRef<GameState | null>(localGameState); // Removed
 
-  // --- Update localGameState Ref whenever WebSocket state changes ---
-  useEffect(() => {
-    gameStateRef.current = latestGameState; // Update ref for game loop
-    setLocalGameState(latestGameState); // Update state for rendering
-  }, [latestGameState]);
-
-  // --- Input Handling (Updated to use hook's socket) ---
-  const handleDirectionChange = useCallback(
-    (direction: Direction) => {
-      if (socket && isConnected) {
-        let inputToSend: { dx: number; dy: number } | null = null;
-        switch (direction) {
-          case Direction.UP:
-            inputToSend = { dx: 0, dy: 1 };
-            break;
-          case Direction.DOWN:
-            inputToSend = { dx: 0, dy: -1 };
-            break;
-          case Direction.LEFT:
-            inputToSend = { dx: -1, dy: 0 };
-            break;
-          case Direction.RIGHT:
-            inputToSend = { dx: 1, dy: 0 };
-            break;
-        }
-        if (inputToSend) {
-          socket.emit('input', inputToSend);
-        }
-      }
-    },
-    [socket, isConnected]
-  );
-  useGameInput(gameContainerRef, handleDirectionChange);
+  // --- Input Handling (New Hook) ---
+  useGameControls(socket, isConnected, gameContainerRef);
 
   // --- Determine if Game Loop Should Be Active (Update to use hook's ref) ---
   const isGameLoopActive =
@@ -116,7 +90,7 @@ const App: React.FC = () => {
       }
     }
     // No need to request next frame here, the hook handles it
-  }, [gameAdapterRef]); // Add gameAdapterRef as dependency
+  }, [gameAdapterRef, gameStateRef]); // Added gameStateRef dependency
 
   // --- Use the Game Loop Hook ---
   useGameLoop(drawFrame, isGameLoopActive);
@@ -197,8 +171,8 @@ const App: React.FC = () => {
             {profileStatus === 'loading' ? 'Loading Profile...' : 'Connecting...'}
           </div>
         )}
-        {isConnected && localGameState?.playerCount && localGameState.playerCount > 0 && (
-          <div className='player-count-badge'>Players: {localGameState.playerCount}</div>
+        {isConnected && syncedGameState?.playerCount && syncedGameState.playerCount > 0 && (
+          <div className='player-count-badge'>Players: {syncedGameState.playerCount}</div>
         )}
       </div>
 
@@ -231,11 +205,11 @@ const App: React.FC = () => {
             <div id='active-powerups'>
               <strong>Active Effects:</strong>
               {(() => {
-                if (!localGameState?.activePowerUps || !localGameState.timestamp) {
+                if (!syncedGameState?.activePowerUps || !syncedGameState.timestamp) {
                   return <span style={{ fontStyle: 'italic', opacity: 0.7 }}> None</span>;
                 }
-                const serverTime = localGameState.timestamp;
-                const active = localGameState.activePowerUps.filter(
+                const serverTime = syncedGameState.timestamp;
+                const active = syncedGameState.activePowerUps.filter(
                   (ap) => ap.playerId === localPlayerId && ap.expiresAt > serverTime
                 );
                 if (active.length === 0) {
@@ -277,7 +251,7 @@ const App: React.FC = () => {
                 </thead>
                 <tbody>
                   {(() => {
-                    const playerStats = localGameState?.playerStats || {};
+                    const playerStats = syncedGameState?.playerStats || {};
                     const players = Object.values(playerStats).sort(
                       (a, b) => (b.score ?? 0) - (a.score ?? 0)
                     );
