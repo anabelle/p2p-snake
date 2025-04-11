@@ -81,6 +81,7 @@
       "text",
       "text-summary",
       "lcov"
-    ]
+    ],
+    "watchPlugins": []
   }
 }
