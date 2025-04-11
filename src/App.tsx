@@ -14,7 +14,8 @@ import { useGameControls } from './hooks/useGameControls'; // Import the new con
 import { useGameRenderer } from './hooks/useGameRenderer'; // Import the new renderer hook
 import useCanvasElement from './hooks/useCanvasElement'; // Import the new hook
 import UserInfoSection from './components/UserInfoSection'; // Import the new component
-import PlayerRankings from './components/PlayerRankings'; // Import the new component
+import PlayerRankings from './components/PlayerRankings'; // Import the rankings component
+import PowerUpLegend from './components/PowerUpLegend'; // Import the legend component
 
 import './App.css'; // Import the CSS file
 
@@ -161,23 +162,7 @@ const App: React.FC = () => {
             isConnected={isConnected}
           />
 
-          <div className='info-section' id='powerup-legend'>
-            <h3>Power-Up Legend</h3>
-            <ul>
-              <li>
-                <span className='powerup-symbol speed'>S</span> - Speed Boost
-              </li>
-              <li>
-                <span className='powerup-symbol slow'>W</span> - Slow Down
-              </li>
-              <li>
-                <span className='powerup-symbol invincibility'>I</span> - Invincibility
-              </li>
-              <li>
-                <span className='powerup-symbol double-score'>2x</span> - Double Score
-              </li>
-            </ul>
-          </div>
+          <PowerUpLegend />
         </div>
       )}
     </div>
