@@ -4,11 +4,11 @@ import { NetplayAdapter } from './game/network/NetplayAdapter';
 // Types might still be needed for state-sync
 import { GameState, Direction } from './game/state/types';
 import { UserProfile } from './types'; // Import UserProfile type
-import { v4 as uuidv4 } from 'uuid';
 import { GRID_SIZE, CELL_SIZE } from './game/constants';
 import ProfileModal from './components/ProfileModal'; // Import the modal component
 import { useGameInput } from './hooks/useGameInput'; // Import the new hook
 import { useWebSocket } from './hooks/useWebSocket'; // Import the WebSocket hook
+import { useUserProfile } from './hooks/useUserProfile'; // Import the new profile hook
 
 import './App.css'; // Import the CSS file
 
@@ -19,7 +19,6 @@ if (typeof window !== 'undefined') {
 
 const App: React.FC = () => {
   const gameContainerRef = useRef<HTMLDivElement>(null); // Ref for touch events and canvas container
-  const localPlayerIdRef = useRef<string>('');
   const gameAdapterRef = useRef<NetplayAdapter | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameRef = useRef<number>();
@@ -37,40 +36,31 @@ const App: React.FC = () => {
     disconnect: disconnectWebSocket // Use this function from the hook
   } = useWebSocket();
 
+  // --- Use User Profile Hook ---
+  const {
+    currentUserProfile, // State from hook
+    isProfileModalOpen, // State from hook
+    profileStatus, // State from hook ('loading', 'loaded', 'needed', 'error')
+    localPlayerId, // Value from hook
+    openProfileModal, // Function from hook
+    closeProfileModal, // Function from hook
+    saveProfile // Function from hook
+  } = useUserProfile({
+    connectWebSocket, // Pass the connect function from useWebSocket
+    socket // Pass the socket instance from useWebSocket
+    // Pass latestGameState later for server sync
+    // latestGameState,
+  });
+
   // --- React State ---
   const [localGameState, setLocalGameState] = useState<GameState | null>(null); // Initialize as null
   const gameStateRef = useRef<GameState | null>(localGameState); // Ref for game loop
-
-  // --- Profile State ---
-  const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // --- Update localGameState Ref whenever WebSocket state changes ---
   useEffect(() => {
     gameStateRef.current = latestGameState; // Update ref for game loop
     setLocalGameState(latestGameState); // Update state for rendering
   }, [latestGameState]);
-
-  // --- Sync User Profile with Server State ---
-  useEffect(() => {
-    if (latestGameState && localPlayerIdRef.current && currentUserProfile) {
-      const playerStatsFromServer = latestGameState.playerStats?.[localPlayerIdRef.current];
-      if (
-        playerStatsFromServer &&
-        (playerStatsFromServer.name !== currentUserProfile.name ||
-          playerStatsFromServer.color !== currentUserProfile.color)
-      ) {
-        const updatedProfile = {
-          id: localPlayerIdRef.current,
-          name: playerStatsFromServer.name ?? '',
-          color: playerStatsFromServer.color
-        };
-        console.log('Updating local profile from server state:', updatedProfile);
-        localStorage.setItem('snakeUserProfile', JSON.stringify(updatedProfile));
-        setCurrentUserProfile(updatedProfile);
-      }
-    }
-  }, [latestGameState, currentUserProfile]);
 
   // --- Input Handling (Updated to use hook's socket) ---
   const handleDirectionChange = useCallback(
@@ -127,28 +117,29 @@ const App: React.FC = () => {
       animationFrameRef.current = undefined;
       console.log('Game loop stopping: Adapter or Canvas ref missing.');
     }
-  }, []); // No dependencies needed
+  }, []);
 
   // --- Game Adapter Initialization ---
   const startGameAdapter = useCallback(
-    (playerId: string) => {
-      // Check if adapter already exists OR if playerId is missing
-      if (gameAdapterRef.current || !playerId) {
-        // If adapter exists, ensure loop is running
-        if (gameAdapterRef.current && !animationFrameRef.current) {
+    (playerId: string | null) => {
+      if (!playerId) {
+        console.warn('startGameAdapter called without a valid playerId.');
+        // Clean up existing adapter if playerId becomes null
+        if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = undefined;
+        gameAdapterRef.current = null;
+        return;
+      }
+
+      if (gameAdapterRef.current) {
+        if (!animationFrameRef.current) {
           console.log('Adapter exists, ensuring game loop is running.');
           gameLoop();
         }
-        // If no playerId, log warning
-        if (!playerId) {
-          console.warn('startGameAdapter called without a valid playerId.');
-        }
-        return; // Don't proceed if adapter exists or playerId is missing
+        return;
       }
 
-      // Proceed with adapter creation if it doesn't exist and playerId is provided
       try {
-        // Belt-and-suspenders check for canvas before creating adapter
         if (!canvasRef.current) {
           console.error('startGameAdapter called but canvasRef is null!');
           return;
@@ -156,7 +147,6 @@ const App: React.FC = () => {
         console.log(`Creating NetplayAdapter for player ${playerId}...`);
         gameAdapterRef.current = new NetplayAdapter(canvasRef.current, playerId);
         console.log('NetplayAdapter created. Starting client game loop...');
-        // Ensure loop starts if not already running
         if (!animationFrameRef.current) {
           gameLoop();
         }
@@ -167,55 +157,38 @@ const App: React.FC = () => {
     [gameLoop]
   );
 
-  // --- Effect to Manage Game Adapter based on Connection Status ---
+  // --- Effect to Manage Game Adapter based on Connection and Profile (Use localPlayerId) ---
   useEffect(() => {
-    if (isConnected && canvasRef.current && currentUserProfile?.id) {
+    if (isConnected && canvasRef.current && localPlayerId && profileStatus === 'loaded') {
+      console.log(`Conditions met for player ${localPlayerId}. Ensuring game adapter & loop.`);
+      startGameAdapter(localPlayerId);
+    } else {
+      // Clean up adapter if disconnected, no localPlayerId, or profile isn't loaded
       console.log(
-        `Conditions met for player ${currentUserProfile.id}. Ensuring game adapter & loop.`
+        'Conditions not met for game adapter (disconnected, no profile, or loading). Cleaning up adapter and loop.'
       );
-      startGameAdapter(currentUserProfile.id);
-    } else if (!isConnected) {
-      console.log('Socket disconnected, cleaning up adapter and loop.');
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = undefined;
-      }
-      gameAdapterRef.current = null;
+      // Call startGameAdapter with null to handle cleanup
+      startGameAdapter(null);
     }
-    // Dependencies simplified
-  }, [isConnected, startGameAdapter, currentUserProfile]);
+  }, [isConnected, startGameAdapter, localPlayerId, profileStatus]); // Add localPlayerId and profileStatus
 
-  // --- Centralized Setup Effect (Handles profile load, initial canvas, main cleanup) ---
+  // --- Effect to handle profile status changes (e.g., open modal) ---
   useEffect(() => {
-    // --- Load Profile or Trigger Modal ---
-    const loadAndInitialize = () => {
-      const storedProfile = localStorage.getItem('snakeUserProfile');
-      if (storedProfile) {
-        try {
-          const profile: UserProfile = JSON.parse(storedProfile);
-          if (profile.id && profile.name && profile.color) {
-            console.log('Loaded profile, setting state and connecting:', profile);
-            localPlayerIdRef.current = profile.id;
-            setCurrentUserProfile(profile); // Set state first
-            connectWebSocket(profile); // THEN connect with the hook's function
-          } else {
-            handleInvalidProfile('Invalid profile structure');
-          }
-        } catch (e) {
-          handleInvalidProfile(`Error parsing profile: ${e}`);
-        }
-      } else {
-        console.log('No profile found, opening modal.');
-        setIsProfileModalOpen(true);
-      }
-    };
+    if (profileStatus === 'needed') {
+      console.log("Profile status is 'needed', opening profile modal.");
+      openProfileModal();
+    }
+    // Handle 'error' status if needed (e.g., show an error message)
+    if (profileStatus === 'error') {
+      console.error("Profile status is 'error'. Could not load or parse profile.");
+      // Potentially show a persistent error message to the user here
+      // For now, we still open the modal to allow creating a new one.
+      openProfileModal();
+    }
+  }, [profileStatus, openProfileModal]);
 
-    const handleInvalidProfile = (message: string) => {
-      console.error(message);
-      localStorage.removeItem('snakeUserProfile');
-      setIsProfileModalOpen(true);
-    };
-
+  // --- Centralized Setup Effect (Simplified: mainly for canvas and cleanup) ---
+  useEffect(() => {
     // --- Canvas Creation (Ensure it exists initially if possible) ---
     let canvasElementCreated = false;
     if (!canvasRef.current && gameContainerRef.current) {
@@ -227,9 +200,6 @@ const App: React.FC = () => {
       canvasRef.current = canvas;
       canvasElementCreated = true;
     }
-
-    // --- Start Initial Load/Connection ---
-    loadAndInitialize();
 
     // --- Cleanup function for this main setup effect ---
     return () => {
@@ -251,44 +221,7 @@ const App: React.FC = () => {
         canvasRef.current = null;
       }
     };
-  }, [connectWebSocket, disconnectWebSocket, canvasHeight, canvasWidth]);
-
-  // --- Profile Modal Handlers (No changes needed) ---
-  const handleOpenProfileModal = () => {
-    setIsProfileModalOpen(true);
-  };
-
-  const handleCloseProfileModal = () => {
-    setIsProfileModalOpen(false);
-  };
-
-  // --- handleSaveProfile (Updated to use hook's connect/socket) ---
-  const handleSaveProfile = (profileData: UserProfile) => {
-    const isNewUser = !currentUserProfile || !profileData.id;
-    const profileToSave: UserProfile = {
-      ...profileData,
-      id: isNewUser ? uuidv4() : profileData.id
-    };
-
-    console.log(isNewUser ? 'Saving NEW profile:' : 'Saving UPDATED profile:', profileToSave);
-    localStorage.setItem('snakeUserProfile', JSON.stringify(profileToSave));
-    localPlayerIdRef.current = profileToSave.id;
-    setCurrentUserProfile(profileToSave);
-    setIsProfileModalOpen(false);
-
-    if (isNewUser) {
-      console.log('Connecting WebSocket for new user...');
-      connectWebSocket(profileToSave);
-    } else if (socket?.connected) {
-      const updatePayload = { name: profileToSave.name, color: profileToSave.color };
-      console.log('Emitting profile update to server:', updatePayload);
-      socket.emit('updateProfile', updatePayload);
-    } else {
-      console.warn(
-        'Profile updated, but socket not connected. Update will be sent on next connection.'
-      );
-    }
-  };
+  }, [disconnectWebSocket, canvasHeight, canvasWidth]); // Removed connectWebSocket dependency
 
   // --- Render function (Structure remains the same as original) ---
   return (
@@ -297,8 +230,8 @@ const App: React.FC = () => {
 
       <ProfileModal
         isOpen={isProfileModalOpen}
-        onRequestClose={handleCloseProfileModal}
-        onSave={handleSaveProfile}
+        onRequestClose={closeProfileModal}
+        onSave={saveProfile}
         initialProfile={currentUserProfile}
       />
 
@@ -311,21 +244,23 @@ const App: React.FC = () => {
           ['--canvas-width' as string]: `${canvasWidth}px`
         }}
       >
-        {!isConnected && !isProfileModalOpen && (
-          <div className='connecting-overlay'>Connecting...</div>
+        {!isConnected && profileStatus !== 'loaded' && !isProfileModalOpen && (
+          <div className='connecting-overlay'>
+            {profileStatus === 'loading' ? 'Loading Profile...' : 'Connecting...'}
+          </div>
         )}
         {isConnected && localGameState?.playerCount && localGameState.playerCount > 0 && (
           <div className='player-count-badge'>Players: {localGameState.playerCount}</div>
         )}
       </div>
 
-      {isConnected && currentUserProfile && (
+      {isConnected && currentUserProfile && profileStatus === 'loaded' && (
         <div className='info-sections-wrapper'>
           <div className='info-section' id='your-snake-info'>
             <h3>Your Snake</h3>
             <div
               className='editable-profile-item'
-              onClick={handleOpenProfileModal}
+              onClick={openProfileModal}
               title='Click to edit profile'
             >
               <span>
@@ -334,7 +269,7 @@ const App: React.FC = () => {
             </div>
             <div
               className='editable-profile-item'
-              onClick={handleOpenProfileModal}
+              onClick={openProfileModal}
               title='Click to edit profile'
             >
               <span>
@@ -353,7 +288,7 @@ const App: React.FC = () => {
                 }
                 const serverTime = localGameState.timestamp;
                 const active = localGameState.activePowerUps.filter(
-                  (ap) => ap.playerId === localPlayerIdRef.current && ap.expiresAt > serverTime
+                  (ap) => ap.playerId === localPlayerId && ap.expiresAt > serverTime
                 );
                 if (active.length === 0) {
                   return <span style={{ fontStyle: 'italic', opacity: 0.7 }}> None</span>;
@@ -398,11 +333,13 @@ const App: React.FC = () => {
                     const players = Object.values(playerStats).sort(
                       (a, b) => (b.score ?? 0) - (a.score ?? 0)
                     );
+
                     if (players.length > 0) {
                       return players.map((player) => (
                         <tr
                           key={player.id}
-                          className={player.id === localPlayerIdRef.current ? 'highlight-row' : ''}
+                          // Use localPlayerId from hook
+                          className={player.id === localPlayerId ? 'highlight-row' : ''}
                         >
                           <td>
                             <div>
@@ -411,7 +348,8 @@ const App: React.FC = () => {
                                 style={{ backgroundColor: player.color }}
                               />
                               {player.name || player.id.substring(0, 6)}
-                              {player.id === localPlayerIdRef.current ? ' (You)' : ''}
+                              {/* Use localPlayerId from hook */}
+                              {player.id === localPlayerId ? ' (You)' : ''}
                             </div>
                           </td>
                           <td>{player.score ?? 0}</td>
@@ -422,11 +360,15 @@ const App: React.FC = () => {
                         </tr>
                       ));
                     } else {
+                      // Handle the "no players" case
+                      // Since we are inside the block conditional on profileStatus === 'loaded',
+                      // we only need to check the connection status.
+                      const statusMessage = isConnected
+                        ? 'Waiting for players...'
+                        : 'Connecting...';
                       return (
                         <tr>
-                          <td colSpan={4}>
-                            {isConnected ? 'Waiting for players...' : 'Connecting...'}
-                          </td>
+                          <td colSpan={4}>{statusMessage}</td>
                         </tr>
                       );
                     }

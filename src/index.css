@@ -394,9 +394,7 @@ button:disabled {
   position: relative;
   /* Ensure the container doesn't exceed screen width */
   max-width: 100%;
-  /* Optional: center the container if it's narrower than the screen */
-  margin-left: auto;
-  margin-right: auto;
+
   /* Make the canvas element scale visually within the container */
   & > canvas {
     display: block; /* Remove extra space below canvas */
