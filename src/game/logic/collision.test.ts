@@ -4,7 +4,7 @@ import {
   checkFoodCollision,
   checkPowerUpCollision
 } from './collision';
-import { Point, Snake, Food, PowerUp, Direction, PowerUpType } from '../state/types'; // Import necessary types
+import { Snake, Food, PowerUp, Direction, PowerUpType } from '../state/types'; // Import necessary types
 
 describe('Collision Logic', () => {
   const gridSize = { width: 10, height: 10 };
@@ -33,25 +33,46 @@ describe('Collision Logic', () => {
     });
 
     it('should return false if point is exactly on the boundary edge (valid)', () => {
-        expect(hasCollidedWithWall({ x: 0, y: 5 }, gridSize)).toBe(false);
-        expect(hasCollidedWithWall({ x: 9, y: 5 }, gridSize)).toBe(false);
-        expect(hasCollidedWithWall({ x: 5, y: 0 }, gridSize)).toBe(false);
-        expect(hasCollidedWithWall({ x: 5, y: 9 }, gridSize)).toBe(false);
+      expect(hasCollidedWithWall({ x: 0, y: 5 }, gridSize)).toBe(false);
+      expect(hasCollidedWithWall({ x: 9, y: 5 }, gridSize)).toBe(false);
+      expect(hasCollidedWithWall({ x: 5, y: 0 }, gridSize)).toBe(false);
+      expect(hasCollidedWithWall({ x: 5, y: 9 }, gridSize)).toBe(false);
     });
   });
 
   describe('hasCollidedWithSnake', () => {
     const snake1: Snake = {
-      id: 's1', color: 'red', score: 0, direction: Direction.RIGHT, activePowerUps: [],
-      body: [{ x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }]
+      id: 's1',
+      color: 'red',
+      score: 0,
+      direction: Direction.RIGHT,
+      activePowerUps: [],
+      body: [
+        { x: 5, y: 5 },
+        { x: 4, y: 5 },
+        { x: 3, y: 5 }
+      ]
     };
     const snake2: Snake = {
-      id: 's2', color: 'blue', score: 0, direction: Direction.LEFT, activePowerUps: [],
-      body: [{ x: 1, y: 1 }, { x: 2, y: 1 }, { x: 3, y: 1 }]
+      id: 's2',
+      color: 'blue',
+      score: 0,
+      direction: Direction.LEFT,
+      activePowerUps: [],
+      body: [
+        { x: 1, y: 1 },
+        { x: 2, y: 1 },
+        { x: 3, y: 1 }
+      ]
     };
-    const singleSegmentSnake: Snake = { // Added for edge case testing
-        id: 's3', color: 'green', score: 0, direction: Direction.UP, activePowerUps: [],
-        body: [{ x: 8, y: 8 }]
+    const singleSegmentSnake: Snake = {
+      // Added for edge case testing
+      id: 's3',
+      color: 'green',
+      score: 0,
+      direction: Direction.UP,
+      activePowerUps: [],
+      body: [{ x: 8, y: 8 }]
     };
     const snakes = [snake1, snake2, singleSegmentSnake];
 
@@ -60,10 +81,10 @@ describe('Collision Logic', () => {
     });
 
     it('should return true if point collides with own snake body (excluding head)', () => {
-        // Point collides with snake1's second segment
-        expect(hasCollidedWithSnake({ x: 4, y: 5 }, snakes, 's1')).toBe(true);
-        // Point collides with snake1's third segment
-        expect(hasCollidedWithSnake({ x: 3, y: 5 }, snakes, 's1')).toBe(true);
+      // Point collides with snake1's second segment
+      expect(hasCollidedWithSnake({ x: 4, y: 5 }, snakes, 's1')).toBe(true);
+      // Point collides with snake1's third segment
+      expect(hasCollidedWithSnake({ x: 3, y: 5 }, snakes, 's1')).toBe(true);
     });
 
     it('should return false if point collides with own snake head when currentSnakeId is provided', () => {
@@ -71,7 +92,7 @@ describe('Collision Logic', () => {
       expect(hasCollidedWithSnake({ x: 5, y: 5 }, snakes, 's1')).toBe(false);
     });
 
-     it('should return true if point collides with own snake head when currentSnakeId is NOT provided', () => {
+    it('should return true if point collides with own snake head when currentSnakeId is NOT provided', () => {
       // Point is snake1's head, but we don't exclude it
       expect(hasCollidedWithSnake({ x: 5, y: 5 }, snakes)).toBe(true);
     });
@@ -81,7 +102,7 @@ describe('Collision Logic', () => {
       expect(hasCollidedWithSnake({ x: 9, y: 9 }, snakes, 's1')).toBe(false);
     });
 
-     it('should return false for an empty list of snakes', () => {
+    it('should return false for an empty list of snakes', () => {
       expect(hasCollidedWithSnake({ x: 1, y: 1 }, [])).toBe(false);
     });
 
@@ -139,4 +160,4 @@ describe('Collision Logic', () => {
       expect(checkPowerUpCollision({ x: 1, y: 1 }, [])).toBeNull();
     });
   });
-}); 
+});

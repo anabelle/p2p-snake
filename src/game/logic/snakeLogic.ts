@@ -1,6 +1,6 @@
-import { Direction, Point, Snake } from "../state/types";
-import { generateRandomColor, generateRandomPosition, mulberry32 } from "./prng";
-import { PLAYER_COLORS } from "../constants"; // Import player colors
+import { Direction, Point, Snake } from '../state/types';
+import { generateRandomPosition } from './prng';
+import { PLAYER_COLORS } from '../constants'; // Import player colors
 
 // Helper function to get a color for a player ID
 // Uses a simple hash modulo to assign a deterministic color from the list
@@ -29,8 +29,8 @@ export const generateNewSnake = (
   let finalColor = preferredColor;
   const hexColorRegex = /^#[0-9A-F]{6}$/i;
   if (!finalColor || !hexColorRegex.test(finalColor)) {
-      console.log(`Preferred color '${preferredColor}' for ${id} invalid or missing, using hash.`);
-      finalColor = getPlayerColor(id);
+    console.log(`Preferred color '${preferredColor}' for ${id} invalid or missing, using hash.`);
+    finalColor = getPlayerColor(id);
   }
 
   if (!position) {
@@ -44,7 +44,7 @@ export const generateNewSnake = (
       body: [{ x: 0, y: 0 }],
       direction: Direction.RIGHT,
       score: 0,
-      activePowerUps: [],
+      activePowerUps: []
     };
   }
 
@@ -57,12 +57,15 @@ export const generateNewSnake = (
     body: [position],
     direction: initialDirection,
     score: 0,
-    activePowerUps: [],
+    activePowerUps: []
   };
 };
 
 // Calculate the next head position based on current direction, including screen wrapping
-export const getNextHeadPosition = (snake: Snake, gridSize: { width: number; height: number }): Point => {
+export const getNextHeadPosition = (
+  snake: Snake,
+  gridSize: { width: number; height: number }
+): Point => {
   if (snake.body.length === 0) {
     // Should not happen for a valid snake
     console.warn(`Snake ${snake.id} has empty body.`);
@@ -72,15 +75,23 @@ export const getNextHeadPosition = (snake: Snake, gridSize: { width: number; hei
 
   // Calculate raw next position
   switch (snake.direction) {
-    case Direction.UP: head.y -= 1; break;
-    case Direction.DOWN: head.y += 1; break;
-    case Direction.LEFT: head.x -= 1; break;
-    case Direction.RIGHT: head.x += 1; break;
+    case Direction.UP:
+      head.y -= 1;
+      break;
+    case Direction.DOWN:
+      head.y += 1;
+      break;
+    case Direction.LEFT:
+      head.x -= 1;
+      break;
+    case Direction.RIGHT:
+      head.x += 1;
+      break;
   }
 
   // Apply screen wrapping
-  head.x = (head.x % gridSize.width + gridSize.width) % gridSize.width;
-  head.y = (head.y % gridSize.height + gridSize.height) % gridSize.height;
+  head.x = ((head.x % gridSize.width) + gridSize.width) % gridSize.width;
+  head.y = ((head.y % gridSize.height) + gridSize.height) % gridSize.height;
 
   return head;
 };
@@ -104,6 +115,6 @@ export const growSnake = (snake: Snake): Snake => {
   const tail = snake.body[snake.body.length - 1];
   return {
     ...snake,
-    body: [...snake.body, { ...tail }], // Add a new segment identical to the last one
+    body: [...snake.body, { ...tail }] // Add a new segment identical to the last one
   };
-}; 
+};

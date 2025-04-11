@@ -1,5 +1,5 @@
 import React from 'react';
-import { GameState, PowerUpType, ActivePowerUp } from '../game/state/types';
+import { GameState, PowerUpType } from '../game/state/types';
 
 interface GameInfoProps {
   gameState: GameState;
@@ -23,25 +23,21 @@ const getPowerUpName = (type: PowerUpType): string => {
   }
 };
 
-const GameInfo: React.FC<GameInfoProps> = ({ 
-  gameState, 
-  localPlayerId,
-  connectedPlayers
-}) => {
+const GameInfo: React.FC<GameInfoProps> = ({ gameState, localPlayerId, connectedPlayers }) => {
   // Find the local player's snake
-  const localSnake = gameState.snakes.find(snake => snake.id === localPlayerId);
-  
+  const localSnake = gameState.snakes.find((snake) => snake.id === localPlayerId);
+
   // Format the power-ups with user-friendly names
   const formatPowerUps = () => {
     if (!localSnake || localSnake.activePowerUps.length === 0) {
       return 'None';
     }
-    
-    return localSnake.activePowerUps.map(powerUp => getPowerUpName(powerUp.type)).join(', ');
+
+    return localSnake.activePowerUps.map((powerUp) => getPowerUpName(powerUp.type)).join(', ');
   };
-  
+
   return (
-    <div className="game-info">
+    <div className='game-info'>
       <h2>Snake Game</h2>
       <div>
         <strong>Your Score:</strong> {localSnake ? localSnake.score : 0}
@@ -50,17 +46,16 @@ const GameInfo: React.FC<GameInfoProps> = ({
         <strong>Players Connected:</strong> {connectedPlayers}
       </div>
       <div>
-        <strong>Active Power-ups:</strong>{' '}
-        {formatPowerUps()}
+        <strong>Active Power-ups:</strong> {formatPowerUps()}
       </div>
-      <div aria-live="polite" className="visually-hidden">
+      <div aria-live='polite' className='visually-hidden'>
         Game state updated. Your score: {localSnake ? localSnake.score : 0}.
-        {localSnake && localSnake.activePowerUps.length > 0 && 
-          ` Active power-ups: ${formatPowerUps()}.`
-        }
+        {localSnake &&
+          localSnake.activePowerUps.length > 0 &&
+          ` Active power-ups: ${formatPowerUps()}.`}
       </div>
     </div>
   );
 };
 
-export default GameInfo; 
+export default GameInfo;

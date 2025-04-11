@@ -34,38 +34,38 @@ export class GameManager {
     const initialSeed = Date.now();
     const initialRandomFunc = mulberry32(initialSeed);
     const initialState: GameState = {
-        snakes: [],
-        food: [],
-        powerUps: [],
-        activePowerUps: [],
-        gridSize: GRID_SIZE,
-        timestamp: performance.now(),
-        sequence: 0,
-        rngSeed: initialSeed,
-        playerCount: 0,
-        powerUpCounter: 0,
-        playerStats: {}
+      snakes: [],
+      food: [],
+      powerUps: [],
+      activePowerUps: [],
+      gridSize: GRID_SIZE,
+      timestamp: performance.now(),
+      sequence: 0,
+      rngSeed: initialSeed,
+      playerCount: 0,
+      powerUpCounter: 0,
+      playerStats: {}
     };
 
     // Add AI snake stats
     initialState.playerStats[AI_SNAKE_ID] = {
-        id: AI_SNAKE_ID,
-        name: "AI Snake",
-        color: "#FF5500",
-        score: this.currentGameState?.playerStats?.[AI_SNAKE_ID]?.score || 0, // Preserve score?
-        deaths: this.currentGameState?.playerStats?.[AI_SNAKE_ID]?.deaths || 0, // Preserve deaths?
-        isConnected: true // AI is always 'connected'
+      id: AI_SNAKE_ID,
+      name: 'AI Snake',
+      color: '#FF5500',
+      score: this.currentGameState?.playerStats?.[AI_SNAKE_ID]?.score || 0, // Preserve score?
+      deaths: this.currentGameState?.playerStats?.[AI_SNAKE_ID]?.deaths || 0, // Preserve deaths?
+      isConnected: true // AI is always 'connected'
     };
 
     // Generate initial food
     const occupiedInitial = getOccupiedPositions(initialState);
     const foodCount = 3;
     for (let i = 0; i < foodCount; i++) {
-        const food = generateFood(initialState.gridSize, occupiedInitial, initialRandomFunc);
-        if (food) {
-            initialState.food.push(food);
-            occupiedInitial.push(food.position);
-        }
+      const food = generateFood(initialState.gridSize, occupiedInitial, initialRandomFunc);
+      if (food) {
+        initialState.food.push(food);
+        occupiedInitial.push(food.position);
+      }
     }
     initialState.rngSeed = initialRandomFunc() * 4294967296;
 
@@ -78,7 +78,12 @@ export class GameManager {
     // The AI snake logic within updateGame should handle its creation.
     const emptyInputs = new Map<string, Direction>();
     const emptyPlayerSet = new Set<string>(); // No real players yet
-    this.currentGameState = updateGame(this.currentGameState, emptyInputs, this.currentGameState.timestamp, emptyPlayerSet);
+    this.currentGameState = updateGame(
+      this.currentGameState,
+      emptyInputs,
+      this.currentGameState.timestamp,
+      emptyPlayerSet
+    );
   }
 
   // --- Player Management ---
@@ -86,40 +91,40 @@ export class GameManager {
     if (this.connectedPlayerIds.has(playerId)) {
       console.warn(`Player ${playerId} already connected.`);
       // Update connection status if they were previously disconnected
-      if(this.currentGameState.playerStats[playerId]) {
-          this.currentGameState.playerStats[playerId].isConnected = true;
-          this.currentGameState.playerStats[playerId].name = name; // Update name on reconnect
-          // We don't force color here, let profile update handle changes
+      if (this.currentGameState.playerStats[playerId]) {
+        this.currentGameState.playerStats[playerId].isConnected = true;
+        this.currentGameState.playerStats[playerId].name = name; // Update name on reconnect
+        // We don't force color here, let profile update handle changes
       }
     } else {
       this.connectedPlayerIds.add(playerId);
       this.playerInputs.set(playerId, { dx: 0, dy: 0 }); // Initialize input
 
-       if (!this.currentGameState.playerStats) {
-          this.currentGameState.playerStats = {};
-       }
+      if (!this.currentGameState.playerStats) {
+        this.currentGameState.playerStats = {};
+      }
 
-       if (this.currentGameState.playerStats[playerId]) {
-         // Player reconnecting, update status and name
-         this.currentGameState.playerStats[playerId] = {
-           ...this.currentGameState.playerStats[playerId],
-           isConnected: true,
-           name: name // Update name in case it changed
-           // Keep existing score/deaths
-         };
-       } else {
-          // Initial stats for a completely new player
-          this.currentGameState.playerStats[playerId] = {
-              id: playerId,
-              name: name,
-              color: color, // Store preferred color
-              score: 0,
-              deaths: 0,
-              isConnected: true
-          };
-       }
+      if (this.currentGameState.playerStats[playerId]) {
+        // Player reconnecting, update status and name
+        this.currentGameState.playerStats[playerId] = {
+          ...this.currentGameState.playerStats[playerId],
+          isConnected: true,
+          name: name // Update name in case it changed
+          // Keep existing score/deaths
+        };
+      } else {
+        // Initial stats for a completely new player
+        this.currentGameState.playerStats[playerId] = {
+          id: playerId,
+          name: name,
+          color: color, // Store preferred color
+          score: 0,
+          deaths: 0,
+          isConnected: true
+        };
+      }
     }
-     // Update player count in game state
+    // Update player count in game state
     this.currentGameState.playerCount = this.connectedPlayerIds.size;
   }
 
@@ -138,34 +143,40 @@ export class GameManager {
 
   // --- Input and Profile Updates ---
   setPlayerInput(playerId: string, input: PlayerInputData): void {
-     if (this.connectedPlayerIds.has(playerId) && // Ensure player is still connected
-         typeof input?.dx === 'number' && typeof input?.dy === 'number') {
-       this.playerInputs.set(playerId, input);
-     }
+    if (
+      this.connectedPlayerIds.has(playerId) && // Ensure player is still connected
+      typeof input?.dx === 'number' &&
+      typeof input?.dy === 'number'
+    ) {
+      this.playerInputs.set(playerId, input);
+    }
   }
 
   queueProfileUpdate(update: ProfileUpdate): void {
-      // Basic validation (can be enhanced)
-      if (!this.currentGameState.playerStats || !this.currentGameState.playerStats[update.playerId]) {
-          console.warn(`Received updateProfile for unknown or disconnected player: ${update.playerId}`);
-          return;
-      }
-      const hexColorRegex = /^#[0-9A-F]{6}$/i;
-      if (!update.name || !update.color || !hexColorRegex.test(update.color)) {
-          console.warn(`Invalid profile update data for ${update.playerId}:`, update);
-          return;
-      }
-      this.profileUpdateQueue.push(update);
+    // Basic validation (can be enhanced)
+    if (!this.currentGameState.playerStats || !this.currentGameState.playerStats[update.playerId]) {
+      console.warn(`Received updateProfile for unknown or disconnected player: ${update.playerId}`);
+      return;
+    }
+    const hexColorRegex = /^#[0-9A-F]{6}$/i;
+    if (!update.name || !update.color || !hexColorRegex.test(update.color)) {
+      console.warn(`Invalid profile update data for ${update.playerId}:`, update);
+      return;
+    }
+    this.profileUpdateQueue.push(update);
   }
 
   // --- Game Loop Tick ---
   runGameTick(): GameState | null {
-    if (this.connectedPlayerIds.size === 0 && !this.currentGameState.playerStats[AI_SNAKE_ID]?.isConnected) {
-        // No human players AND AI seems gone (or never initialized?), can truly sleep
-        // Or maybe we always run the tick for the AI? Let's assume we run if AI exists.
-         this.lastTickTime = performance.now(); // Prevent large time jump
-         // console.log("No players, skipping tick."); // Optional logging
-         return null; // Indicate no update occurred
+    if (
+      this.connectedPlayerIds.size === 0 &&
+      !this.currentGameState.playerStats[AI_SNAKE_ID]?.isConnected
+    ) {
+      // No human players AND AI seems gone (or never initialized?), can truly sleep
+      // Or maybe we always run the tick for the AI? Let's assume we run if AI exists.
+      this.lastTickTime = performance.now(); // Prevent large time jump
+      // console.log("No players, skipping tick."); // Optional logging
+      return null; // Indicate no update occurred
     }
 
     const now = performance.now();
@@ -180,19 +191,21 @@ export class GameManager {
     // Prepare inputs map for updateGame
     const currentTickPlayerInputs: PlayerInputs = new Map();
     this.playerInputs.forEach((input, pId) => {
-      if (this.connectedPlayerIds.has(pId)) { // Only include inputs from connected players
+      if (this.connectedPlayerIds.has(pId)) {
+        // Only include inputs from connected players
         let requestedDirection: Direction | null = null;
         if (input.dx === -1) requestedDirection = Direction.LEFT;
         else if (input.dx === 1) requestedDirection = Direction.RIGHT;
-        else if (input.dy === 1) requestedDirection = Direction.UP; // Assuming +y is up based on client? Check consistency.
+        else if (input.dy === 1)
+          requestedDirection = Direction.UP; // Assuming +y is up based on client? Check consistency.
         else if (input.dy === -1) requestedDirection = Direction.DOWN; // Assuming -y is down
 
         if (requestedDirection !== null) {
           currentTickPlayerInputs.set(pId, requestedDirection);
         }
       } else {
-         // Clean up inputs for players who disconnected between ticks?
-         this.playerInputs.delete(pId);
+        // Clean up inputs for players who disconnected between ticks?
+        this.playerInputs.delete(pId);
       }
     });
 
@@ -201,14 +214,14 @@ export class GameManager {
       // Pass the set of *currently connected* player IDs. updateGame uses this
       // to know which snakes correspond to active players.
       this.currentGameState = updateGame(
-          this.currentGameState,
-          currentTickPlayerInputs,
-          logicalTime,
-          this.connectedPlayerIds // Pass the actual connected player IDs
+        this.currentGameState,
+        currentTickPlayerInputs,
+        logicalTime,
+        this.connectedPlayerIds // Pass the actual connected player IDs
       );
       // TODO: Add recovery logic/validation as seen in the original file if needed
     } catch (e) {
-      console.error("!!! Error during updateGame in GameManager:", e);
+      console.error('!!! Error during updateGame in GameManager:', e);
       // Potentially reset state or log more details
       return null; // Indicate error, no new state to broadcast
     }
@@ -218,32 +231,39 @@ export class GameManager {
 
   // --- Helpers ---
   private processProfileUpdates(): void {
-     if (this.profileUpdateQueue.length === 0) return;
+    // console.log(`Processing ${this.profileUpdateQueue.length} profile updates`);
+    this.profileUpdateQueue.forEach((update) => {
+      const stats = this.currentGameState.playerStats?.[update.playerId];
+      // Process only if the player is currently known and connected
+      if (stats && this.connectedPlayerIds.has(update.playerId)) {
+        // Validate name and color
+        if (!update.name || update.name.length > 16) {
+          // console.warn(`Invalid name in update for ${update.playerId}: ${update.name}`);
+          return; // Skip this update
+        }
+        // Basic hex color validation (e.g., #RRGGBB)
+        if (!/^#[0-9a-fA-F]{6}$/.test(update.color)) {
+          // console.warn(`Invalid color in update for ${update.playerId}: ${update.color}`);
+          return; // Skip this update
+        }
 
-     this.profileUpdateQueue.forEach(update => {
-         if (this.currentGameState.playerStats && this.currentGameState.playerStats[update.playerId]) {
-             const stats = this.currentGameState.playerStats[update.playerId];
-             let updated = false;
-             if (stats.name !== update.name) {
-                 stats.name = update.name;
-                 updated = true;
-             }
-             if (stats.color !== update.color) {
-                 stats.color = update.color;
-                 // Update the active snake's color if it exists
-                 const snake = this.currentGameState.snakes.find(s => s.id === update.playerId);
-                 if (snake) {
-                     snake.color = update.color;
-                 }
-                 updated = true;
-             }
-             // if (updated) { console.log(`Applied queued profile update for ${update.playerId}`); }
-         } else {
-             // console.warn(`Skipping queued update for unknown/disconnected player: ${update.playerId}`);
-         }
-     });
-     // Clear the queue after processing
-     this.profileUpdateQueue.length = 0;
+        if (stats.name !== update.name) {
+          stats.name = update.name;
+        }
+        if (stats.color !== update.color) {
+          stats.color = update.color;
+          // Update the active snake's color if it exists
+          const snake = this.currentGameState.snakes.find((s) => s.id === update.playerId);
+          if (snake) {
+            snake.color = update.color;
+          }
+        }
+      } else {
+        // console.warn(`Skipping queued update for unknown/disconnected player: ${update.playerId}`);
+      }
+    });
+    // Clear the queue after processing
+    this.profileUpdateQueue.length = 0;
   }
 
   // --- Accessors ---
@@ -252,12 +272,12 @@ export class GameManager {
   }
 
   getPlayerCount(): number {
-      // Only count human players for the sleep check logic perhaps?
-      // Or total players including AI? Let's count humans for now.
-      return this.connectedPlayerIds.size;
+    // Only count human players for the sleep check logic perhaps?
+    // Or total players including AI? Let's count humans for now.
+    return this.connectedPlayerIds.size;
   }
 
-   getPlayerStats(): Record<string, PlayerStats> {
-       return this.currentGameState.playerStats || {};
-   }
-} 
+  getPlayerStats(): Record<string, PlayerStats> {
+    return this.currentGameState.playerStats || {};
+  }
+}

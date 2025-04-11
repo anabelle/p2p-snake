@@ -9,47 +9,47 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: production
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          
+
       - name: Configure Git
         run: |
           git config --global user.email "git@8manos.com"
           git config --global user.name "Auto Build"
-      
+
       - name: Install dependencies
         run: npm install
-      
+
       - name: Run tests
         run: npm run test:ci
-      
+
       - name: Run Cypress E2E tests
         uses: cypress-io/github-action@v6
         with:
           start: npm run start:dev # Correct command to start the dev server
           wait-on: 'http://localhost:3000' # URL to wait for
           # browser: chrome # Optional: specify browser (defaults to Electron)
-      
+
       - name: Build frontend
         run: npm run build
-      
+
       - name: Install lftp
         run: |
           sudo apt-get update
           sudo apt-get install -y lftp
-      
+
       - name: Prepare deployment files
         run: |
           mkdir -p deploy
           cp -r build/* deploy/
-          
+
       - name: Deploy via FTP
         env:
           FTP_USER: ${{ secrets.FTP_USER }}
@@ -57,4 +57,4 @@ jobs:
           FTP_HOST: ${{ secrets.FTP_HOST }}
         run: |
           cd deploy
-          lftp -e "set ftp:ssl-allow no; mirror -RLve . .;" -u $FTP_USER,$FTP_PASS $FTP_HOST 
+          lftp -e "set ftp:ssl-allow no; mirror -RLve . .;" -u $FTP_USER,$FTP_PASS $FTP_HOST

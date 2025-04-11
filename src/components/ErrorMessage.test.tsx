@@ -26,15 +26,15 @@ describe('ErrorMessage', () => {
 
   it('does not render when the message is empty', () => {
     const mockDismiss = jest.fn();
-    render(<ErrorMessage message="" onDismiss={mockDismiss} />);
+    render(<ErrorMessage message='' onDismiss={mockDismiss} />);
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('does not render when the message is null', () => {
     const mockDismiss = jest.fn();
-    render(<ErrorMessage message={null as any} onDismiss={mockDismiss} />); 
-    
+    render(<ErrorMessage message={null as any} onDismiss={mockDismiss} />);
+
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
-}); 
+});

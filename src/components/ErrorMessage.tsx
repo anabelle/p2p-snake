@@ -7,15 +7,15 @@ interface ErrorMessageProps {
 
 const ErrorMessage: React.FC<ErrorMessageProps> = ({ message, onDismiss }) => {
   if (!message) return null;
-  
+
   return (
-    <div className="error-message" role="alert">
+    <div className='error-message' role='alert'>
       <p>{message}</p>
-      <button onClick={onDismiss} aria-label="Dismiss error">
+      <button onClick={onDismiss} aria-label='Dismiss error'>
         Close
       </button>
     </div>
   );
 };
 
-export default ErrorMessage; 
+export default ErrorMessage;

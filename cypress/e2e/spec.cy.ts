@@ -47,14 +47,14 @@ describe('App Initialization and Profile', () => {
     const initialProfile = {
       id: 'test-user-123',
       name: 'ReturningUser',
-      color: '#ff0000',
+      color: '#ff0000'
     };
 
     beforeEach(() => {
       // Set local storage to simulate a returning user
       localStorage.setItem('snakeUserProfile', JSON.stringify(initialProfile));
       // Reload the page to ensure the profile is loaded
-      cy.reload(); 
+      cy.reload();
     });
 
     it('should load directly into the game and display existing profile', () => {
@@ -65,7 +65,9 @@ describe('App Initialization and Profile', () => {
       cy.get('#game-canvas-container').should('be.visible').find('canvas').should('exist');
 
       // Check if the correct name is displayed
-      cy.get('#your-snake-info .editable-profile-item').first().should('contain', initialProfile.name);
+      cy.get('#your-snake-info .editable-profile-item')
+        .first()
+        .should('contain', initialProfile.name);
     });
 
     it('should display the game canvas with correct dimensions', () => {
@@ -104,7 +106,9 @@ describe('App Initialization and Profile', () => {
       cy.get('.profile-modal').should('not.exist');
 
       // Check the initial name is displayed
-      cy.get('#your-snake-info .editable-profile-item').first().should('contain', initialProfile.name);
+      cy.get('#your-snake-info .editable-profile-item')
+        .first()
+        .should('contain', initialProfile.name);
 
       // Click the profile name/area to open the modal
       cy.get('#your-snake-info .editable-profile-item').first().click();
@@ -130,7 +134,7 @@ describe('App Initialization and Profile', () => {
 
       // Check if the updated name is displayed
       cy.get('#your-snake-info .editable-profile-item').first().should('contain', updatedName);
-      
+
       // Also check canvas is still present
       cy.get('#game-canvas-container').should('be.visible').find('canvas').should('exist');
     });
@@ -144,7 +148,7 @@ describe('App Initialization and Profile', () => {
 
       // Basic assertion: Ensure the app didn't crash and key elements are still present
       cy.get('#game-canvas-container canvas').should('be.visible');
-      cy.get('#your-snake-info').should('be.visible'); 
+      cy.get('#your-snake-info').should('be.visible');
     });
   });
 });

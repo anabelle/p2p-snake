@@ -14,7 +14,6 @@ interface MockState {
 }
 
 describe('PRNG Logic', () => {
-
   describe('mulberry32', () => {
     it('should return a function', () => {
       const randomFunc = mulberry32(123);
@@ -30,7 +29,7 @@ describe('PRNG Logic', () => {
       const results2 = Array.from({ length: 5 }, randomFunc2);
 
       expect(results1).toEqual(results2);
-      results1.forEach(num => {
+      results1.forEach((num) => {
         expect(num).toBeGreaterThanOrEqual(0);
         expect(num).toBeLessThan(1);
       });
@@ -78,9 +77,13 @@ describe('PRNG Logic', () => {
     });
 
     it('should generate a position not in occupiedPositions', () => {
-      const occupied: Point[] = [{ x: 0, y: 0 }, { x: 1, y: 1 }];
+      const occupied: Point[] = [
+        { x: 0, y: 0 },
+        { x: 1, y: 1 }
+      ];
       // Mock random to eventually produce an unoccupied spot (e.g., 2,2)
-      const mockRandomFunc = jest.fn()
+      const mockRandomFunc = jest
+        .fn()
         .mockReturnValueOnce(0 / 3) // Tries 0,0 (occupied)
         .mockReturnValueOnce(0 / 3)
         .mockReturnValueOnce(1 / 3) // Tries 1,1 (occupied)
@@ -102,7 +105,9 @@ describe('PRNG Logic', () => {
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
       const pos = generateRandomPosition(gridSize, occupied, randomFunc);
       expect(pos).toBeNull();
-      expect(warnSpy).toHaveBeenCalledWith("Could not find an unoccupied position to generate random item.");
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Could not find an unoccupied position to generate random item.'
+      );
       warnSpy.mockRestore();
     });
   });
@@ -116,13 +121,22 @@ describe('PRNG Logic', () => {
     it('should return positions occupied by snakes', () => {
       const state: MockState = {
         snakes: [
-          { body: [{ x: 0, y: 0 }, { x: 0, y: 1 }] },
+          {
+            body: [
+              { x: 0, y: 0 },
+              { x: 0, y: 1 }
+            ]
+          },
           { body: [{ x: 2, y: 2 }] }
         ],
         food: [],
         powerUps: []
       };
-      const expected = [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 2, y: 2 }];
+      const expected = [
+        { x: 0, y: 0 },
+        { x: 0, y: 1 },
+        { x: 2, y: 2 }
+      ];
       expect(getOccupiedPositions(state)).toEqual(expect.arrayContaining(expected));
       expect(getOccupiedPositions(state).length).toBe(expected.length);
     });
@@ -133,9 +147,12 @@ describe('PRNG Logic', () => {
         food: [{ position: { x: 1, y: 1 } }, { position: { x: 3, y: 3 } }],
         powerUps: []
       };
-      const expected = [{ x: 1, y: 1 }, { x: 3, y: 3 }];
+      const expected = [
+        { x: 1, y: 1 },
+        { x: 3, y: 3 }
+      ];
       expect(getOccupiedPositions(state)).toEqual(expect.arrayContaining(expected));
-       expect(getOccupiedPositions(state).length).toBe(expected.length);
+      expect(getOccupiedPositions(state).length).toBe(expected.length);
     });
 
     it('should return positions occupied by powerUps', () => {
@@ -155,21 +172,27 @@ describe('PRNG Logic', () => {
         food: [{ position: { x: 1, y: 1 } }],
         powerUps: [{ position: { x: 2, y: 2 } }]
       };
-      const expected = [{ x: 0, y: 0 }, { x: 1, y: 1 }, { x: 2, y: 2 }];
+      const expected = [
+        { x: 0, y: 0 },
+        { x: 1, y: 1 },
+        { x: 2, y: 2 }
+      ];
       expect(getOccupiedPositions(state)).toEqual(expect.arrayContaining(expected));
       expect(getOccupiedPositions(state).length).toBe(expected.length);
     });
 
-     it('should include duplicate positions if present', () => {
+    it('should include duplicate positions if present', () => {
       const state: MockState = {
         snakes: [{ body: [{ x: 0, y: 0 }] }],
         food: [{ position: { x: 0, y: 0 } }], // Food on snake
         powerUps: []
       };
-      const expected = [{ x: 0, y: 0 }, { x: 0, y: 0 }];
+      const expected = [
+        { x: 0, y: 0 },
+        { x: 0, y: 0 }
+      ];
       expect(getOccupiedPositions(state)).toEqual(expect.arrayContaining(expected));
       expect(getOccupiedPositions(state).length).toBe(expected.length);
     });
   });
-
-}); 
+});

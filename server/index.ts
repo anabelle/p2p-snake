@@ -8,8 +8,8 @@ import { GameState } from '../src/game/state/types'; // Import GameState for typ
 // --- Server Setup ---
 const io = new Server(httpServer, {
   cors: {
-    origin: "*", // Allow all origins for development
-    methods: ["GET", "POST"]
+    origin: '*', // Allow all origins for development
+    methods: ['GET', 'POST']
   }
 });
 
@@ -25,20 +25,19 @@ setupSocketHandlers(io, gameManager);
 const GAME_LOOP_INTERVAL_MS = GAME_SPEED_MS; // Align with game logic speed
 
 setInterval(() => {
-    // Run the game tick
-    const newState: GameState | null = gameManager.runGameTick();
+  // Run the game tick
+  const newState: GameState | null = gameManager.runGameTick();
 
-    // Broadcast the new state if it was updated
-    if (newState) {
-        io.emit('state-sync', newState);
-        // Optional logging
-        // const playerCount = gameManager.getPlayerCount();
-        // if (playerCount > 0) {
-        //   console.log(`Tick ${newState.sequence}: Sent state sync to ${playerCount} players.`);
-        // }
-    }
-    // If newState is null, it means the tick was skipped (e.g., no players)
-
+  // Broadcast the new state if it was updated
+  if (newState) {
+    io.emit('state-sync', newState);
+    // Optional logging
+    // const playerCount = gameManager.getPlayerCount();
+    // if (playerCount > 0) {
+    //   console.log(`Tick ${newState.sequence}: Sent state sync to ${playerCount} players.`);
+    // }
+  }
+  // If newState is null, it means the tick was skipped (e.g., no players)
 }, GAME_LOOP_INTERVAL_MS);
 
 // --- Start Server ---
@@ -48,7 +47,7 @@ httpServer.listen(PORT, () => {
 });
 
 // --- Graceful Shutdown (Optional but Recommended) ---
-const signals = { 'SIGINT': 2, 'SIGTERM': 15 };
+const signals = { SIGINT: 2, SIGTERM: 15 };
 
 function shutdown(signal: keyof typeof signals, value: number) {
   console.log(`\nReceived ${signal}. Shutting down gracefully...`);
@@ -68,5 +67,7 @@ function shutdown(signal: keyof typeof signals, value: number) {
 }
 
 Object.keys(signals).forEach((signal) => {
-  process.on(signal as NodeJS.Signals, () => shutdown(signal as keyof typeof signals, signals[signal as keyof typeof signals]));
-}); 
+  process.on(signal as NodeJS.Signals, () =>
+    shutdown(signal as keyof typeof signals, signals[signal as keyof typeof signals])
+  );
+});

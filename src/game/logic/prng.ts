@@ -1,4 +1,4 @@
-import { Point } from "../state/types";
+import { Point } from '../state/types';
 
 // Generate a random color (with high contrast for accessibility)
 // Uses a provided random function (expected to return [0, 1))
@@ -15,7 +15,7 @@ export const generateRandomColor = (randomFunc: () => number): string => {
     '#FFFFFF', // White
     '#00FF7F', // SpringGreen
     '#FF69B4', // HotPink
-    '#1E90FF'  // DodgerBlue
+    '#1E90FF' // DodgerBlue
   ];
   return highContrastColors[Math.floor(randomFunc() * highContrastColors.length)];
 };
@@ -32,7 +32,7 @@ export const generateRandomPosition = (
   while (attempts < maxAttempts) {
     const potentialPos = {
       x: Math.floor(randomFunc() * gridSize.width),
-      y: Math.floor(randomFunc() * gridSize.height),
+      y: Math.floor(randomFunc() * gridSize.height)
     };
 
     // Check if the potential position is occupied
@@ -48,27 +48,29 @@ export const generateRandomPosition = (
   }
 
   // Grid is full or near full, cannot find a free spot after max attempts
-  console.warn("Could not find an unoccupied position to generate random item.");
+  console.warn('Could not find an unoccupied position to generate random item.');
   return null;
 };
 
 // Simple Mulberry32 PRNG function generator
 // Takes an initial seed and returns a function that generates pseudo-random numbers [0, 1)
 export function mulberry32(seed: number): () => number {
-  return function() {
+  return function () {
     // Use parentheses to clarify operator precedence
-    var t = (seed += 0x6D2B79F5);
+    var t = (seed += 0x6d2b79f5);
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     seed = t; // Update seed for next call
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  }
+  };
 }
 
 // Helper to get all currently occupied positions
-export const getOccupiedPositions = (
-  state: { snakes: { body: Point[] }[], food: { position: Point }[], powerUps: { position: Point }[] }
-): Point[] => {
+export const getOccupiedPositions = (state: {
+  snakes: { body: Point[] }[];
+  food: { position: Point }[];
+  powerUps: { position: Point }[];
+}): Point[] => {
   const positions: Point[] = [];
 
   state.snakes.forEach((snake) => {
@@ -86,4 +88,4 @@ export const getOccupiedPositions = (
   });
 
   return positions;
-}; 
+};

@@ -18,10 +18,10 @@ export interface Food {
 }
 
 export enum PowerUpType {
-  SPEED = "SPEED",
-  SLOW = "SLOW",
-  INVINCIBILITY = "INVINCIBILITY",
-  DOUBLE_SCORE = "DOUBLE_SCORE",
+  SPEED = 'SPEED',
+  SLOW = 'SLOW',
+  INVINCIBILITY = 'INVINCIBILITY',
+  DOUBLE_SCORE = 'DOUBLE_SCORE'
 }
 
 export interface PowerUp {
@@ -38,12 +38,12 @@ export interface ActivePowerUp {
 }
 
 export interface PlayerStats {
-    id: string;
-    name?: string; // Add optional name field
-    color: string; // Store color here for persistence
-    score: number;
-    deaths: number;
-    isConnected: boolean;
+  id: string;
+  name?: string; // Add optional name field
+  color: string; // Store color here for persistence
+  score: number;
+  deaths: number;
+  isConnected: boolean;
 }
 
 export interface GameState {
@@ -64,8 +64,8 @@ export interface GameState {
 }
 
 export enum Direction {
-  UP = "UP",
-  DOWN = "DOWN",
-  LEFT = "LEFT",
-  RIGHT = "RIGHT",
-} 
+  UP = 'UP',
+  DOWN = 'DOWN',
+  LEFT = 'LEFT',
+  RIGHT = 'RIGHT'
+}

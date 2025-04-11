@@ -13,7 +13,7 @@ import './App.css'; // Import the CSS file
 
 // Bind modal to app element (important for accessibility)
 if (typeof window !== 'undefined') {
-    Modal.setAppElement(document.getElementById('root') || document.body);
+  Modal.setAppElement(document.getElementById('root') || document.body);
 }
 
 const App: React.FC = () => {
@@ -34,18 +34,19 @@ const App: React.FC = () => {
 
   // --- React State ---
   const [isConnected, setIsConnected] = useState(false);
-  const [gameState, setGameState] = useState<GameState>({ // Initialize game state
-      snakes: [],
-      food: [],
-      powerUps: [],
-      activePowerUps: [],
-      gridSize: GRID_SIZE,
-      timestamp: 0,
-      sequence: 0,
-      rngSeed: 0,
-      playerCount: 0,
-      powerUpCounter: 0,
-      playerStats: {}
+  const [gameState, setGameState] = useState<GameState>({
+    // Initialize game state
+    snakes: [],
+    food: [],
+    powerUps: [],
+    activePowerUps: [],
+    gridSize: GRID_SIZE,
+    timestamp: 0,
+    sequence: 0,
+    rngSeed: 0,
+    playerCount: 0,
+    powerUpCounter: 0,
+    playerStats: {}
   });
   const gameStateRef = useRef<GameState>(gameState); // Ref to hold current game state
 
@@ -57,7 +58,7 @@ const App: React.FC = () => {
   // const localInputStateRef = useRef({ dx: 0, dy: 0 }); // No longer needed for direction
   // const pressedKeysRef = useRef<Set<string>>(new Set()); // No longer needed for direction
   // State for touch controls
-  const touchStartPos = useRef<{ x: number, y: number } | null>(null);
+  const touchStartPos = useRef<{ x: number; y: number } | null>(null);
 
   // Input Event Listeners
   useEffect(() => {
@@ -68,10 +69,22 @@ const App: React.FC = () => {
       let isArrowKey = false;
 
       switch (event.key) {
-        case 'ArrowUp':    direction = { dx: 0, dy: 1 }; isArrowKey = true; break;
-        case 'ArrowDown':  direction = { dx: 0, dy: -1 }; isArrowKey = true; break;
-        case 'ArrowLeft':  direction = { dx: -1, dy: 0 }; isArrowKey = true; break;
-        case 'ArrowRight': direction = { dx: 1, dy: 0 }; isArrowKey = true; break;
+        case 'ArrowUp':
+          direction = { dx: 0, dy: 1 };
+          isArrowKey = true;
+          break;
+        case 'ArrowDown':
+          direction = { dx: 0, dy: -1 };
+          isArrowKey = true;
+          break;
+        case 'ArrowLeft':
+          direction = { dx: -1, dy: 0 };
+          isArrowKey = true;
+          break;
+        case 'ArrowRight':
+          direction = { dx: 1, dy: 0 };
+          isArrowKey = true;
+          break;
       }
 
       if (direction && socketRef.current && socketRef.current.connected) {
@@ -96,7 +109,8 @@ const App: React.FC = () => {
     const gameArea = gameContainerRef.current; // Capture ref value
 
     const handleTouchStart = (event: TouchEvent) => {
-      if (event.touches.length === 1) { // Only handle single touch swipes
+      if (event.touches.length === 1) {
+        // Only handle single touch swipes
         touchStartPos.current = { x: event.touches[0].clientX, y: event.touches[0].clientY };
         // Prevent default scroll/zoom behavior triggered by touchstart
         // event.preventDefault(); // May prevent clicking UI elements inside? Test this.
@@ -104,23 +118,27 @@ const App: React.FC = () => {
     };
 
     const handleTouchMove = (event: TouchEvent) => {
-        // Prevent scrolling while dragging finger
-        event.preventDefault();
+      // Prevent scrolling while dragging finger
+      event.preventDefault();
     };
 
     const handleTouchEnd = (event: TouchEvent) => {
       if (!touchStartPos.current || event.changedTouches.length === 0) return;
 
-      const touchEndPos = { x: event.changedTouches[0].clientX, y: event.changedTouches[0].clientY };
+      const touchEndPos = {
+        x: event.changedTouches[0].clientX,
+        y: event.changedTouches[0].clientY
+      };
       const dx = touchEndPos.x - touchStartPos.current.x;
       const dy = touchEndPos.y - touchStartPos.current.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
 
       const swipeThreshold = 30; // Minimum distance for a swipe
 
-      if (distance > swipeThreshold) { // Check if swipe distance is significant
-        const angle = Math.atan2(dy, dx) * 180 / Math.PI; // Angle in degrees
-        let detectedDirection: { dx: number, dy: number } | null = null;
+      if (distance > swipeThreshold) {
+        // Check if swipe distance is significant
+        const angle = (Math.atan2(dy, dx) * 180) / Math.PI; // Angle in degrees
+        let detectedDirection: { dx: number; dy: number } | null = null;
 
         // Determine direction based on angle ranges (adjust ranges as needed)
         if (angle >= -45 && angle < 45) {
@@ -135,24 +153,23 @@ const App: React.FC = () => {
 
         // Send swipe input directly if valid and connected
         if (detectedDirection && socketRef.current && socketRef.current.connected) {
-            // // Original logic to prevent reversing - maybe let server handle this?
-            // // const currentInput = localInputStateRef.current;
-            // // const isOpposite =
-            // //       (detectedDirection.dx !== 0 && detectedDirection.dx === -currentInput.dx) ||
-            // //       (detectedDirection.dy !== 0 && detectedDirection.dy === -currentInput.dy);
-            // // if (!isOpposite) {
-            // //     socketRef.current.emit('input', detectedDirection);
-            // //     console.log("SWIPE Detected & Sent - Angle:", angle, " Direction:", detectedDirection);
-            // // } else {
-            // //     console.log("SWIPE Ignored - Opposite direction");
-            // // }
+          // // Original logic to prevent reversing - maybe let server handle this?
+          // // const currentInput = localInputStateRef.current;
+          // // const isOpposite =
+          // //       (detectedDirection.dx !== 0 && detectedDirection.dx === -currentInput.dx) ||
+          // //       (detectedDirection.dy !== 0 && detectedDirection.dy === -currentInput.dy);
+          // // if (!isOpposite) {
+          // //     socketRef.current.emit('input', detectedDirection);
+          // //     console.log("SWIPE Detected & Sent - Angle:", angle, " Direction:", detectedDirection);
+          // // } else {
+          // //     console.log("SWIPE Ignored - Opposite direction");
+          // // }
 
-            // Send directly, let server validate/handle opposite direction logic
-            socketRef.current.emit('input', detectedDirection);
-            // console.log("SWIPE Detected & Sent - Angle:", angle, " Direction:", detectedDirection);
-
+          // Send directly, let server validate/handle opposite direction logic
+          socketRef.current.emit('input', detectedDirection);
+          // console.log("SWIPE Detected & Sent - Angle:", angle, " Direction:", detectedDirection);
         } else if (!detectedDirection) {
-             console.log("SWIPE Ignored - Angle not in defined range:", angle);
+          console.log('SWIPE Ignored - Angle not in defined range:', angle);
         }
       }
 
@@ -160,18 +177,18 @@ const App: React.FC = () => {
     };
 
     if (gameArea) {
-        console.log("Attaching touch listeners...");
-        // Use { passive: false } to allow preventDefault inside listeners
-        gameArea.addEventListener('touchstart', handleTouchStart, { passive: false });
-        gameArea.addEventListener('touchmove', handleTouchMove, { passive: false });
-        gameArea.addEventListener('touchend', handleTouchEnd, { passive: true }); // touchend doesn't need preventDefault usually
+      console.log('Attaching touch listeners...');
+      // Use { passive: false } to allow preventDefault inside listeners
+      gameArea.addEventListener('touchstart', handleTouchStart, { passive: false });
+      gameArea.addEventListener('touchmove', handleTouchMove, { passive: false });
+      gameArea.addEventListener('touchend', handleTouchEnd, { passive: true }); // touchend doesn't need preventDefault usually
     }
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       // window.removeEventListener('keyup', handleKeyUp); // Ensure KeyUp listener removal is also removed
       if (gameArea) {
-        console.log("Removing touch listeners...");
+        console.log('Removing touch listeners...');
         gameArea.removeEventListener('touchstart', handleTouchStart);
         gameArea.removeEventListener('touchmove', handleTouchMove);
         gameArea.removeEventListener('touchend', handleTouchEnd);
@@ -183,30 +200,30 @@ const App: React.FC = () => {
   const gameLoop = useCallback(() => {
     // More resilient check for game loop conditions
     const canDraw = canvasRef.current && gameAdapterRef.current;
-    
+
     if (!canDraw) {
-      console.log("Game loop stopping: Canvas or game adapter missing");
+      console.log('Game loop stopping: Canvas or game adapter missing');
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = undefined;
       return;
     }
-    
+
     // Even if socket is disconnected, we can continue drawing the last known state
     // This provides a smoother experience during reconnection attempts
-    
+
     // Draw the current state (updated by state-sync messages)
     try {
       if (canvasRef.current && gameAdapterRef.current) {
         gameAdapterRef.current.draw(canvasRef.current, gameStateRef.current);
       }
     } catch (e) {
-      console.error("Error during gameAdapter.draw:", e);
+      console.error('Error during gameAdapter.draw:', e);
       // Don't stop the loop on transient drawing errors - just try again next frame
     }
 
     // Request next frame
     animationFrameRef.current = requestAnimationFrame(gameLoop);
-  // Dependencies: gameStateRef (though it's a ref, changes won't trigger re-render/re-memoization directly)
+    // Dependencies: gameStateRef (though it's a ref, changes won't trigger re-render/re-memoization directly)
   }, []);
 
   // --- Game Adapter Initialization (Moved outside useEffect, wrapped in useCallback) ---
@@ -217,254 +234,267 @@ const App: React.FC = () => {
       try {
         // Ensure localPlayerIdRef.current has a value before creating adapter
         if (!localPlayerIdRef.current) {
-            console.error("Cannot start adapter: localPlayerId is not set.");
-            return;
+          console.error('Cannot start adapter: localPlayerId is not set.');
+          return;
         }
         gameAdapterRef.current = new NetplayAdapter(canvasRef.current, localPlayerIdRef.current);
         // console.log(`Client NetplayAdapter instance created.`);
 
         // Start the game loop
-        console.log("Starting client game loop...");
+        console.log('Starting client game loop...');
         gameLoop(); // Call the memoized gameLoop
-
       } catch (e) {
-        console.error("Error creating NetplayAdapter instance:", e);
+        console.error('Error creating NetplayAdapter instance:', e);
         return;
       }
     } else {
       // console.log(`startGameAdapter did not proceed. Adapter: ${!!gameAdapterRef.current}, Container: ${!!gameContainerRef.current}, Canvas: ${!!canvasRef.current}`);
     }
-  // Dependencies: gameLoop needs to be included as it's called.
-  // localPlayerIdRef is read, but refs don't usually go in deps.
+    // Dependencies: gameLoop needs to be included as it's called.
+    // localPlayerIdRef is read, but refs don't usually go in deps.
   }, [gameLoop]);
 
   // --- WebSocket Connection Function ---
-  const connectWebSocket = useCallback((profile: UserProfile) => {
-    if (socketRef.current) {
+  const connectWebSocket = useCallback(
+    (profile: UserProfile) => {
+      if (socketRef.current) {
         console.log('WebSocket already connected or connecting.');
         return; // Avoid reconnecting if already connected
-    }
+      }
 
-    console.log(`Connecting to WebSocket with Profile: ID=${profile.id}, Name=${profile.name}, Color=${profile.color}`);
-    
-    // Use environment variable for the server URL, falling back to production URL
-    const SIGNALING_SERVER_URI = process.env.REACT_APP_SIGNALING_SERVER_URL || 'https://snake-api-974c0cc98060.herokuapp.com';
-    console.log(`Using signaling server: ${SIGNALING_SERVER_URI}`);
-    
-    socketRef.current = io(SIGNALING_SERVER_URI, {
+      console.log(
+        `Connecting to WebSocket with Profile: ID=${profile.id}, Name=${profile.name}, Color=${profile.color}`
+      );
+
+      // Use environment variable for the server URL, falling back to production URL
+      const SIGNALING_SERVER_URI =
+        process.env.REACT_APP_SIGNALING_SERVER_URL ||
+        'https://snake-api-974c0cc98060.herokuapp.com';
+      console.log(`Using signaling server: ${SIGNALING_SERVER_URI}`);
+
+      socketRef.current = io(SIGNALING_SERVER_URI, {
         query: {
-            id: profile.id,
-            name: profile.name,
-            color: profile.color
+          id: profile.id,
+          name: profile.name,
+          color: profile.color
         },
         reconnectionAttempts: 5, // Increased from 3 to 5
         reconnectionDelay: 1000, // Start with 1 second delay
         reconnectionDelayMax: 5000, // Maximum 5 second delay
         timeout: 10000 // Longer connection timeout
-    });
-    const socket = socketRef.current;
+      });
+      const socket = socketRef.current;
 
-    socket.on('connect', () => {
+      socket.on('connect', () => {
         console.log('Connected to signaling server');
         setIsConnected(true);
-        
+
         // Initialize game if needed - this will happen on both first connect and reconnects
         if (!gameAdapterRef.current) {
-            console.log('Initializing game adapter after connection');
-            // Ensure canvas exists before creating adapter
-            if (!canvasRef.current && gameContainerRef.current) {
-                console.log("Recreating canvas element after reconnection...");
-                const canvas = document.createElement('canvas');
-                canvas.width = canvasWidth;
-                canvas.height = canvasHeight;
-                gameContainerRef.current.appendChild(canvas);
-                canvasRef.current = canvas;
-            }
-            
-            // Start the game
-            startGameAdapter();
-        }
-    });
+          console.log('Initializing game adapter after connection');
+          // Ensure canvas exists before creating adapter
+          if (!canvasRef.current && gameContainerRef.current) {
+            console.log('Recreating canvas element after reconnection...');
+            const canvas = document.createElement('canvas');
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            gameContainerRef.current.appendChild(canvas);
+            canvasRef.current = canvas;
+          }
 
-    socket.on('disconnect', (reason) => {
+          // Start the game
+          startGameAdapter();
+        }
+      });
+
+      socket.on('disconnect', (reason) => {
         console.log('Disconnected from signaling server:', reason);
         setIsConnected(false);
-        
+
         // Stop the game loop on disconnect
         if (animationFrameRef.current) {
-            cancelAnimationFrame(animationFrameRef.current);
-            animationFrameRef.current = undefined;
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = undefined;
         }
-        
+
         // Clear the game adapter but keep the canvas for reconnection
         gameAdapterRef.current = null;
-        
+
         // Clear the canvas display but keep the reference
         if (canvasRef.current) {
-            const ctx = canvasRef.current.getContext('2d');
-            ctx?.clearRect(0, 0, canvasWidth, canvasHeight);
+          const ctx = canvasRef.current.getContext('2d');
+          ctx?.clearRect(0, 0, canvasWidth, canvasHeight);
         }
-        
+
         // Don't set socketRef to null to allow auto-reconnection
         // socketRef.current = null; // <-- Remove this line
-    });
+      });
 
-    socket.on('connect_error', (err) => {
+      socket.on('connect_error', (err) => {
         console.error('Signaling connection error:', err);
         setIsConnected(false);
-        
+
         // Don't clear socket reference to allow auto-reconnection
         // socketRef.current = null; // <-- Remove this line
-    });
+      });
 
-    // --- Listener for State Sync from Server ---
-    socket.on('state-sync', (serverState: GameState) => {
+      // --- Listener for State Sync from Server ---
+      socket.on('state-sync', (serverState: GameState) => {
         // We don't need the adapter to deserialize anymore
         // Process the received state directly
 
         // Debug check - log player stats if empty but players exist
-        if (serverState.snakes.length > 0 &&
-            (!serverState.playerStats || Object.keys(serverState.playerStats).length === 0)) {
-            console.warn("Received state with snakes but empty playerStats", {
-                snakeCount: serverState.snakes.length,
-                playerStats: serverState.playerStats
-            });
+        if (
+          serverState.snakes.length > 0 &&
+          (!serverState.playerStats || Object.keys(serverState.playerStats).length === 0)
+        ) {
+          console.warn('Received state with snakes but empty playerStats', {
+            snakeCount: serverState.snakes.length,
+            playerStats: serverState.playerStats
+          });
 
-            // Create playerStats if missing from snakes as a fallback (MUTATES serverState copy)
-            if (!serverState.playerStats) {
-                serverState.playerStats = {};
+          // Create playerStats if missing from snakes as a fallback (MUTATES serverState copy)
+          if (!serverState.playerStats) {
+            serverState.playerStats = {};
+          }
+
+          // Populate from snakes if needed (MUTATES serverState copy)
+          serverState.snakes.forEach((snake) => {
+            if (!serverState.playerStats[snake.id]) {
+              // console.log(`Client: Adding missing stats for snake ${snake.id} from sync`);
+              serverState.playerStats[snake.id] = {
+                id: snake.id,
+                color: snake.color,
+                score: snake.score,
+                deaths: 0, // Assume 0 deaths if initializing here
+                isConnected: true // Assume connected if they have a snake
+              };
             }
-
-            // Populate from snakes if needed (MUTATES serverState copy)
-            serverState.snakes.forEach(snake => {
-                if (!serverState.playerStats[snake.id]) {
-                    // console.log(`Client: Adding missing stats for snake ${snake.id} from sync`);
-                    serverState.playerStats[snake.id] = {
-                        id: snake.id,
-                        color: snake.color,
-                        score: snake.score,
-                        deaths: 0, // Assume 0 deaths if initializing here
-                        isConnected: true // Assume connected if they have a snake
-                    };
-                }
-            });
+          });
         } else if (serverState.playerStats) {
-            // Ensure all snakes have a corresponding playerStat entry if playerStats exists
-            serverState.snakes.forEach(snake => {
-                 if (!serverState.playerStats[snake.id]) {
-                    // console.log(`Client: Adding missing stats for snake ${snake.id} (stats existed)`);
-                    serverState.playerStats[snake.id] = {
-                        id: snake.id,
-                        color: snake.color,
-                        score: snake.score,
-                        deaths: 0, // Assume 0 deaths
-                        isConnected: true
-                    };
-                 } else {
-                     // Ensure existing playerStats has correct 'isConnected' status if snake is present
-                     serverState.playerStats[snake.id].isConnected = true;
-                 }
-            });
-            // Ensure playerStats reflects disconnected players (those in stats but not snakes)
-            Object.keys(serverState.playerStats).forEach(pId => {
-                if (!serverState.snakes.some(s => s.id === pId)) {
-                    if (serverState.playerStats[pId].isConnected) {
-                         // console.log(`Client: Marking player ${pId} as disconnected (not in snakes)`);
-                        serverState.playerStats[pId].isConnected = false;
-                    }
-                }
-            });
+          // Ensure all snakes have a corresponding playerStat entry if playerStats exists
+          serverState.snakes.forEach((snake) => {
+            if (!serverState.playerStats[snake.id]) {
+              // console.log(`Client: Adding missing stats for snake ${snake.id} (stats existed)`);
+              serverState.playerStats[snake.id] = {
+                id: snake.id,
+                color: snake.color,
+                score: snake.score,
+                deaths: 0, // Assume 0 deaths
+                isConnected: true
+              };
+            } else {
+              // Ensure existing playerStats has correct 'isConnected' status if snake is present
+              serverState.playerStats[snake.id].isConnected = true;
+            }
+          });
+          // Ensure playerStats reflects disconnected players (those in stats but not snakes)
+          Object.keys(serverState.playerStats).forEach((pId) => {
+            if (!serverState.snakes.some((s) => s.id === pId)) {
+              if (serverState.playerStats[pId].isConnected) {
+                // console.log(`Client: Marking player ${pId} as disconnected (not in snakes)`);
+                serverState.playerStats[pId].isConnected = false;
+              }
+            }
+          });
         }
 
         // Update main game state for rendering snakes, food, etc.
         setGameState(serverState);
 
-        // --- Refined Profile Sync Logic --- 
+        // --- Refined Profile Sync Logic ---
         // Always check server state for the authoritative profile info after connect/update
         const playerStatsFromServer = serverState.playerStats?.[localPlayerIdRef.current];
-        
-        setCurrentUserProfile(currentProfile => {
-            // Only proceed if we have both local profile and server stats for this player
-            if (playerStatsFromServer && currentProfile) {
-                const serverName = playerStatsFromServer.name; // Could be string | undefined
-                const serverColor = playerStatsFromServer.color; // Is string
-                let changed = false;
-                let updatedProfile = { ...currentProfile };
 
-                // Check if name needs updating from server
-                if (serverName !== currentProfile.name) { // Comparison handles undefined correctly
-                    console.log(`Server name (${serverName}) differs from local (${currentProfile.name}). Updating local profile.`);
-                    // Use nullish coalescing to provide default empty string if serverName is undefined
-                    updatedProfile.name = serverName ?? ''; 
-                    changed = true;
-                }
+        setCurrentUserProfile((currentProfile) => {
+          // Only proceed if we have both local profile and server stats for this player
+          if (playerStatsFromServer && currentProfile) {
+            const serverName = playerStatsFromServer.name; // Could be string | undefined
+            const serverColor = playerStatsFromServer.color; // Is string
+            let changed = false;
+            let updatedProfile = { ...currentProfile };
 
-                // Check if color needs updating from server (color is non-optional)
-                if (serverColor !== currentProfile.color) {
-                    console.log(`Server color (${serverColor}) differs from local (${currentProfile.color}). Updating local profile.`);
-                    updatedProfile.color = serverColor;
-                    changed = true;
-                }
-
-                // If any changes were detected, update localStorage and return the new profile state
-                if (changed) {
-                    localStorage.setItem('snakeUserProfile', JSON.stringify(updatedProfile));
-                    return updatedProfile;
-                }
+            // Check if name needs updating from server
+            if (serverName !== currentProfile.name) {
+              // Comparison handles undefined correctly
+              console.log(
+                `Server name (${serverName}) differs from local (${currentProfile.name}). Updating local profile.`
+              );
+              // Use nullish coalescing to provide default empty string if serverName is undefined
+              updatedProfile.name = serverName ?? '';
+              changed = true;
             }
-            // If no server stats, no local profile, or no changes needed, return the current profile
-            return currentProfile; 
+
+            // Check if color needs updating from server (color is non-optional)
+            if (serverColor !== currentProfile.color) {
+              console.log(
+                `Server color (${serverColor}) differs from local (${currentProfile.color}). Updating local profile.`
+              );
+              updatedProfile.color = serverColor;
+              changed = true;
+            }
+
+            // If any changes were detected, update localStorage and return the new profile state
+            if (changed) {
+              localStorage.setItem('snakeUserProfile', JSON.stringify(updatedProfile));
+              return updatedProfile;
+            }
+          }
+          // If no server stats, no local profile, or no changes needed, return the current profile
+          return currentProfile;
         });
-    });
-  // Dependencies updated to include the stable startGameAdapter
-  }, [setCurrentUserProfile, canvasWidth, canvasHeight, startGameAdapter]);
+      });
+      // Dependencies updated to include the stable startGameAdapter
+    },
+    [setCurrentUserProfile, canvasWidth, canvasHeight, startGameAdapter]
+  );
 
   // --- Centralized Setup Effect (Handles profile load, WebSocket connection, canvas) ---
   useEffect(() => {
-    // --- Load Profile or Trigger Modal --- 
+    // --- Load Profile or Trigger Modal ---
     const loadAndInitialize = () => {
-        const storedProfile = localStorage.getItem('snakeUserProfile');
-        let profile: UserProfile | null = null;
-        if (storedProfile) {
-            try {
-                const parsed = JSON.parse(storedProfile);
-                // Basic validation
-                if (parsed.id && parsed.name && parsed.color) {
-                    profile = parsed;
-                    console.log('Loaded user profile from localStorage:', profile);
-                } else {
-                    console.warn('Invalid profile structure in localStorage. Clearing.');
-                    localStorage.removeItem('snakeUserProfile');
-                }
-            } catch (e) {
-                console.error('Failed to parse user profile from localStorage:', e);
-                localStorage.removeItem('snakeUserProfile'); // Clear invalid data
-            }
+      const storedProfile = localStorage.getItem('snakeUserProfile');
+      let profile: UserProfile | null = null;
+      if (storedProfile) {
+        try {
+          const parsed = JSON.parse(storedProfile);
+          // Basic validation
+          if (parsed.id && parsed.name && parsed.color) {
+            profile = parsed;
+            console.log('Loaded user profile from localStorage:', profile);
+          } else {
+            console.warn('Invalid profile structure in localStorage. Clearing.');
+            localStorage.removeItem('snakeUserProfile');
+          }
+        } catch (e) {
+          console.error('Failed to parse user profile from localStorage:', e);
+          localStorage.removeItem('snakeUserProfile'); // Clear invalid data
         }
+      }
 
-        if (profile) {
-            // Profile exists, set state and connect
-            localPlayerIdRef.current = profile.id;
-            setCurrentUserProfile(profile);
-            connectWebSocket(profile); // Call the memoized function
-        } else {
-            // No valid profile, open modal
-            console.log('No valid user profile found. Opening creation modal...');
-            setIsProfileModalOpen(true);
-        }
+      if (profile) {
+        // Profile exists, set state and connect
+        localPlayerIdRef.current = profile.id;
+        setCurrentUserProfile(profile);
+        connectWebSocket(profile); // Call the memoized function
+      } else {
+        // No valid profile, open modal
+        console.log('No valid user profile found. Opening creation modal...');
+        setIsProfileModalOpen(true);
+      }
     };
 
     // --- Canvas Creation --- (Moved from separate effect to ensure order)
     let canvasCreated = false;
     if (!canvasRef.current && gameContainerRef.current) {
-         console.log("Creating canvas element...");
-         const canvas = document.createElement('canvas');
-         canvas.width = canvasWidth;
-         canvas.height = canvasHeight;
-         gameContainerRef.current.appendChild(canvas);
-         canvasRef.current = canvas;
-         canvasCreated = true;
-         console.log("Canvas element created and appended.");
+      console.log('Creating canvas element...');
+      const canvas = document.createElement('canvas');
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      gameContainerRef.current.appendChild(canvas);
+      canvasRef.current = canvas;
+      canvasCreated = true;
+      console.log('Canvas element created and appended.');
     }
 
     // --- Start Initial Load/Connection ---
@@ -477,8 +507,8 @@ const App: React.FC = () => {
       console.log('Clean up main effect');
       // First, cancel current animation frame if active
       if (animationFrameRef.current) {
-          cancelAnimationFrame(animationFrameRef.current);
-          animationFrameRef.current = undefined;
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = undefined;
       }
       // Disconnect WebSocket
       socketRef.current?.disconnect();
@@ -489,12 +519,12 @@ const App: React.FC = () => {
       /* eslint-disable react-hooks/exhaustive-deps */
       const gameContainer = gameContainerRef.current; // Copy the ref value
       if (canvasCreated && canvasRef.current && gameContainer?.contains(canvasRef.current)) {
-          console.log("Removing canvas element.");
-          gameContainer.removeChild(canvasRef.current);
-          canvasRef.current = null;
+        console.log('Removing canvas element.');
+        gameContainer.removeChild(canvasRef.current);
+        canvasRef.current = null;
       }
     };
-  // Dependencies: connectWebSocket (stable), canvas dimensions
+    // Dependencies: connectWebSocket (stable), canvas dimensions
   }, [canvasHeight, canvasWidth, connectWebSocket]);
 
   // Effect to keep gameStateRef updated with the latest gameState
@@ -516,14 +546,14 @@ const App: React.FC = () => {
     const isNewUser = !currentUserProfile; // Check if we are creating a new profile
 
     if (isNewUser) {
-        // Creating a new profile
-        const newId = uuidv4();
-        profileToSave = { ...profileData, id: newId };
-        console.log('Saving new profile:', profileToSave);
+      // Creating a new profile
+      const newId = uuidv4();
+      profileToSave = { ...profileData, id: newId };
+      console.log('Saving new profile:', profileToSave);
     } else {
-        // Updating existing profile
-        profileToSave = { ...currentUserProfile!, ...profileData }; // Merge changes, keep existing ID
-        console.log('Updating existing profile:', profileToSave);
+      // Updating existing profile
+      profileToSave = { ...currentUserProfile!, ...profileData }; // Merge changes, keep existing ID
+      console.log('Updating existing profile:', profileToSave);
     }
 
     // Save to localStorage
@@ -539,21 +569,23 @@ const App: React.FC = () => {
 
     // Connect or Update Server
     if (isNewUser) {
-        // If it was a new user, establish the WebSocket connection now
-        connectWebSocket(profileToSave);
+      // If it was a new user, establish the WebSocket connection now
+      connectWebSocket(profileToSave);
     } else if (socketRef.current?.connected) {
-        // If updating and connected, notify the server
-        const updatePayload = { name: profileToSave.name, color: profileToSave.color };
-        console.log('Emitting profile update to server:', updatePayload);
-        socketRef.current.emit('updateProfile', updatePayload);
+      // If updating and connected, notify the server
+      const updatePayload = { name: profileToSave.name, color: profileToSave.color };
+      console.log('Emitting profile update to server:', updatePayload);
+      socketRef.current.emit('updateProfile', updatePayload);
     } else {
-        console.warn('Profile updated, but socket is not connected. Update will be sent on next connection (if implemented)');
+      console.warn(
+        'Profile updated, but socket is not connected. Update will be sent on next connection (if implemented)'
+      );
     }
   };
 
   // Render function
   return (
-    <div className="game-container">
+    <div className='game-container'>
       <h1>Multiplayer Snake Game</h1>
 
       {/* Profile Modal */}
@@ -564,188 +596,227 @@ const App: React.FC = () => {
         initialProfile={currentUserProfile} // Pass current profile for editing, or null for creation
       />
 
-      <div ref={gameContainerRef} id="game-canvas-container" style={{
+      <div
+        ref={gameContainerRef}
+        id='game-canvas-container'
+        style={{
           width: canvasWidth,
           height: canvasHeight,
-          ['--canvas-width' as string]: `${canvasWidth}px` 
-        }}>
-         {isConnected && gameState.playerCount > 0 && (
-           <div className="player-count-badge">
-              Players: {gameState.playerCount}
-           </div>
-         )}
-         {!isConnected && 
-            <div className="connecting-overlay">
-                Connecting...
-            </div>
-         }
+          ['--canvas-width' as string]: `${canvasWidth}px`
+        }}
+      >
+        {isConnected && gameState.playerCount > 0 && (
+          <div className='player-count-badge'>Players: {gameState.playerCount}</div>
+        )}
+        {!isConnected && <div className='connecting-overlay'>Connecting...</div>}
       </div>
-      
-      {isConnected && gameAdapterRef.current && currentUserProfile && ( // Ensure profile is loaded
-        <div className="info-sections-wrapper">
-          <div className="info-section" id="your-snake-info">
-            <h3>Your Snake</h3>
-            {/* Make Name and Color clickable */}
-            <div className="editable-profile-item" onClick={handleOpenProfileModal} title="Click to edit profile">
-              <span><strong>Name:</strong> {currentUserProfile.name}</span>
-            </div>
-            <div className="editable-profile-item" onClick={handleOpenProfileModal} title="Click to edit profile">
-              <span>
-                <strong>Color: </strong>
-                {(() => {
-                  // Use currentUserProfile.color as the primary source
-                  const color = currentUserProfile.color;
-                  // Fallback check needed? Server sync should update currentUserProfile.
-                  // const yourPlayerStats = gameState.playerStats?.[localPlayerIdRef.current];
-                  // const color = yourPlayerStats?.color || currentUserProfile.color; // Prioritize stats?
 
-                  if (color) {
-                    return (
-                      <span
-                        className="player-color-swatch"
-                        style={{ backgroundColor: color, cursor: 'pointer' }} // Add cursor pointer
-                      />
-                    );
-                  } else {
-                     return (
-                       <span style={{ color: 'var(--text-color)', opacity: 0.7, fontStyle: 'italic' }}> (Waiting...)</span>
-                     );
-                  }
-                })()}
-              </span>
-            </div>
-            <div id="active-powerups">
-              <strong>Active Effects:</strong>
-              {(() => {
-
-
-                // Use the timestamp from the received game state for comparison
-                const serverTime = gameState.timestamp;
-                const allActive = gameState.activePowerUps || []; // Ensure it's an array
-
-                const active = allActive.filter(ap => {
-                  const isLocal = ap.playerId === localPlayerIdRef.current;
-                  const isExpired = ap.expiresAt <= serverTime;
-                  // Log individual checks
-                  // console.log(`  Checking AP type=${ap.type}, player=${ap.playerId}, expires=${ap.expiresAt}, local=${isLocal}, expired=${isExpired}`);
-                  return isLocal && !isExpired; // Compare against server time
-                });
-
-
-                if (active.length === 0) {
-                  return <span style={{ fontStyle: 'italic', opacity: 0.7 }}> None</span>;
-                }
-
-                // Mapping from type to description (reuse from legend)
-                const descriptions: Record<string, string> = {
-                  SPEED: "Speed Boost",
-                  SLOW: "Slow Down",
-                  INVINCIBILITY: "Invincibility",
-                  DOUBLE_SCORE: "Double Score"
-                };
-
-                return active.map(ap => {
-                  let symbol = '?';
-                  let className = 'powerup-symbol';
-                  let description = descriptions[ap.type] || ap.type; // Get description or fallback to type name
-
-                  switch (ap.type) {
-                    case 'SPEED': symbol = 'S'; className += ' speed'; break;
-                    case 'SLOW': symbol = 'W'; className += ' slow'; break;
-                    case 'INVINCIBILITY': symbol = 'I'; className += ' invincibility'; break;
-                    case 'DOUBLE_SCORE': symbol = '2x'; className += ' double-score'; break;
-                  }
-                  // Calculate remaining duration roughly (optional)
-                  const expiresIn = Math.max(0, Math.round((ap.expiresAt - serverTime) / 1000));
-                  const title = `${description} (expires in ~${expiresIn}s)`;
-
-                  return (
-                    <div key={ap.type}>
-                         <span className={className} title={title}>
-                           {symbol}
-                         </span>
-                         <span>{description} (~{expiresIn}s)</span> 
-                    </div>
-                  );
-                });
-              })()}
-            </div>
-          </div>
-
-          <div className="info-section" id="player-rankings">
-            <h3>Player Rankings</h3>
-            <div className="table-scroll-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Player</th>
-                    <th>Score</th>
-                    <th>Deaths</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
+      {isConnected &&
+        gameAdapterRef.current &&
+        currentUserProfile && ( // Ensure profile is loaded
+          <div className='info-sections-wrapper'>
+            <div className='info-section' id='your-snake-info'>
+              <h3>Your Snake</h3>
+              {/* Make Name and Color clickable */}
+              <div
+                className='editable-profile-item'
+                onClick={handleOpenProfileModal}
+                title='Click to edit profile'
+              >
+                <span>
+                  <strong>Name:</strong> {currentUserProfile.name}
+                </span>
+              </div>
+              <div
+                className='editable-profile-item'
+                onClick={handleOpenProfileModal}
+                title='Click to edit profile'
+              >
+                <span>
+                  <strong>Color: </strong>
                   {(() => {
-                    // Always derive players from playerStats
-                    const playerStats = gameState.playerStats || {};
-                    const players = Object.values(playerStats);
+                    // Use currentUserProfile.color as the primary source
+                    const color = currentUserProfile.color;
+                    // Fallback check needed? Server sync should update currentUserProfile.
+                    // const yourPlayerStats = gameState.playerStats?.[localPlayerIdRef.current];
+                    // const color = yourPlayerStats?.color || currentUserProfile.color; // Prioritize stats?
 
-                    if (players.length > 0) {
-                      // console.log("Rendering", players.length, "players from gameState.playerStats (incl. offline)");
-                      return players
-                        .sort((a, b) => b.score - a.score) // Sort by score descending
-                        .map(player => (
-                          <tr 
-                            key={player.id} 
-                            className={player.id === localPlayerIdRef.current ? 'highlight-row' : ''}
-                          >
-                            <td>
-                              <div>
-                                <span 
-                                  className="player-color-swatch" 
-                                  style={{ backgroundColor: player.color }}
-                                />
-                                {player.name || player.id.substring(0, 6)} {player.id === localPlayerIdRef.current ? '(You)' : ''}
-                              </div>
-                            </td>
-                            <td>
-                              {player.score}
-                            </td>
-                            <td>
-                              {player.deaths}
-                            </td>
-                            <td className={player.isConnected ? 'status-online' : 'status-offline'}>
-                              {player.isConnected ? 'Online' : 'Offline'}
-                            </td>
-                          </tr>
-                        ));
+                    if (color) {
+                      return (
+                        <span
+                          className='player-color-swatch'
+                          style={{ backgroundColor: color, cursor: 'pointer' }} // Add cursor pointer
+                        />
+                      );
+                    } else {
+                      return (
+                        <span
+                          style={{ color: 'var(--text-color)', opacity: 0.7, fontStyle: 'italic' }}
+                        >
+                          {' '}
+                          (Waiting...)
+                        </span>
+                      );
                     }
-                    
-                    // If playerStats is empty
-                    return (
-                      <tr>
-                        <td colSpan={4}>
-                          {isConnected ? 'Waiting for players...' : 'Connecting...'}
-                        </td>
-                      </tr>
-                    );
                   })()}
-                </tbody>
-              </table>
+                </span>
+              </div>
+              <div id='active-powerups'>
+                <strong>Active Effects:</strong>
+                {(() => {
+                  // Use the timestamp from the received game state for comparison
+                  const serverTime = gameState.timestamp;
+                  const allActive = gameState.activePowerUps || []; // Ensure it's an array
+
+                  const active = allActive.filter((ap) => {
+                    const isLocal = ap.playerId === localPlayerIdRef.current;
+                    const isExpired = ap.expiresAt <= serverTime;
+                    // Log individual checks
+                    // console.log(`  Checking AP type=${ap.type}, player=${ap.playerId}, expires=${ap.expiresAt}, local=${isLocal}, expired=${isExpired}`);
+                    return isLocal && !isExpired; // Compare against server time
+                  });
+
+                  if (active.length === 0) {
+                    return <span style={{ fontStyle: 'italic', opacity: 0.7 }}> None</span>;
+                  }
+
+                  // Mapping from type to description (reuse from legend)
+                  const descriptions: Record<string, string> = {
+                    SPEED: 'Speed Boost',
+                    SLOW: 'Slow Down',
+                    INVINCIBILITY: 'Invincibility',
+                    DOUBLE_SCORE: 'Double Score'
+                  };
+
+                  return active.map((ap) => {
+                    let symbol = '?';
+                    let className = 'powerup-symbol';
+                    let description = descriptions[ap.type] || ap.type; // Get description or fallback to type name
+
+                    switch (ap.type) {
+                      case 'SPEED':
+                        symbol = 'S';
+                        className += ' speed';
+                        break;
+                      case 'SLOW':
+                        symbol = 'W';
+                        className += ' slow';
+                        break;
+                      case 'INVINCIBILITY':
+                        symbol = 'I';
+                        className += ' invincibility';
+                        break;
+                      case 'DOUBLE_SCORE':
+                        symbol = '2x';
+                        className += ' double-score';
+                        break;
+                    }
+                    // Calculate remaining duration roughly (optional)
+                    const expiresIn = Math.max(0, Math.round((ap.expiresAt - serverTime) / 1000));
+                    const title = `${description} (expires in ~${expiresIn}s)`;
+
+                    return (
+                      <div key={ap.type}>
+                        <span className={className} title={title}>
+                          {symbol}
+                        </span>
+                        <span>
+                          {description} (~{expiresIn}s)
+                        </span>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+
+            <div className='info-section' id='player-rankings'>
+              <h3>Player Rankings</h3>
+              <div className='table-scroll-wrapper'>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Player</th>
+                      <th>Score</th>
+                      <th>Deaths</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      // Always derive players from playerStats
+                      const playerStats = gameState.playerStats || {};
+                      const players = Object.values(playerStats);
+
+                      if (players.length > 0) {
+                        // console.log("Rendering", players.length, "players from gameState.playerStats (incl. offline)");
+                        return players
+                          .sort((a, b) => b.score - a.score) // Sort by score descending
+                          .map((player) => (
+                            <tr
+                              key={player.id}
+                              className={
+                                player.id === localPlayerIdRef.current ? 'highlight-row' : ''
+                              }
+                            >
+                              <td>
+                                <div>
+                                  <span
+                                    className='player-color-swatch'
+                                    style={{ backgroundColor: player.color }}
+                                  />
+                                  {player.name || player.id.substring(0, 6)}{' '}
+                                  {player.id === localPlayerIdRef.current ? '(You)' : ''}
+                                </div>
+                              </td>
+                              <td>{player.score}</td>
+                              <td>{player.deaths}</td>
+                              <td
+                                className={player.isConnected ? 'status-online' : 'status-offline'}
+                              >
+                                {player.isConnected ? 'Online' : 'Offline'}
+                              </td>
+                            </tr>
+                          ));
+                      }
+
+                      // If playerStats is empty
+                      return (
+                        <tr>
+                          <td colSpan={4}>
+                            {isConnected ? 'Waiting for players...' : 'Connecting...'}
+                          </td>
+                        </tr>
+                      );
+                    })()}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Power-up Legend Section */}
       {isConnected && (
-        <div className="info-section" id="powerup-legend">
+        <div className='info-section' id='powerup-legend'>
           <h3>Power-Up Legend</h3>
           <ul>
-            <li><span className="powerup-symbol speed">S</span> - Speed Boost: Temporarily increase your snake's speed.</li>
-            <li><span className="powerup-symbol slow">W</span> - Slow Down: Temporarily decrease your snake's speed.</li>
-            <li><span className="powerup-symbol invincibility">I</span> - Invincibility: Temporarily pass through other snakes and walls.</li>
-            <li><span className="powerup-symbol double-score">2x</span> - Double Score: Temporarily earn double points for eating food.</li>
+            <li>
+              <span className='powerup-symbol speed'>S</span> - Speed Boost: Temporarily increase
+              your snake's speed.
+            </li>
+            <li>
+              <span className='powerup-symbol slow'>W</span> - Slow Down: Temporarily decrease your
+              snake's speed.
+            </li>
+            <li>
+              <span className='powerup-symbol invincibility'>I</span> - Invincibility: Temporarily
+              pass through other snakes and walls.
+            </li>
+            <li>
+              <span className='powerup-symbol double-score'>2x</span> - Double Score: Temporarily
+              earn double points for eating food.
+            </li>
           </ul>
         </div>
       )}
@@ -753,4 +824,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App; 
+export default App;

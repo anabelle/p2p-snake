@@ -6,9 +6,13 @@ export const httpServer = createServer((req: IncomingMessage, res: ServerRespons
   if (req.url === '/' || req.url === '') {
     const userAgent = req.headers['user-agent'] || '';
     // Redirect browsers to the main game site
-    if (userAgent.includes('Mozilla') || userAgent.includes('Chrome') || userAgent.includes('Safari')) {
+    if (
+      userAgent.includes('Mozilla') ||
+      userAgent.includes('Chrome') ||
+      userAgent.includes('Safari')
+    ) {
       res.writeHead(302, {
-        'Location': 'https://snake.heyanabelle.com'
+        Location: 'https://snake.heyanabelle.com'
       });
       res.end();
       return;
@@ -19,4 +23,4 @@ export const httpServer = createServer((req: IncomingMessage, res: ServerRespons
   // We can let socket.io handle upgrades, or just return 404 for non-root http requests.
   res.writeHead(404);
   res.end();
-}); 
+});

@@ -9,7 +9,14 @@ export interface ExtendedPeerInstance extends SimplePeer.Instance {
 }
 
 export interface PeerMessage {
-  type: 'state' | 'action' | 'chat' | 'DIRECTION_CHANGE' | 'STATE_UPDATE' | 'PLAYER_JOIN' | 'PLAYER_LEAVE';
+  type:
+    | 'state'
+    | 'action'
+    | 'chat'
+    | 'DIRECTION_CHANGE'
+    | 'STATE_UPDATE'
+    | 'PLAYER_JOIN'
+    | 'PLAYER_LEAVE';
   senderId: string;
   data: any;
   timestamp: number;
@@ -19,4 +26,4 @@ export interface PeerMessage {
 export interface Peer {
   id: string;
   connection: ExtendedPeerInstance | null; // Use ExtendedPeerInstance again
-} 
+}

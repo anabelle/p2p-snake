@@ -14,11 +14,10 @@
   --grid-line-color: rgba(255, 255, 255, 0.05); /* Subtle grid */
   --highlight-bg: rgba(79, 70, 229, 0.2); /* Semi-transparent primary */
 
-  --font-family-sans: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  --font-family-mono: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  --font-family-sans:
+    'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
+    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --font-family-mono: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 *,
@@ -76,7 +75,8 @@ canvas {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.info-section h2, .info-section h3 {
+.info-section h2,
+.info-section h3 {
   margin-top: 0;
   color: var(--primary-color);
   border-bottom: 1px solid var(--border-color);
@@ -117,10 +117,11 @@ table {
 
 /* Ensure table doesn't add its own margin when inside the wrapper */
 .table-scroll-wrapper table {
-    margin-top: 0;
+  margin-top: 0;
 }
 
-th, td {
+th,
+td {
   padding: 0.75rem 1rem;
   text-align: left;
   border-bottom: 1px solid var(--border-color);
@@ -168,7 +169,9 @@ button {
   font-size: 1rem;
   font-weight: bold;
   font-family: var(--font-family-sans);
-  transition: background-color 0.2s ease-out, transform 0.1s ease-out;
+  transition:
+    background-color 0.2s ease-out,
+    transform 0.1s ease-out;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -226,8 +229,8 @@ button:disabled {
 }
 
 .modal-content h2 {
-    margin-top: 0;
-    color: var(--primary-color);
+  margin-top: 0;
+  color: var(--primary-color);
 }
 
 /* Visually Hidden - Keep for accessibility */
@@ -315,7 +318,8 @@ button:disabled {
     padding: 0.75rem 1rem;
   }
 
-  th, td {
+  th,
+  td {
     padding: 0.5rem 0.75rem;
   }
 
@@ -369,15 +373,27 @@ button:disabled {
 }
 
 /* Specific Power-up Symbol Styles (can customize background/text color) */
-.powerup-symbol.speed { background-color: #64B5F6; color: white; } /* Light Blue */
-.powerup-symbol.slow { background-color: #FFB74D; color: white; } /* Orange */
-.powerup-symbol.invincibility { background-color: #BA68C8; color: white; } /* Purple */
-.powerup-symbol.double-score { background-color: #4DB6AC; color: white; } /* Teal */
+.powerup-symbol.speed {
+  background-color: #64b5f6;
+  color: white;
+} /* Light Blue */
+.powerup-symbol.slow {
+  background-color: #ffb74d;
+  color: white;
+} /* Orange */
+.powerup-symbol.invincibility {
+  background-color: #ba68c8;
+  color: white;
+} /* Purple */
+.powerup-symbol.double-score {
+  background-color: #4db6ac;
+  color: white;
+} /* Teal */
 
 #game-canvas-container {
   position: relative;
   /* Ensure the container doesn't exceed screen width */
-  max-width: 100%; 
+  max-width: 100%;
   /* Optional: center the container if it's narrower than the screen */
   margin-left: auto;
   margin-right: auto;
@@ -388,4 +404,4 @@ button:disabled {
     height: auto; /* Maintain aspect ratio */
     background-color: #222; /* Ensure background shows if scaled */
   }
-} 
+}

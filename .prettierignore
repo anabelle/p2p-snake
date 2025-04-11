@@ -1,0 +1,8 @@
+node_modules
+public
+build
+dist
+package.json
+package-lock.json
+coverage
+.husky 

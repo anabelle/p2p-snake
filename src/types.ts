@@ -5,4 +5,4 @@ export interface UserProfile {
 }
 
 // You can add other shared types here later, like GameState, PlayerStats etc.
-// For now, just UserProfile is needed for the modal. 
+// For now, just UserProfile is needed for the modal.

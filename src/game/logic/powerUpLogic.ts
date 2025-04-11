@@ -1,6 +1,6 @@
-import { Point, PowerUp, PowerUpType, ActivePowerUp, Snake } from "../state/types";
-import { generateRandomPosition } from "./prng";
-import { POWER_UP_GRID_DURATION, POWER_UP_EFFECT_DURATION } from "../constants";
+import { Point, PowerUp, PowerUpType, ActivePowerUp, Snake } from '../state/types';
+import { generateRandomPosition } from './prng';
+import { POWER_UP_GRID_DURATION, POWER_UP_EFFECT_DURATION } from '../constants';
 
 // Generate a new power-up at a random position
 export const generatePowerUp = (
@@ -12,7 +12,7 @@ export const generatePowerUp = (
 ): PowerUp | null => {
   const position = generateRandomPosition(gridSize, occupiedPositions, randomFunc);
   if (!position) {
-    console.warn("Could not generate power-up: No unoccupied position found.");
+    console.warn('Could not generate power-up: No unoccupied position found.');
     return null; // Grid might be full
   }
 
@@ -23,7 +23,7 @@ export const generatePowerUp = (
     id: `powerup-${powerUpId}`,
     type: randomType,
     position,
-    expiresAt: currentTime + POWER_UP_GRID_DURATION,
+    expiresAt: currentTime + POWER_UP_GRID_DURATION
   };
 };
 
@@ -36,7 +36,7 @@ export const activatePowerUp = (
   return {
     type: powerUp.type,
     playerId: snake.id,
-    expiresAt: currentTime + POWER_UP_EFFECT_DURATION,
+    expiresAt: currentTime + POWER_UP_EFFECT_DURATION
   };
 };
 
@@ -57,17 +57,13 @@ export const cleanupExpiredActivePowerUps = (
   activePowerUps: ActivePowerUp[],
   currentTime: number
 ): ActivePowerUp[] => {
-  return activePowerUps.filter(ap => ap.expiresAt > currentTime);
+  return activePowerUps.filter((ap) => ap.expiresAt > currentTime);
 };
 
 // Remove expired power-ups from the grid
-export const cleanupExpiredGridPowerUps = (
-  powerUps: PowerUp[],
-  currentTime: number
-): PowerUp[] => {
-  return powerUps.filter(p => p.expiresAt > currentTime);
+export const cleanupExpiredGridPowerUps = (powerUps: PowerUp[], currentTime: number): PowerUp[] => {
+  return powerUps.filter((p) => p.expiresAt > currentTime);
 };
-
 
 // --- Effect Calculation Functions ---
 
@@ -106,4 +102,4 @@ export const isInvincible = (
   currentTime: number
 ): boolean => {
   return isPowerUpActive(PowerUpType.INVINCIBILITY, snakeId, activePowerUps, currentTime);
-}; 
+};

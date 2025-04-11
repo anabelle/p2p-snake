@@ -12,30 +12,30 @@ This project implements a classic Snake game with real-time multiplayer capabili
 
 ## Features
 
-* **Multiplayer**: Play with friends in real-time
-* **AI Snake**: Always-present AI opponent that adapts its difficulty based on length
-* **Player Management**: Handles players joining, leaving, and preserves stats (score, deaths) for returning players
-* **Deterministic Game Logic**: Ensures all players experience the same game events
-* **Power-Ups**: Collect power-ups for temporary effects:
-  * SPEED: Move faster than other players
-  * SLOW: Move at half speed
-  * INVINCIBILITY: Pass through other snakes without dying
-  * DOUBLE_SCORE: Double points for eating food
-* **Collision Detection**: Handles snake-snake collisions with death tracking
-* **Score Tracking**: Updates and syncs scores based on food consumption and multipliers
-* **Responsive UI**: Built with React and TypeScript
+- **Multiplayer**: Play with friends in real-time
+- **AI Snake**: Always-present AI opponent that adapts its difficulty based on length
+- **Player Management**: Handles players joining, leaving, and preserves stats (score, deaths) for returning players
+- **Deterministic Game Logic**: Ensures all players experience the same game events
+- **Power-Ups**: Collect power-ups for temporary effects:
+  - SPEED: Move faster than other players
+  - SLOW: Move at half speed
+  - INVINCIBILITY: Pass through other snakes without dying
+  - DOUBLE_SCORE: Double points for eating food
+- **Collision Detection**: Handles snake-snake collisions with death tracking
+- **Score Tracking**: Updates and syncs scores based on food consumption and multipliers
+- **Responsive UI**: Built with React and TypeScript
 
 ## Technical Architecture
 
-* **Frontend**: React with TypeScript, using Socket.IO for client-server communication
-* **Backend**: Node.js server using Socket.IO for real-time state synchronization and game logic
-* **Game Loop**: Server-managed tick system ensures consistent gameplay across all clients
-* **Testing**: Jest with ts-jest for unit and integration tests
+- **Frontend**: React with TypeScript, using Socket.IO for client-server communication
+- **Backend**: Node.js server using Socket.IO for real-time state synchronization and game logic
+- **Game Loop**: Server-managed tick system ensures consistent gameplay across all clients
+- **Testing**: Jest with ts-jest for unit and integration tests
 
 ## Prerequisites
 
-* Node.js (v18 or later recommended)
-* npm (usually comes with Node.js)
+- Node.js (v18 or later recommended)
+- npm (usually comes with Node.js)
 
 ```bash
 # Check versions
@@ -46,6 +46,7 @@ npm -v
 ## Setup and Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/yourusername/snake.git
    cd snake
@@ -65,6 +66,7 @@ npm run start:dev
 ```
 
 This will:
+
 1. Start the game server on port 3001
 2. Start the React app on port 3000
 3. Configure the React app to use localhost:3001 as the server
@@ -72,6 +74,7 @@ This will:
 Alternatively, you can run them separately:
 
 1. **Start the Game Server:**
+
    ```bash
    npm run start:server
    ```
@@ -112,6 +115,7 @@ npm test -- --coverage
 The server and frontend are configured to be deployed together, with the server serving the static files.
 
 1. Build the static files:
+
    ```bash
    npm run build
    ```
@@ -128,4 +132,4 @@ The server and frontend are configured to be deployed together, with the server 
 2. Create a feature branch: `git checkout -b feature/my-new-feature`
 3. Commit your changes: `git commit -am 'Add some feature'`
 4. Push to the branch: `git push origin feature/my-new-feature`
-5. Submit a pull request 
+5. Submit a pull request

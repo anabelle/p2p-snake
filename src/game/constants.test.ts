@@ -56,10 +56,10 @@ describe('Game Constants', () => {
     expect(PLAYER_COLORS).toBeDefined();
     expect(Array.isArray(PLAYER_COLORS)).toBe(true);
     expect(PLAYER_COLORS.length).toBeGreaterThan(0);
-    PLAYER_COLORS.forEach(color => {
+    PLAYER_COLORS.forEach((color) => {
       expect(typeof color).toBe('string');
       // Basic hex color check
       expect(color).toMatch(/^#[0-9A-F]{6}$/i);
     });
   });
-}); 
+});

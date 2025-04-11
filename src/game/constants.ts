@@ -24,7 +24,7 @@ export const PLAYER_COLORS = [
   '#B2FF33', // Yellow-Green
   '#33FFB2', // Aqua
   '#B233FF', // Violet
-  
+
   // Dark colors
   '#1E293B', // Slate-900
   '#1E3A8A', // Dark Blue
@@ -32,7 +32,7 @@ export const PLAYER_COLORS = [
   '#6B0000', // Dark Red
   '#3D4B12', // Dark Olive
   '#004D40', // Dark Teal
-  
+
   // Pastel colors
   '#FFD1DC', // Pastel Pink
   '#B5EAD7', // Pastel Mint
@@ -40,7 +40,7 @@ export const PLAYER_COLORS = [
   '#FFF1C1', // Pastel Yellow
   '#E2F0CB', // Pastel Green
   '#F0E0FF', // Pastel Lavender
-  
+
   // Interesting colors
   '#F0A202', // Amber
   '#F87666', // Coral
@@ -51,5 +51,5 @@ export const PLAYER_COLORS = [
   '#FF6392', // Flamingo Pink
   '#03071E', // Dark Navy
   '#A7F0D1', // Seafoam Green
-  '#540D6E', // Byzantine Purple
-]; 
+  '#540D6E' // Byzantine Purple
+];

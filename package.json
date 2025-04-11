@@ -41,12 +41,24 @@
     "start:dev": "cross-env REACT_APP_SIGNALING_SERVER_URL=http://localhost:3001 concurrently \"npm run start:server\" \"npm run start\"",
     "heroku-postbuild": "npm run build",
     "cypress:open": "cypress open",
-    "cypress:run": "cypress run"
+    "cypress:run": "cypress run",
+    "prepare": "husky install",
+    "lint": "eslint . --fix --max-warnings=0",
+    "format": "prettier . --write"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix"
+    ],
+    "*.{js,jsx,ts,tsx,json,css,scss,md}": [
+      "prettier --write"
+    ]
   },
   "eslintConfig": {
     "extends": [
       "react-app",
-      "react-app/jest"
+      "react-app/jest",
+      "prettier"
     ]
   },
   "browserslist": {
@@ -69,8 +81,13 @@
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
     "cypress": "^14.3.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.2",
+    "husky": "^8.0.0",
     "jest-environment-jsdom": "^27.5.1",
     "jest-watch-typeahead": "^2.2.2",
+    "lint-staged": "^15.5.1",
+    "prettier": "^3.5.3",
     "react-app-rewired": "^2.2.1",
     "ts-jest": "^27.1.4",
     "ts-node": "^10.9.2"
