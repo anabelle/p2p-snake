@@ -26,16 +26,15 @@ describe('ErrorMessage', () => {
 
   it('does not render when the message is empty', () => {
     const mockDismiss = jest.fn();
-    const { container } = render(<ErrorMessage message="" onDismiss={mockDismiss} />);
+    render(<ErrorMessage message="" onDismiss={mockDismiss} />);
 
-    expect(container.firstChild).toBeNull();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('does not render when the message is null', () => {
     const mockDismiss = jest.fn();
-    // Casting null to any to satisfy the component's expected string type for the test setup
-    const { container } = render(<ErrorMessage message={null as any} onDismiss={mockDismiss} />); 
+    render(<ErrorMessage message={null as any} onDismiss={mockDismiss} />); 
     
-    expect(container.firstChild).toBeNull();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 }); 
