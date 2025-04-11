@@ -188,32 +188,31 @@ const App: React.FC = () => {
 
   // --- Centralized Setup Effect (Simplified: mainly for canvas and cleanup) ---
   useEffect(() => {
-    // --- Canvas Creation (Ensure it exists initially if possible) ---
+    // --- Canvas Creation (Remains the same) ---
     let canvasElementCreated = false;
-    if (!canvasRef.current && gameContainerRef.current) {
+    const container = gameContainerRef.current; // Capture ref value here
+
+    if (!canvasRef.current && container) {
+      // Use captured value
       console.log('Creating initial canvas element on mount...');
       const canvas = document.createElement('canvas');
       canvas.width = canvasWidth;
       canvas.height = canvasHeight;
-      gameContainerRef.current.appendChild(canvas);
+      container.appendChild(canvas); // Use captured value
       canvasRef.current = canvas;
       canvasElementCreated = true;
     }
 
-    // --- Cleanup function for this main setup effect ---
+    // --- Cleanup function for this main setup effect (Simplified) ---
     return () => {
       console.log('Main App effect cleanup (unmount)');
-      disconnectWebSocket();
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = undefined;
-      }
-      gameAdapterRef.current = null;
-      const gameContainer = gameContainerRef.current;
-      if (canvasElementCreated && canvasRef.current && gameContainer?.contains(canvasRef.current)) {
+      disconnectWebSocket(); // Still disconnect WebSocket
+
+      // Use the captured container variable in cleanup
+      if (canvasElementCreated && canvasRef.current && container?.contains(canvasRef.current)) {
         console.log('Removing initial canvas element on unmount.');
         try {
-          gameContainer.removeChild(canvasRef.current);
+          container.removeChild(canvasRef.current); // Use captured value
         } catch (error) {
           console.error('Error removing canvas during unmount cleanup:', error);
         }
