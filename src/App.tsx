@@ -16,6 +16,7 @@ import useCanvasElement from './hooks/useCanvasElement'; // Import the new hook
 import UserInfoSection from './components/UserInfoSection'; // Import the new component
 import PlayerRankings from './components/PlayerRankings'; // Import the rankings component
 import PowerUpLegend from './components/PowerUpLegend'; // Import the legend component
+import GameArea from './components/GameArea'; // Import the game area component
 
 import './App.css'; // Import the CSS file
 
@@ -128,24 +129,15 @@ const App: React.FC = () => {
         initialProfile={currentUserProfile}
       />
 
-      <div
-        ref={gameContainerRef}
-        id='game-canvas-container'
-        style={{
-          width: canvasWidth,
-          height: canvasHeight,
-          ['--canvas-width' as string]: `${canvasWidth}px`
-        }}
-      >
-        {!isConnected && profileStatus !== 'loaded' && !isProfileModalOpen && (
-          <div className='connecting-overlay'>
-            {profileStatus === 'loading' ? 'Loading Profile...' : 'Connecting...'}
-          </div>
-        )}
-        {isConnected && syncedGameState?.playerCount && syncedGameState.playerCount > 0 && (
-          <div className='player-count-badge'>Players: {syncedGameState.playerCount}</div>
-        )}
-      </div>
+      <GameArea
+        gameContainerRef={gameContainerRef}
+        canvasWidth={canvasWidth}
+        canvasHeight={canvasHeight}
+        isConnected={isConnected}
+        profileStatus={profileStatus}
+        isProfileModalOpen={isProfileModalOpen}
+        syncedGameState={syncedGameState}
+      />
 
       {isConnected && currentUserProfile && profileStatus === 'loaded' && (
         <div className='info-sections-wrapper'>
