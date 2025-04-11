@@ -39,7 +39,8 @@
     "preview": "vite preview",
     "start:server": "tsx server/index.ts",
     "start:dev": "cross-env REACT_APP_SIGNALING_SERVER_URL=http://localhost:3001 concurrently \"npm run start:server\" \"npm run start\"",
-    "heroku-postbuild": "npm run build"
+    "heroku-postbuild": "npm run build",
+    "cypress:open": "cypress open"
   },
   "eslintConfig": {
     "extends": [
@@ -66,6 +67,7 @@
     "buffer": "^6.0.3",
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
+    "cypress": "^14.3.0",
     "jest-environment-jsdom": "^27.5.1",
     "jest-watch-typeahead": "^2.2.2",
     "react-app-rewired": "^2.2.1",
