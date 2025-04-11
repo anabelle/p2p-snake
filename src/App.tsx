@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Modal from 'react-modal'; // Import Modal
-import { NetplayAdapter } from './game/network/NetplayAdapter';
+// import { NetplayAdapter } from './game/network/NetplayAdapter';
 // Types might still be needed for state-sync
 import { GameState, Direction } from './game/state/types';
 import { GRID_SIZE, CELL_SIZE } from './game/constants';
@@ -8,6 +8,8 @@ import ProfileModal from './components/ProfileModal'; // Import the modal compon
 import { useGameInput } from './hooks/useGameInput'; // Import the new hook
 import { useWebSocket } from './hooks/useWebSocket'; // Import the WebSocket hook
 import { useUserProfile } from './hooks/useUserProfile'; // Import the new profile hook
+import { useGameLoop } from './hooks/useGameLoop'; // Import the game loop hook
+import { useGameAdapter } from './hooks/useGameAdapter'; // Import the game adapter hook
 
 import './App.css'; // Import the CSS file
 
@@ -18,9 +20,7 @@ if (typeof window !== 'undefined') {
 
 const App: React.FC = () => {
   const gameContainerRef = useRef<HTMLDivElement>(null); // Ref for touch events and canvas container
-  const gameAdapterRef = useRef<NetplayAdapter | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const animationFrameRef = useRef<number>();
 
   // --- Calculate Canvas Size from Constants ---
   const canvasWidth = GRID_SIZE.width * CELL_SIZE;
@@ -49,6 +49,14 @@ const App: React.FC = () => {
     socket // Pass the socket instance from useWebSocket
     // Pass latestGameState later for server sync
     // latestGameState,
+  });
+
+  // --- Use Game Adapter Hook ---
+  const gameAdapterRef = useGameAdapter({
+    canvasRef,
+    localPlayerId,
+    isConnected,
+    profileStatus
   });
 
   // --- React State ---
@@ -89,87 +97,29 @@ const App: React.FC = () => {
   );
   useGameInput(gameContainerRef, handleDirectionChange);
 
-  // --- Game Loop ---
-  const gameLoop = useCallback(() => {
-    // Check if drawing is possible (refs exist)
-    if (canvasRef.current && gameAdapterRef.current) {
-      // Only attempt to draw if state is also available
-      if (gameStateRef.current) {
-        try {
-          gameAdapterRef.current.draw(canvasRef.current, gameStateRef.current);
-        } catch (e) {
-          console.error('Error during gameAdapter.draw:', e);
-          // Optional: Decide if loop should stop on draw error
-        }
-      } else {
-        // State not yet available, clear canvas? Or just wait?
-        // console.log("Waiting for game state to draw...");
-        // Optionally clear the canvas to avoid showing stale frame
-        // const ctx = canvasRef.current.getContext('2d');
-        // ctx?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-      }
-      // Keep requesting frames as long as the adapter exists
-      animationFrameRef.current = requestAnimationFrame(gameLoop);
-    } else {
-      // If adapter or canvas disappears, stop the loop
-      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = undefined;
-      console.log('Game loop stopping: Adapter or Canvas ref missing.');
-    }
-  }, []);
+  // --- Determine if Game Loop Should Be Active (Update to use hook's ref) ---
+  const isGameLoopActive =
+    isConnected &&
+    profileStatus === 'loaded' &&
+    !!canvasRef.current &&
+    !!gameAdapterRef.current && // Use the ref from useGameAdapter
+    !!localPlayerId;
 
-  // --- Game Adapter Initialization ---
-  const startGameAdapter = useCallback(
-    (playerId: string | null) => {
-      if (!playerId) {
-        console.warn('startGameAdapter called without a valid playerId.');
-        // Clean up existing adapter if playerId becomes null
-        if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = undefined;
-        gameAdapterRef.current = null;
-        return;
-      }
-
-      if (gameAdapterRef.current) {
-        if (!animationFrameRef.current) {
-          console.log('Adapter exists, ensuring game loop is running.');
-          gameLoop();
-        }
-        return;
-      }
-
+  // --- Draw Frame Callback for Game Loop ---
+  const drawFrame = useCallback(() => {
+    // Check if drawing is possible (refs exist) - redundant check if isGameLoopActive is correct
+    if (canvasRef.current && gameAdapterRef.current && gameStateRef.current) {
       try {
-        if (!canvasRef.current) {
-          console.error('startGameAdapter called but canvasRef is null!');
-          return;
-        }
-        console.log(`Creating NetplayAdapter for player ${playerId}...`);
-        gameAdapterRef.current = new NetplayAdapter(canvasRef.current, playerId);
-        console.log('NetplayAdapter created. Starting client game loop...');
-        if (!animationFrameRef.current) {
-          gameLoop();
-        }
+        gameAdapterRef.current.draw(canvasRef.current, gameStateRef.current);
       } catch (e) {
-        console.error('Error creating NetplayAdapter instance:', e);
+        console.error('Error during gameAdapter.draw:', e);
       }
-    },
-    [gameLoop]
-  );
-
-  // --- Effect to Manage Game Adapter based on Connection and Profile (Use localPlayerId) ---
-  useEffect(() => {
-    if (isConnected && canvasRef.current && localPlayerId && profileStatus === 'loaded') {
-      console.log(`Conditions met for player ${localPlayerId}. Ensuring game adapter & loop.`);
-      startGameAdapter(localPlayerId);
-    } else {
-      // Clean up adapter if disconnected, no localPlayerId, or profile isn't loaded
-      console.log(
-        'Conditions not met for game adapter (disconnected, no profile, or loading). Cleaning up adapter and loop.'
-      );
-      // Call startGameAdapter with null to handle cleanup
-      startGameAdapter(null);
     }
-  }, [isConnected, startGameAdapter, localPlayerId, profileStatus]); // Add localPlayerId and profileStatus
+    // No need to request next frame here, the hook handles it
+  }, [gameAdapterRef]); // Add gameAdapterRef as dependency
+
+  // --- Use the Game Loop Hook ---
+  useGameLoop(drawFrame, isGameLoopActive);
 
   // --- Effect to handle profile status changes (e.g., open modal) ---
   useEffect(() => {
