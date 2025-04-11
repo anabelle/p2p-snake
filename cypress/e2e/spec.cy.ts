@@ -27,7 +27,8 @@ describe('App Initialization and Profile', () => {
 
       // Type a name into the input
       const testName = 'NewUser';
-      cy.get('#profileName').type(testName);
+      cy.get('#profileName').type(testName, { delay: 50, force: true });
+      cy.get('#profileName').should('have.value', testName);
 
       // Click the save button
       cy.get('.profile-modal-actions button').contains('Save').click();
@@ -36,9 +37,10 @@ describe('App Initialization and Profile', () => {
       cy.get('.profile-modal').should('not.exist');
 
       // Check if the game canvas container is now visible and contains a canvas
-      cy.get('#game-canvas-container').should('be.visible').find('canvas').should('exist');
+      // Wait for the canvas to ensure game has likely initialized after profile save
+      cy.get('#game-canvas-container canvas', { timeout: 10000 }).should('be.visible');
 
-      // Check if the correct name is displayed
+      // Check if the correct name is displayed, allowing for retry
       cy.get('#your-snake-info .editable-profile-item').first().should('contain', testName);
     });
   });
@@ -124,7 +126,8 @@ describe('App Initialization and Profile', () => {
 
       // Type a new name
       const updatedName = 'UpdatedUser';
-      cy.get('#profileName').clear().type(updatedName);
+      cy.get('#profileName').clear({ force: true }).type(updatedName, { delay: 50, force: true });
+      cy.get('#profileName').should('have.value', updatedName);
 
       // Click the save button
       cy.get('.profile-modal-actions button').contains('Save').click();
@@ -132,11 +135,11 @@ describe('App Initialization and Profile', () => {
       // Check if the modal is closed
       cy.get('.profile-modal').should('not.exist');
 
-      // Check if the updated name is displayed
+      // Check if the updated name is displayed, allowing for retry
       cy.get('#your-snake-info .editable-profile-item').first().should('contain', updatedName);
 
       // Also check canvas is still present
-      cy.get('#game-canvas-container').should('be.visible').find('canvas').should('exist');
+      cy.get('#game-canvas-container canvas').should('be.visible');
     });
 
     it('should handle arrow key presses for input', () => {

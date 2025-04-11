@@ -8,6 +8,7 @@ import io, { Socket } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 import { GRID_SIZE, CELL_SIZE } from './game/constants';
 import ProfileModal from './components/ProfileModal'; // Import the modal component
+import { DirectionInput, mapKeyCodeToDirection } from './utils/inputUtils';
 
 import './App.css'; // Import the CSS file
 
@@ -64,46 +65,28 @@ const App: React.FC = () => {
   useEffect(() => {
     // --- Keyboard Listeners ---
     const handleKeyDown = (event: KeyboardEvent) => {
-      // console.log(`KEYDOWN Event: key=${event.key}`);
-      let direction: { dx: number; dy: number } | null = null;
-      let isArrowKey = false;
-
-      switch (event.key) {
-        case 'ArrowUp':
-          direction = { dx: 0, dy: 1 };
-          isArrowKey = true;
-          break;
-        case 'ArrowDown':
-          direction = { dx: 0, dy: -1 };
-          isArrowKey = true;
-          break;
-        case 'ArrowLeft':
-          direction = { dx: -1, dy: 0 };
-          isArrowKey = true;
-          break;
-        case 'ArrowRight':
-          direction = { dx: 1, dy: 0 };
-          isArrowKey = true;
-          break;
+      // Ignore keydowns if the target is an input, textarea, or select element
+      const target = event.target as HTMLElement;
+      if (
+        target &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')
+      ) {
+        return;
       }
+
+      const direction: DirectionInput | null = mapKeyCodeToDirection(event.key);
 
       if (direction && socketRef.current && socketRef.current.connected) {
-        // Send input directly to the server
         socketRef.current.emit('input', direction);
-        // console.log("KEYDOWN - Sent input:", direction);
       }
 
-      // Prevent default scrolling behavior for arrow keys
-      if (isArrowKey) {
+      // Prevent default scrolling behavior for known movement keys ONLY if not in an input
+      if (direction) {
         event.preventDefault();
       }
     };
 
-    // KeyUp is no longer needed for directional control
-    // const handleKeyUp = (event: KeyboardEvent) => { ... };
-
     window.addEventListener('keydown', handleKeyDown);
-    // window.addEventListener('keyup', handleKeyUp); // Remove KeyUp listener
 
     // --- Touch Listeners for Swipe Controls ---
     const gameArea = gameContainerRef.current; // Capture ref value
@@ -186,7 +169,6 @@ const App: React.FC = () => {
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      // window.removeEventListener('keyup', handleKeyUp); // Ensure KeyUp listener removal is also removed
       if (gameArea) {
         console.log('Removing touch listeners...');
         gameArea.removeEventListener('touchstart', handleTouchStart);
