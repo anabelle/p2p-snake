@@ -14,6 +14,7 @@ import { useGameStateSync } from './hooks/useGameStateSync'; // Import the new s
 import { useGameControls } from './hooks/useGameControls'; // Import the new controls hook
 import useCanvasElement from './hooks/useCanvasElement'; // Import the new hook
 import UserInfoSection from './components/UserInfoSection'; // Import the new component
+import PlayerRankings from './components/PlayerRankings'; // Import the new component
 
 import './App.css'; // Import the CSS file
 
@@ -168,68 +169,11 @@ const App: React.FC = () => {
             openProfileModal={openProfileModal}
           />
 
-          <div className='info-section' id='player-rankings'>
-            <h3>Player Rankings</h3>
-            <div className='table-scroll-wrapper'>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Player</th>
-                    <th>Score</th>
-                    <th>Deaths</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(() => {
-                    const playerStats = syncedGameState?.playerStats || {};
-                    const players = Object.values(playerStats).sort(
-                      (a, b) => (b.score ?? 0) - (a.score ?? 0)
-                    );
-
-                    if (players.length > 0) {
-                      return players.map((player) => (
-                        <tr
-                          key={player.id}
-                          // Use localPlayerId from hook
-                          className={player.id === localPlayerId ? 'highlight-row' : ''}
-                        >
-                          <td>
-                            <div>
-                              <span
-                                className='player-color-swatch'
-                                style={{ backgroundColor: player.color }}
-                              />
-                              {player.name || player.id.substring(0, 6)}
-                              {/* Use localPlayerId from hook */}
-                              {player.id === localPlayerId ? ' (You)' : ''}
-                            </div>
-                          </td>
-                          <td>{player.score ?? 0}</td>
-                          <td>{player.deaths ?? 0}</td>
-                          <td className={player.isConnected ? 'status-online' : 'status-offline'}>
-                            {player.isConnected ? 'Online' : 'Offline'}
-                          </td>
-                        </tr>
-                      ));
-                    } else {
-                      // Handle the "no players" case
-                      // Since we are inside the block conditional on profileStatus === 'loaded',
-                      // we only need to check the connection status.
-                      const statusMessage = isConnected
-                        ? 'Waiting for players...'
-                        : 'Connecting...';
-                      return (
-                        <tr>
-                          <td colSpan={4}>{statusMessage}</td>
-                        </tr>
-                      );
-                    }
-                  })()}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <PlayerRankings
+            syncedGameState={syncedGameState}
+            localPlayerId={localPlayerId}
+            isConnected={isConnected}
+          />
 
           <div className='info-section' id='powerup-legend'>
             <h3>Power-Up Legend</h3>
