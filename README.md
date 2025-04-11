@@ -34,7 +34,10 @@ This project implements a classic Snake game with real-time multiplayer capabili
 - **Frontend**: React with TypeScript, using Socket.IO for client-server communication
 - **Backend**: Node.js server using Socket.IO for real-time state synchronization and game logic
 - **Game Loop**: Server-managed tick system ensures consistent gameplay across all clients
-- **Testing**: Jest with ts-jest for unit and integration tests
+- **Testing**: Jest (unit/integration), Cypress (E2E)
+- **Linting/Formatting**: ESLint, Prettier
+- **Git Hooks**: Husky, lint-staged
+- **CI/CD**: GitHub Actions for automated testing and deployment
 
 ## Prerequisites
 
@@ -52,12 +55,15 @@ npm -v
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yourusername/snake.git
-   cd snake
+   git clone https://github.com/anabelle/p2p-snake.git
+   cd p2p-snake
    ```
 
 2. Install dependencies:
    ```bash
+   # Using npm ci is recommended for CI environments or clean installs
+   npm ci
+   # Or, for typical development:
    npm install
    ```
 
@@ -88,23 +94,50 @@ Alternatively, you can run them separately:
    npm start
    ```
 
-## Running Tests
+### Linting and Formatting
 
-To run the test suite:
+To manually lint and format the codebase:
 
 ```bash
-npm test
+# Lint and attempt to fix issues
+npm run lint
+
+# Format the code
+npm run format
 ```
 
-For test coverage:
+## Running Tests
+
+### Unit Tests
+
+Run the Jest unit and integration tests:
 
 ```bash
+# Run tests once
+npm test
+
+# Run tests in watch mode
+npm test -- --watch
+
+# Run tests with coverage report
 npm test -- --coverage
+```
+
+### End-to-End (E2E) Tests
+
+Run the Cypress E2E tests. This requires the development server to be running (`npm run start:dev`).
+
+```bash
+# Open the Cypress Test Runner UI
+npm run cypress:open
+
+# Run Cypress tests headlessly in the terminal
+npm run cypress:run
 ```
 
 ## How to Play
 
-1. Open the game in your browser
+1. Open the game in your browser (typically `http://localhost:3000` when running locally)
 2. You'll automatically be connected to the game server
 3. Use the arrow keys or WASD to control your snake
 4. Collect food (red circles) to grow your snake and earn points
@@ -114,26 +147,21 @@ npm test -- --coverage
 
 ## Deployment
 
-### Combined Deployment
+This project uses GitHub Actions for automated deployment.
 
-The server and frontend are configured to be deployed together, with the server serving the static files.
+- Pushing to the `main` branch triggers the CI workflow (`unit-test.yml`, then `e2e-test.yml`).
+- If both unit and E2E tests pass on `main`, the `deploy.yml` workflow is triggered.
+- The `deploy.yml` workflow builds the production version of the frontend and deploys the contents of the `build/` directory via FTP to the production server.
 
-1. Build the static files:
-
-   ```bash
-   npm run build
-   ```
-
-2. Deploy to a service that supports Node.js applications (e.g., Heroku, Render, Fly.io):
-   ```bash
-   # Example for Heroku
-   git push heroku main
-   ```
+No manual deployment steps are typically required.
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/my-new-feature`
-3. Commit your changes: `git commit -am 'Add some feature'`
-4. Push to the branch: `git push origin feature/my-new-feature`
-5. Submit a pull request
+3. Make your changes.
+4. **Important:** This project uses pre-commit hooks (Husky + lint-staged) to automatically lint and format your code before committing. Ensure these hooks run successfully.
+5. Commit your changes: `git commit -am 'Add some feature'`
+6. Push to the branch: `git push origin feature/my-new-feature`
+7. Submit a pull request against the `main` branch.
+8. Your pull request will automatically trigger the CI workflow (`unit-test.yml`, `e2e-test.yml`) to run checks.
