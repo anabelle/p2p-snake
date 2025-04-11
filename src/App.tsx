@@ -13,10 +13,11 @@ import { useGameStateSync } from './hooks/useGameStateSync'; // Import the new s
 import { useGameControls } from './hooks/useGameControls'; // Import the new controls hook
 import { useGameRenderer } from './hooks/useGameRenderer'; // Import the new renderer hook
 import useCanvasElement from './hooks/useCanvasElement'; // Import the new hook
-import UserInfoSection from './components/UserInfoSection'; // Import the new component
-import PlayerRankings from './components/PlayerRankings'; // Import the rankings component
-import PowerUpLegend from './components/PowerUpLegend'; // Import the legend component
+// import UserInfoSection from './components/UserInfoSection'; // No longer needed here
+// import PlayerRankings from './components/PlayerRankings'; // No longer needed here
+// import PowerUpLegend from './components/PowerUpLegend'; // No longer needed here
 import GameArea from './components/GameArea'; // Import the game area component
+import InfoPanel from './components/InfoPanel'; // Import the info panel component
 
 import './App.css'; // Import the CSS file
 
@@ -139,24 +140,14 @@ const App: React.FC = () => {
         syncedGameState={syncedGameState}
       />
 
-      {isConnected && currentUserProfile && profileStatus === 'loaded' && (
-        <div className='info-sections-wrapper'>
-          <UserInfoSection
-            currentUserProfile={currentUserProfile}
-            syncedGameState={syncedGameState}
-            localPlayerId={localPlayerId}
-            openProfileModal={openProfileModal}
-          />
-
-          <PlayerRankings
-            syncedGameState={syncedGameState}
-            localPlayerId={localPlayerId}
-            isConnected={isConnected}
-          />
-
-          <PowerUpLegend />
-        </div>
-      )}
+      <InfoPanel
+        isConnected={isConnected}
+        currentUserProfile={currentUserProfile}
+        profileStatus={profileStatus}
+        syncedGameState={syncedGameState}
+        localPlayerId={localPlayerId}
+        openProfileModal={openProfileModal}
+      />
     </div>
   );
 };
