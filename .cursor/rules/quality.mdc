@@ -1,21 +1,26 @@
 ---
 description: 
 globs: 
-alwaysApply: false
----
----
-description: 
-globs: 
 alwaysApply: true
 ---
+# Code Quality Workflow
 
-# Code Qualiy
+## 1. Setup & Context Gathering
 
-- Read package.json and create a file tree map as a first step always.
-- Use TDD always, first verify the issue by writing either unit or cypress tests, then fix it or implement the new feature
-- during development feel free to run only unit tests or cypress tests specific to the file you need to reduce overhead, hoever use verify when it makes sense to check for regressions
-- If you see overlay of webpack-dev-server-client-overlay in cypress, run npm run build to see the error instead of forcing anything.
-- Before making any edits run the following command to get context: "npm run verify"
-- After making any edits run the following commands to verify you didnt break anything: "npm run verify"
-- when everything is ok run: npm run lint and npm run format and fix any warnings or errors in the process
-- then run "npm run verify" after the last modification before saying success.
+*   **Baseline Check:** Before starting significant work or addressing a complex issue, ensure a clean slate by running `npm run verify`.
+*   **Understand the Scope:** If working in an unfamiliar area, review relevant sections of `package.json` (scripts, dependencies) and understand the local file/directory structure.
+
+## 2. Development Cycle (TDD Focus)
+
+*   **Test First:** Aim for a Test-Driven Development (TDD) approach.
+*   **Write a Failing Test:** Before implementing a feature or fixing a bug, write a specific test (unit or Cypress E2E) that clearly defines the desired outcome or reproduces the problem. Ensure this test fails as expected.
+*   **Implement/Fix:** Write the minimal code required to make the failing test pass.
+*   **Refactor:** Improve the code structure and clarity while ensuring all tests still pass.
+*   **Iterative Testing:** During development, run relevant tests frequently to get fast feedback. Use targeted commands like `npm test -- --testPathPattern=yourFile.test.ts` or specific Cypress commands, ensure to disable watch mode so you dont get stuck.
+*   **Troubleshooting Webpack Overlays:** If a `webpack-dev-server-client-overlay` appears during Cypress tests, run `npm run build` to get clearer error messages from the build process.
+
+## 3. Final Checks & Cleanup
+
+*   **Comprehensive Verification:** Before considering work complete or committing changes, run the full `npm run verify` suite to catch any regressions.
+*   **Linting & Formatting:** Run `npm run lint` and `npm run format`. Fix any errors or warnings reported.
+*   **Final Verification:** After *all* code changes, including lint/format fixes, run `npm run verify` one last time to guarantee everything is still working correctly.
