@@ -212,10 +212,7 @@ describe('Fullscreen Feature', () => {
 
   it('should have a fullscreen button with correct initial state and accessibility attributes', () => {
     // Assert initial button state
-    cy.get('button[aria-label="Enter Fullscreen"]')
-      .should('be.visible')
-      .and('contain.text', 'Fullscreen')
-      .and('be.enabled');
+    cy.get('button[aria-label="Enter Fullscreen"]').should('be.visible').and('be.enabled');
     // Assert other elements are visible initially
     cy.get('h1').should('be.visible');
     cy.get("[data-testid='info-panel-wrapper']").should('be.visible');

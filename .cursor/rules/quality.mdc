@@ -3,14 +3,14 @@ description:
 globs: 
 alwaysApply: true
 ---
-# Code Quality Workflow
+# Code Quality Mandatory Rules
 
-## 1. Setup & Context Gathering
+## 1. Gather Context(MANDATORY)
 
-*   **Baseline Check:** Before starting significant work or addressing a complex issue, ensure a clean slate by running `npm run verify`.
-*   **Understand the Scope:** If working in an unfamiliar area, review relevant sections of `package.json` (scripts, dependencies) and understand the local file/directory structure.
+*   **Baseline Check:** Before starting any work or addressing an issue, ensure a clean slate by running a mandatory `npm run verify`.
+*   **Understand the Scope:** Always review relevant sections of `package.json` (scripts, dependencies) and understand the local file/directory structure before doing anything.
 
-## 2. Development Cycle (TDD Focus)
+## 2. Development Cycle (TDD Always)
 
 *   **Test First:** Aim for a Test-Driven Development (TDD) approach.
 *   **Write a Failing Test:** Before implementing a feature or fixing a bug, write a specific test (unit or Cypress E2E) that clearly defines the desired outcome or reproduces the problem. Ensure this test fails as expected.
