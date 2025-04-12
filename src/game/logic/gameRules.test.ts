@@ -91,14 +91,19 @@ const createMinimalGameState = (): GameState => {
 describe('Game Rules - updateGame', () => {
   let baseState: GameState;
   const currentTime = 1000;
-  const generateNewSnakeMock = snakeLogic.generateNewSnake as jest.Mock;
-  const moveSnakeBodyMock = snakeLogic.moveSnakeBody as jest.Mock;
-  const generateFoodMock = foodLogic.generateFood as jest.Mock;
-  const isInvincibleMock = powerUpLogic.isInvincible as jest.Mock;
-  const hasCollidedWithSnakeMock = collision.hasCollidedWithSnake as jest.Mock;
-  const checkFoodCollisionMock = collision.checkFoodCollision as jest.Mock;
-  const checkPowerUpCollisionMock = collision.checkPowerUpCollision as jest.Mock;
-  const getSpeedFactorMock = powerUpLogic.getSpeedFactor as jest.Mock;
+  let generateNewSnakeSpy: jest.SpyInstance;
+  let moveSnakeBodySpy: jest.SpyInstance;
+  let growSnakeSpy: jest.SpyInstance;
+  let generateFoodSpy: jest.SpyInstance;
+  let isInvincibleSpy: jest.SpyInstance;
+  let hasCollidedWithSnakeSpy: jest.SpyInstance;
+  let checkFoodCollisionSpy: jest.SpyInstance;
+  let checkPowerUpCollisionSpy: jest.SpyInstance;
+  let getSpeedFactorSpy: jest.SpyInstance;
+  let activatePowerUpSpy: jest.SpyInstance;
+  let cleanupExpiredGridPowerUpsSpy: jest.SpyInstance;
+  let cleanupExpiredActivePowerUpsSpy: jest.SpyInstance;
+  let getScoreMultiplierSpy: jest.SpyInstance;
   let getOccupiedPositionsSpy: jest.SpyInstance;
 
   beforeEach(() => {
@@ -107,27 +112,60 @@ describe('Game Rules - updateGame', () => {
 
     getOccupiedPositionsSpy = jest.spyOn(prng, 'getOccupiedPositions').mockReturnValue([]);
 
-    generateNewSnakeMock.mockImplementation(
-      (
-        id: string,
-        gs: { width: number; height: number },
-        occ: any[],
-        rf: () => number,
-        color?: string
-      ) => createMockSnake(id, [{ x: 0, y: 0 }])
+    generateNewSnakeSpy = jest
+      .spyOn(snakeLogic, 'generateNewSnake')
+      .mockImplementation(
+        (
+          id: string,
+          gs: { width: number; height: number },
+          occ: any[],
+          rf: () => number,
+          color?: string
+        ) => createMockSnake(id, [{ x: 0, y: 0 }])
+      );
+
+    moveSnakeBodySpy = jest
+      .spyOn(snakeLogic, 'moveSnakeBody')
+      .mockImplementation((snake: Snake) => {
+        const nextHead = { ...snake.body[0] };
+        nextHead.x = (nextHead.x + 1 + GRID_SIZE.width) % GRID_SIZE.width;
+        return { ...snake, body: [nextHead, ...snake.body.slice(0, -1)] };
+      });
+
+    getNextHeadPositionSpy = jest
+      .spyOn(snakeLogic, 'getNextHeadPosition')
+      .mockImplementation((snake: Snake) => ({ x: snake.body[0].x + 1, y: snake.body[0].y }));
+
+    growSnakeSpy = jest.spyOn(snakeLogic, 'growSnake').mockImplementation((snake: Snake) => ({
+      ...snake,
+      body: [...snake.body, { ...snake.body[snake.body.length - 1] }]
+    }));
+
+    isInvincibleSpy = jest.spyOn(powerUpLogic, 'isInvincible').mockReturnValue(false);
+    hasCollidedWithSnakeSpy = jest.spyOn(collision, 'hasCollidedWithSnake').mockReturnValue(false);
+    checkFoodCollisionSpy = jest.spyOn(collision, 'checkFoodCollision').mockReturnValue(null);
+    checkPowerUpCollisionSpy = jest.spyOn(collision, 'checkPowerUpCollision').mockReturnValue(null);
+    getSpeedFactorSpy = jest.spyOn(powerUpLogic, 'getSpeedFactor').mockReturnValue(1);
+    activatePowerUpSpy = jest.spyOn(powerUpLogic, 'activatePowerUp').mockImplementation(
+      (snake: Snake, powerUp: PowerUp, time: number): ActivePowerUp => ({
+        type: powerUp.type,
+        playerId: snake.id,
+        expiresAt: time + POWER_UP_EFFECT_DURATION
+      })
     );
+    cleanupExpiredGridPowerUpsSpy = jest
+      .spyOn(powerUpLogic, 'cleanupExpiredGridPowerUps')
+      .mockImplementation((arr: PowerUp[]) =>
+        arr.filter((p: PowerUp) => p.expiresAt > currentTime)
+      );
+    cleanupExpiredActivePowerUpsSpy = jest
+      .spyOn(powerUpLogic, 'cleanupExpiredActivePowerUps')
+      .mockImplementation((arr: ActivePowerUp[]) =>
+        arr.filter((p: ActivePowerUp) => p.expiresAt > currentTime)
+      );
+    getScoreMultiplierSpy = jest.spyOn(powerUpLogic, 'getScoreMultiplier').mockReturnValue(1);
 
-    moveSnakeBodyMock.mockImplementation((snake: Snake) => {
-      const nextHead = { ...snake.body[0] };
-      nextHead.x = (nextHead.x + 1 + GRID_SIZE.width) % GRID_SIZE.width;
-      return { ...snake, body: [nextHead, ...snake.body.slice(0, -1)] };
-    });
-
-    isInvincibleMock.mockReturnValue(false);
-    hasCollidedWithSnakeMock.mockReturnValue(false);
-    checkFoodCollisionMock.mockReturnValue(null);
-    checkPowerUpCollisionMock.mockReturnValue(null);
-    getSpeedFactorMock.mockReturnValue(1);
+    generateFoodSpy = jest.spyOn(foodLogic, 'generateFood').mockReturnValue(null);
 
     if (jest.isMockFunction(logger.debug)) {
       logger.debug.mockRestore();
@@ -135,25 +173,6 @@ describe('Game Rules - updateGame', () => {
     if (jest.isMockFunction(logger.error)) {
       logger.error.mockRestore();
     }
-
-    powerUpLogic.cleanupExpiredGridPowerUps = jest
-      .fn()
-      .mockImplementation((arr: PowerUp[]) =>
-        arr.filter((p: PowerUp) => p.expiresAt > currentTime)
-      );
-
-    powerUpLogic.cleanupExpiredActivePowerUps = jest
-      .fn()
-      .mockImplementation((arr: ActivePowerUp[]) =>
-        arr.filter((p: ActivePowerUp) => p.expiresAt > currentTime)
-      );
-
-    powerUpLogic.activatePowerUp = jest.fn();
-    snakeLogic.growSnake = jest.fn((snake: Snake) => ({
-      ...snake,
-      body: [...snake.body, snake.body[snake.body.length - 1]]
-    }));
-    powerUpLogic.getScoreMultiplier = jest.fn().mockReturnValue(1);
   });
 
   afterEach(() => {
@@ -168,16 +187,16 @@ describe('Game Rules - updateGame', () => {
     it('should add a new snake for a new player ID', () => {
       const inputs: PlayerInputs = new Map();
       const currentPlayerIDs = new Set(['p1']);
-      moveSnakeBodyMock.mockImplementation((snake: Snake) => snake);
+      moveSnakeBodySpy.mockImplementation((snake: Snake) => snake);
       const mockNewSnake = createMockSnake('p1', [{ x: 1, y: 1 }]);
-      generateNewSnakeMock.mockReturnValue(mockNewSnake);
+      generateNewSnakeSpy.mockReturnValue(mockNewSnake);
       getOccupiedPositionsSpy.mockReturnValue([]);
 
       const nextState = updateGame(baseState, inputs, currentTime, currentPlayerIDs);
 
       expect(getOccupiedPositionsSpy).toHaveBeenCalled();
-      expect(generateNewSnakeMock).toHaveBeenCalledTimes(2);
-      expect(generateNewSnakeMock).toHaveBeenCalledWith(
+      expect(generateNewSnakeSpy).toHaveBeenCalledTimes(2);
+      expect(generateNewSnakeSpy).toHaveBeenCalledWith(
         'p1',
         GRID_SIZE,
         expect.any(Array),
@@ -226,7 +245,7 @@ describe('Game Rules - updateGame', () => {
 
       const mockAISnake = createMockSnake(AI_SNAKE_ID, [{ x: 0, y: 0 }]);
 
-      generateNewSnakeMock.mockImplementation(
+      generateNewSnakeSpy.mockImplementation(
         (id: string, gs: any, occ: any, rf: any, color: any) => {
           if (id === 'p1') return mockP1Snake;
           if (id === AI_SNAKE_ID) return mockAISnake;
@@ -257,7 +276,7 @@ describe('Game Rules - updateGame', () => {
       const inputs: PlayerInputs = new Map();
       const currentPlayerIDs = new Set(['p1']);
 
-      generateNewSnakeMock.mockImplementation(
+      generateNewSnakeSpy.mockImplementation(
         (id: string, gs: any, occ: any, rf: any, color: any) => {
           if (id === 'p1') {
             return { ...createMockSnake(id, [{ x: 1, y: 1 }]), color: color || PLAYER_COLORS[0] };
@@ -271,15 +290,15 @@ describe('Game Rules - updateGame', () => {
       const nextState = updateGame(initialState, inputs, currentTime, currentPlayerIDs);
 
       expect(getOccupiedPositionsSpy).toHaveBeenCalled();
-      expect(generateNewSnakeMock).toHaveBeenCalledTimes(2);
-      expect(generateNewSnakeMock).toHaveBeenCalledWith(
+      expect(generateNewSnakeSpy).toHaveBeenCalledTimes(2);
+      expect(generateNewSnakeSpy).toHaveBeenCalledWith(
         'p1',
         GRID_SIZE,
         expect.any(Array),
         expect.any(Function),
         '#ABCDEF'
       );
-      expect(generateNewSnakeMock).toHaveBeenCalledWith(
+      expect(generateNewSnakeSpy).toHaveBeenCalledWith(
         AI_SNAKE_ID,
         GRID_SIZE,
         expect.any(Array),
@@ -371,7 +390,7 @@ describe('Game Rules - updateGame', () => {
       const initialState = createInitialState([], [], [], [], playerStats);
       const inputs: PlayerInputs = new Map();
       const currentPlayerIDs = new Set<string>(['p1']);
-      generateNewSnakeMock.mockReturnValue(createMockSnake('p1', [{ x: 1, y: 1 }]));
+      generateNewSnakeSpy.mockReturnValue(createMockSnake('p1', [{ x: 1, y: 1 }]));
 
       const nextState = updateGame(initialState, inputs, currentTime, currentPlayerIDs);
 
@@ -428,7 +447,7 @@ describe('Game Rules - updateGame', () => {
       const inputs: PlayerInputs = new Map();
       const currentPlayerIDs = new Set(['p1', 'p2']);
 
-      moveSnakeBodyMock.mockImplementation(
+      moveSnakeBodySpy.mockImplementation(
         (snake: Snake, gridSize: { width: number; height: number }) => ({
           ...snake,
           moved: true,
@@ -438,17 +457,17 @@ describe('Game Rules - updateGame', () => {
 
       updateGame(baseState, inputs, currentTime, currentPlayerIDs);
 
-      expect(moveSnakeBodyMock).toHaveBeenCalledTimes(3);
-      expect(moveSnakeBodyMock).toHaveBeenCalledWith(
+      expect(moveSnakeBodySpy).toHaveBeenCalledTimes(3);
+      expect(moveSnakeBodySpy).toHaveBeenCalledWith(
         expect.objectContaining({ id: 'p1' }),
         GRID_SIZE
       );
-      expect(moveSnakeBodyMock).toHaveBeenCalledWith(
+      expect(moveSnakeBodySpy).toHaveBeenCalledWith(
         expect.objectContaining({ id: 'p2' }),
         GRID_SIZE
       );
 
-      expect(moveSnakeBodyMock).toHaveBeenCalledWith(
+      expect(moveSnakeBodySpy).toHaveBeenCalledWith(
         expect.objectContaining({ id: AI_SNAKE_ID }),
         GRID_SIZE
       );
@@ -479,12 +498,12 @@ describe('Game Rules - updateGame', () => {
         p2: { id: 'p2', color: 'blue', score: 0, deaths: 0, isConnected: true }
       });
 
-      moveSnakeBodyMock.mockImplementation((snake: Snake) => snake);
-      hasCollidedWithSnakeMock.mockReturnValue(false);
-      isInvincibleMock.mockReturnValue(false);
+      moveSnakeBodySpy.mockImplementation((snake: Snake) => snake);
+      hasCollidedWithSnakeSpy.mockReturnValue(false);
+      isInvincibleSpy.mockReturnValue(false);
 
       const mockAISnake = createMockSnake(AI_SNAKE_ID, [{ x: 0, y: 0 }]);
-      generateNewSnakeMock.mockImplementation((id: string) => {
+      generateNewSnakeSpy.mockImplementation((id: string) => {
         if (id === AI_SNAKE_ID) return mockAISnake;
 
         if (id === 'p1') return { ...initialSnake1 };
@@ -514,7 +533,7 @@ describe('Game Rules - updateGame', () => {
       const p1IntendedPos = { x: 6, y: 5 };
       const p2IntendedPos = { x: 5, y: 5 };
 
-      moveSnakeBodyMock.mockImplementation((snake: Snake) => {
+      moveSnakeBodySpy.mockImplementation((snake: Snake) => {
         if (snake.id === 'p1') {
           return {
             ...snake,
@@ -529,7 +548,7 @@ describe('Game Rules - updateGame', () => {
         return snake;
       });
 
-      hasCollidedWithSnakeMock.mockImplementation((intendedPos, snakes, selfId) => {
+      hasCollidedWithSnakeSpy.mockImplementation((intendedPos, snakes, selfId) => {
         if (selfId === 'p2') {
           return true;
         }
@@ -538,7 +557,7 @@ describe('Game Rules - updateGame', () => {
 
       const nextState = updateGame(initialState, inputs, currentTime, currentPlayerIDs);
 
-      expect(hasCollidedWithSnakeMock).toHaveBeenCalled();
+      expect(hasCollidedWithSnakeSpy).toHaveBeenCalled();
 
       const p2Snake = nextState.snakes.find((s) => s.id === 'p2');
       expect(p2Snake).toBeUndefined();
@@ -562,17 +581,17 @@ describe('Game Rules - updateGame', () => {
       const inputs: PlayerInputs = new Map();
       const currentPlayerIDs = new Set(['p1']);
 
-      isInvincibleMock.mockImplementation((snakeId, activePowerUps, time) => {
+      isInvincibleSpy.mockImplementation((snakeId, activePowerUps, time) => {
         return snakeId === 'p1';
       });
 
-      hasCollidedWithSnakeMock.mockImplementation(() => true);
+      hasCollidedWithSnakeSpy.mockImplementation(() => true);
 
       const nextState = updateGame(initialState, inputs, currentTime, currentPlayerIDs);
 
-      expect(isInvincibleMock).toHaveBeenCalled();
+      expect(isInvincibleSpy).toHaveBeenCalled();
 
-      expect(hasCollidedWithSnakeMock).toHaveBeenCalled();
+      expect(hasCollidedWithSnakeSpy).toHaveBeenCalled();
 
       const p1Snake = nextState.snakes.find((s) => s.id === 'p1');
       expect(p1Snake).toBeDefined();
@@ -581,8 +600,6 @@ describe('Game Rules - updateGame', () => {
   });
 
   describe('Food Handling', () => {
-    const growSnakeMock = snakeLogic.growSnake;
-    const getScoreMultiplierMock = powerUpLogic.getScoreMultiplier;
     const foodItem: Food = { position: { x: 6, y: 5 }, value: FOOD_VALUE };
 
     beforeEach(() => {
@@ -597,7 +614,7 @@ describe('Game Rules - updateGame', () => {
         p1: { id: 'p1', color: 'red', score: 0, deaths: 0, isConnected: true }
       });
 
-      moveSnakeBodyMock.mockImplementation((s: Snake) => {
+      moveSnakeBodySpy.mockImplementation((s: Snake) => {
         if (s.id === 'p1') {
           return {
             ...s,
@@ -610,12 +627,12 @@ describe('Game Rules - updateGame', () => {
         return s;
       });
 
-      growSnakeMock.mockImplementation((s: Snake) => ({
+      growSnakeSpy.mockImplementation((s: Snake) => ({
         ...s,
         body: [{ x: s.body[0].x, y: s.body[0].y }, ...s.body]
       }));
 
-      checkFoodCollisionMock.mockImplementation((point: Point, foodList: Food[]) => {
+      checkFoodCollisionSpy.mockImplementation((point: Point, foodList: Food[]) => {
         if (
           point &&
           point.x === foodItem.position.x &&
@@ -627,9 +644,9 @@ describe('Game Rules - updateGame', () => {
         return null;
       });
 
-      getScoreMultiplierMock.mockReturnValue(1);
+      getScoreMultiplierSpy.mockReturnValue(1);
 
-      getSpeedFactorMock.mockReturnValue(1);
+      getSpeedFactorSpy.mockReturnValue(1);
     });
 
     it('should remove food, grow snake, and increase score upon collision', () => {
@@ -645,13 +662,13 @@ describe('Game Rules - updateGame', () => {
       });
 
       const expectedHeadPos = { x: 6, y: 5 };
-      moveSnakeBodyMock.mockImplementation((s: Snake) =>
+      moveSnakeBodySpy.mockImplementation((s: Snake) =>
         s.id === 'p1' ? { ...s, body: [expectedHeadPos, ...s.body.slice(0, -1)] } : s
       );
 
-      checkFoodCollisionMock.mockReturnValue(foodItem);
+      checkFoodCollisionSpy.mockReturnValue(foodItem);
 
-      const growSnakeMock = snakeLogic.growSnake;
+      const growSnakeMock = snakeLogic.growSnake as any;
       growSnakeMock.mockImplementation((s: Snake) => ({
         ...s,
         body: [...s.body, { x: 3, y: 5 }]
@@ -662,8 +679,8 @@ describe('Game Rules - updateGame', () => {
 
       const nextState = updateGame(initialState, inputs, currentTime, currentPlayerIDs);
 
-      expect(checkFoodCollisionMock).toHaveBeenCalled();
-      expect(growSnakeMock).toHaveBeenCalled();
+      expect(checkFoodCollisionSpy).toHaveBeenCalled();
+      expect(growSnakeSpy).toHaveBeenCalled();
 
       expect(nextState.food).toHaveLength(0);
       expect(nextState.snakes[0].body).toHaveLength(3);
@@ -690,11 +707,11 @@ describe('Game Rules - updateGame', () => {
       });
 
       const expectedHeadPos = { x: 6, y: 5 };
-      moveSnakeBodyMock.mockImplementation((s: Snake) =>
+      moveSnakeBodySpy.mockImplementation((s: Snake) =>
         s.id === 'p1' ? { ...s, body: [expectedHeadPos, ...s.body.slice(0, -1)] } : s
       );
 
-      checkFoodCollisionMock.mockReturnValue(foodItem);
+      checkFoodCollisionSpy.mockReturnValue(foodItem);
 
       const getScoreMultiplierMock = powerUpLogic.getScoreMultiplier as jest.Mock;
       getScoreMultiplierMock.mockReturnValue(2);
@@ -704,8 +721,8 @@ describe('Game Rules - updateGame', () => {
 
       const nextState = updateGame(initialState, inputs, currentTime, currentPlayerIDs);
 
-      expect(checkFoodCollisionMock).toHaveBeenCalled();
-      expect(getScoreMultiplierMock).toHaveBeenCalled();
+      expect(checkFoodCollisionSpy).toHaveBeenCalled();
+      expect(getScoreMultiplierSpy).toHaveBeenCalled();
 
       expect(nextState.food).toHaveLength(0);
       expect(nextState.snakes[0].score).toBe(FOOD_VALUE * 2);
@@ -725,11 +742,11 @@ describe('Game Rules - updateGame', () => {
       const currentPlayerIDs = new Set(['p1']);
 
       const newFoodItem: Food = { position: { x: 1, y: 1 }, value: FOOD_VALUE };
-      generateFoodMock.mockReturnValue(newFoodItem);
+      generateFoodSpy.mockReturnValue(newFoodItem);
 
       const nextState = updateGame(emptyFoodState, inputs, currentTime, currentPlayerIDs);
 
-      expect(generateFoodMock).toHaveBeenCalledTimes(3);
+      expect(generateFoodSpy).toHaveBeenCalledTimes(3);
       expect(nextState.food).toHaveLength(3);
       expect(nextState.food).toEqual(expect.arrayContaining([newFoodItem]));
     });
@@ -751,19 +768,19 @@ describe('Game Rules - updateGame', () => {
       });
       initialState.sequence = 0;
 
-      getSpeedFactorMock.mockReturnValue(0.5);
+      getSpeedFactorSpy.mockReturnValue(0.5);
 
-      moveSnakeBodyMock.mockImplementation((s: Snake) => s);
+      moveSnakeBodySpy.mockImplementation((s: Snake) => s);
 
-      checkFoodCollisionMock.mockReturnValue(foodItem);
+      checkFoodCollisionSpy.mockReturnValue(foodItem);
 
-      const growSnakeMock = snakeLogic.growSnake as jest.Mock;
+      const growSnakeMock = snakeLogic.growSnake as any;
       growSnakeMock.mockImplementation((s: Snake) => ({
         ...s,
         body: [...s.body, { x: 4, y: 5 }]
       }));
 
-      const getScoreMultiplierMock = powerUpLogic.getScoreMultiplier as jest.Mock;
+      const getScoreMultiplierMock = powerUpLogic.getScoreMultiplier as any;
       getScoreMultiplierMock.mockReturnValue(1);
 
       const inputs: PlayerInputs = new Map();
@@ -771,11 +788,11 @@ describe('Game Rules - updateGame', () => {
 
       const nextState = updateGame(initialState, inputs, currentTime, currentPlayerIDs);
 
-      expect(getSpeedFactorMock).toHaveBeenCalledWith('p1', [slowPowerUp], currentTime);
+      expect(getSpeedFactorSpy).toHaveBeenCalledWith('p1', [slowPowerUp], currentTime);
 
-      expect(checkFoodCollisionMock).toHaveBeenCalled();
+      expect(checkFoodCollisionSpy).toHaveBeenCalled();
       expect(growSnakeMock).toHaveBeenCalled();
-      expect(getScoreMultiplierMock).toHaveBeenCalled();
+      expect(getScoreMultiplierSpy).toHaveBeenCalled();
 
       expect(nextState.food).toHaveLength(0);
       expect(nextState.snakes[0].score).toBe(FOOD_VALUE * 1);
@@ -785,10 +802,6 @@ describe('Game Rules - updateGame', () => {
   });
 
   describe('PowerUp Handling', () => {
-    const activatePowerUpMock = powerUpLogic.activatePowerUp;
-    const cleanupExpiredActivePowerUpsMock = powerUpLogic.cleanupExpiredActivePowerUps;
-    const cleanupExpiredGridPowerUpsMock = powerUpLogic.cleanupExpiredGridPowerUps;
-
     const powerUpItem: PowerUp = {
       id: 'pu1',
       type: PowerUpType.SPEED,
@@ -802,19 +815,13 @@ describe('Game Rules - updateGame', () => {
       expiresAt: currentTime + POWER_UP_EFFECT_DURATION
     };
 
-    beforeEach(() => {
-      jest.clearAllMocks();
+    it('should remove grid powerup and add active powerup on collision', () => {
+      const inputs: PlayerInputs = new Map();
+      const currentPlayerIDs = new Set(['p1']);
 
-      const snake = createMockSnake('p1', [
-        { x: 5, y: 5 },
-        { x: 4, y: 5 }
-      ]);
-
-      baseState = createInitialState([snake], [], [powerUpItem], [], {
-        p1: { id: 'p1', color: 'red', score: 0, deaths: 0, isConnected: true }
-      });
-
-      moveSnakeBodyMock.mockImplementation((s: Snake) => {
+      checkPowerUpCollisionSpy.mockReturnValueOnce(powerUpItem);
+      activatePowerUpSpy.mockReturnValueOnce(activePowerUp);
+      moveSnakeBodySpy.mockImplementationOnce((s: Snake) => {
         if (s.id === 'p1') {
           return {
             ...s,
@@ -827,65 +834,22 @@ describe('Game Rules - updateGame', () => {
         return s;
       });
 
-      activatePowerUpMock.mockReturnValue(activePowerUp);
-
-      checkPowerUpCollisionMock.mockImplementation((point: Point, puList: PowerUp[]) => {
-        if (
-          point &&
-          point.x === powerUpItem.position.x &&
-          point.y === powerUpItem.position.y &&
-          puList.includes(powerUpItem)
-        ) {
-          return powerUpItem;
-        }
-        return null;
-      });
-
-      getSpeedFactorMock.mockReturnValue(1);
-
-      cleanupExpiredGridPowerUpsMock.mockImplementation((arr: PowerUp[]) =>
-        arr.filter((p: PowerUp) => p.expiresAt > currentTime)
-      );
-
-      cleanupExpiredActivePowerUpsMock.mockImplementation((arr: ActivePowerUp[]) =>
-        arr.filter((p: ActivePowerUp) => p.expiresAt > currentTime)
-      );
-    });
-
-    it('should remove grid powerup and add active powerup on collision', () => {
-      const inputs: PlayerInputs = new Map();
-      const currentPlayerIDs = new Set(['p1']);
-
-      checkPowerUpCollisionMock.mockReturnValue(powerUpItem);
-
-      const activatePowerUpMock = powerUpLogic.activatePowerUp as jest.Mock;
-      activatePowerUpMock.mockReturnValue(activePowerUp);
-
       const nextState = updateGame(baseState, inputs, currentTime, currentPlayerIDs);
 
-      expect(checkPowerUpCollisionMock).toHaveBeenCalled();
-
-      expect(activatePowerUpMock).toHaveBeenCalled();
-
-      expect(nextState.powerUps).toHaveLength(0);
-
-      expect(nextState.activePowerUps).toHaveLength(2);
-      expect(nextState.activePowerUps[0]).toEqual(activePowerUp);
-      expect(nextState.activePowerUps[1]).toEqual(activePowerUp);
+      expect(checkPowerUpCollisionSpy).toHaveBeenCalled();
+      expect(activatePowerUpSpy).toHaveBeenCalled();
+      expect(nextState.powerUps.some((p) => p.id === powerUpItem.id)).toBe(false);
+      expect(nextState.activePowerUps).toEqual(expect.arrayContaining([activePowerUp]));
     });
 
     it('should call cleanup functions for expired powerups', () => {
       const inputs: PlayerInputs = new Map();
       const currentPlayerIDs = new Set(['p1']);
 
-      const cleanupExpiredGridPowerUpsMock = powerUpLogic.cleanupExpiredGridPowerUps as jest.Mock;
-      const cleanupExpiredActivePowerUpsMock =
-        powerUpLogic.cleanupExpiredActivePowerUps as jest.Mock;
-
       updateGame(baseState, inputs, currentTime, currentPlayerIDs);
 
-      expect(cleanupExpiredGridPowerUpsMock).toHaveBeenCalled();
-      expect(cleanupExpiredActivePowerUpsMock).toHaveBeenCalled();
+      expect(cleanupExpiredGridPowerUpsSpy).toHaveBeenCalled();
+      expect(cleanupExpiredActivePowerUpsSpy).toHaveBeenCalled();
     });
   });
 
@@ -918,16 +882,16 @@ describe('Game Rules - updateGame', () => {
       const currentPlayerIDs = new Set(['p1']);
 
       const mockAISnake = createMockSnake(AI_SNAKE_ID, [{ x: 0, y: 0 }]);
-      generateNewSnakeMock.mockImplementation((id: string) => {
+      generateNewSnakeSpy.mockImplementation((id: string) => {
         if (id === AI_SNAKE_ID) return mockAISnake;
         if (id === 'p1') return snake;
         return createMockSnake(id, [{ x: 9, y: 9 }]);
       });
 
-      getSpeedFactorMock.mockReturnValue(2);
+      getSpeedFactorSpy.mockReturnValue(2);
 
       let moveCounter = 0;
-      moveSnakeBodyMock.mockImplementation((snake: Snake) => {
+      moveSnakeBodySpy.mockImplementation((snake: Snake) => {
         if (snake.id === 'p1') {
           moveCounter++;
 
@@ -951,7 +915,7 @@ describe('Game Rules - updateGame', () => {
       });
 
       let callCount = 0;
-      checkFoodCollisionMock.mockImplementation(() => {
+      checkFoodCollisionSpy.mockImplementation(() => {
         callCount++;
 
         if (callCount === 1) return intermediateFood;
@@ -967,11 +931,11 @@ describe('Game Rules - updateGame', () => {
 
       const nextState = updateGame(initialState, inputs, currentTime, currentPlayerIDs);
 
-      expect(getSpeedFactorMock).toHaveBeenCalledWith('p1', [speedPowerUp], currentTime);
+      expect(getSpeedFactorSpy).toHaveBeenCalledWith('p1', [speedPowerUp], currentTime);
 
       expect(moveCounter).toBe(2);
 
-      expect(checkFoodCollisionMock).toHaveBeenCalled();
+      expect(checkFoodCollisionSpy).toHaveBeenCalled();
       expect(callCount).toBeGreaterThan(0);
 
       expect(nextState.food.length).toBe(0);
@@ -1021,17 +985,17 @@ describe('Game Rules - updateGame', () => {
       const currentPlayerIDs = new Set(['p1']);
 
       const mockAISnake = createMockSnake(AI_SNAKE_ID, [{ x: 0, y: 0 }]);
-      generateNewSnakeMock.mockImplementation((id: string) => {
+      generateNewSnakeSpy.mockImplementation((id: string) => {
         if (id === AI_SNAKE_ID) return mockAISnake;
         if (id === 'p1') return snake1;
         return createMockSnake(id, [{ x: 9, y: 9 }]);
       });
 
-      moveSnakeBodyMock.mockClear();
+      moveSnakeBodySpy.mockClear();
 
-      getSpeedFactorMock.mockReturnValue(1);
+      getSpeedFactorSpy.mockReturnValue(1);
 
-      moveSnakeBodyMock.mockImplementation((snake: Snake) => {
+      moveSnakeBodySpy.mockImplementation((snake: Snake) => {
         return {
           ...snake,
           body: [{ x: snake.body[0].x + 1, y: snake.body[0].y }, ...snake.body.slice(0, -1)]
@@ -1040,12 +1004,12 @@ describe('Game Rules - updateGame', () => {
 
       updateGame(initialState, inputs, currentTime, currentPlayerIDs);
 
-      expect(moveSnakeBodyMock).toHaveBeenCalledTimes(2);
-      expect(moveSnakeBodyMock).toHaveBeenCalledWith(
+      expect(moveSnakeBodySpy).toHaveBeenCalledTimes(2);
+      expect(moveSnakeBodySpy).toHaveBeenCalledWith(
         expect.objectContaining({ id: 'p1' }),
         GRID_SIZE
       );
-      expect(moveSnakeBodyMock).toHaveBeenCalledWith(
+      expect(moveSnakeBodySpy).toHaveBeenCalledWith(
         expect.objectContaining({ id: AI_SNAKE_ID }),
         GRID_SIZE
       );
@@ -1067,19 +1031,19 @@ describe('Game Rules - updateGame', () => {
       const inputs: PlayerInputs = new Map();
       const currentPlayerIDs = new Set(['p1']);
 
-      moveSnakeBodyMock.mockClear();
-      generateNewSnakeMock.mockImplementation((id: string) => {
+      moveSnakeBodySpy.mockClear();
+      generateNewSnakeSpy.mockImplementation((id: string) => {
         if (id === AI_SNAKE_ID) return aiSnake;
         if (id === 'p1') return snake;
         return createMockSnake(id, [{ x: 9, y: 9 }]);
       });
 
-      getSpeedFactorMock.mockImplementation((id: string, activePowerUps: ActivePowerUp[]) => {
+      getSpeedFactorSpy.mockImplementation((id: string, activePowerUps: ActivePowerUp[]) => {
         if (id === 'p1') return 0.5;
         return 1;
       });
 
-      moveSnakeBodyMock.mockImplementation((snake: Snake) => {
+      moveSnakeBodySpy.mockImplementation((snake: Snake) => {
         if (snake.id === 'p1') {
           return snake;
         }
@@ -1092,7 +1056,7 @@ describe('Game Rules - updateGame', () => {
 
       const nextState = updateGame(initialState, inputs, currentTime, currentPlayerIDs);
 
-      expect(getSpeedFactorMock).toHaveBeenCalledWith('p1', [slowPowerUp], currentTime);
+      expect(getSpeedFactorSpy).toHaveBeenCalledWith('p1', [slowPowerUp], currentTime);
 
       const p1Snake = nextState.snakes.find((s) => s.id === 'p1');
       expect(p1Snake.body[0].x).toBe(5);
@@ -1118,19 +1082,19 @@ describe('Game Rules - updateGame', () => {
       const inputs: PlayerInputs = new Map();
       const currentPlayerIDs = new Set(['p1']);
 
-      moveSnakeBodyMock.mockClear();
-      generateNewSnakeMock.mockImplementation((id: string) => {
+      moveSnakeBodySpy.mockClear();
+      generateNewSnakeSpy.mockImplementation((id: string) => {
         if (id === AI_SNAKE_ID) return aiSnake;
         if (id === 'p1') return snake1;
         return createMockSnake(id, [{ x: 9, y: 9 }]);
       });
 
-      getSpeedFactorMock.mockImplementation((id: string, activePowerUps: ActivePowerUp[]) => {
+      getSpeedFactorSpy.mockImplementation((id: string, activePowerUps: ActivePowerUp[]) => {
         if (id === 'p1') return 0.5;
         return 1;
       });
 
-      moveSnakeBodyMock.mockImplementation((snake: Snake) => {
+      moveSnakeBodySpy.mockImplementation((snake: Snake) => {
         return {
           ...snake,
           body: [{ x: snake.body[0].x + 1, y: snake.body[0].y }, ...snake.body.slice(0, -1)]
@@ -1139,7 +1103,7 @@ describe('Game Rules - updateGame', () => {
 
       const nextState = updateGame(initialState, inputs, currentTime, currentPlayerIDs);
 
-      expect(getSpeedFactorMock).toHaveBeenCalledWith('p1', [slowPowerUp], currentTime);
+      expect(getSpeedFactorSpy).toHaveBeenCalledWith('p1', [slowPowerUp], currentTime);
 
       const p1Snake = nextState.snakes.find((s) => s.id === 'p1');
       expect(p1Snake.body[0].x).toBe(6);
@@ -1279,16 +1243,16 @@ describe('Game Rules - updateGame', () => {
       const tick1Time = currentTime + 100;
       const tick2Time = tick1Time + 100;
 
-      hasCollidedWithSnakeMock.mockClear();
-      moveSnakeBodyMock.mockClear();
-      isInvincibleMock.mockClear();
-      generateNewSnakeMock.mockClear();
+      hasCollidedWithSnakeSpy.mockClear();
+      moveSnakeBodySpy.mockClear();
+      isInvincibleSpy.mockClear();
+      generateNewSnakeSpy.mockClear();
 
-      hasCollidedWithSnakeMock.mockImplementation(
+      hasCollidedWithSnakeSpy.mockImplementation(
         (head: Point, snakes: Snake[], selfId: string) => selfId === AI_SNAKE_ID
       );
-      isInvincibleMock.mockReturnValue(false);
-      moveSnakeBodyMock.mockImplementation((s: Snake) => s);
+      isInvincibleSpy.mockReturnValue(false);
+      moveSnakeBodySpy.mockImplementation((s: Snake) => s);
 
       const stateAfterCollision = updateGame(initialState, inputs, tick1Time, currentPlayerIDs);
 
@@ -1298,11 +1262,11 @@ describe('Game Rules - updateGame', () => {
       expect(stateAfterCollision.playerStats[AI_SNAKE_ID]?.score).toBe(50);
       expect(stateAfterCollision.playerStats[AI_SNAKE_ID]?.isConnected).toBe(true);
 
-      hasCollidedWithSnakeMock.mockReset();
-      generateNewSnakeMock.mockReset();
+      hasCollidedWithSnakeSpy.mockReset();
+      generateNewSnakeSpy.mockReset();
 
       const newAISnakeMock = createMockSnake(AI_SNAKE_ID, [{ x: 0, y: 0 }], Direction.RIGHT, 50);
-      generateNewSnakeMock.mockImplementation((id: string) => {
+      generateNewSnakeSpy.mockImplementation((id: string) => {
         if (id === AI_SNAKE_ID) return newAISnakeMock;
         return createMockSnake(id, [{ x: 9, y: 9 }]);
       });
@@ -1315,7 +1279,7 @@ describe('Game Rules - updateGame', () => {
         currentPlayerIDs
       );
 
-      expect(generateNewSnakeMock).toHaveBeenCalledWith(
+      expect(generateNewSnakeSpy).toHaveBeenCalledWith(
         AI_SNAKE_ID,
         initialState.gridSize,
         expect.any(Array),

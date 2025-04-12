@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import { generateFood } from './foodLogic';
 import { Point } from '../state/types';
 import * as prng from './prng';
