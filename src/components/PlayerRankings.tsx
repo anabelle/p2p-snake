@@ -1,5 +1,5 @@
 import React from 'react';
-import { GameState } from '../game/state/types'; // Correct path assumed
+import { GameState } from '../game/state/types';
 
 interface PlayerRankingsProps {
   syncedGameState: GameState | null;
@@ -12,7 +12,6 @@ const PlayerRankings: React.FC<PlayerRankingsProps> = ({
   localPlayerId,
   isConnected
 }) => {
-  // --- Render logic extracted from App.tsx --- //
   const renderTableBody = () => {
     const playerStats = syncedGameState?.playerStats || {};
     const players = Object.values(playerStats).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
@@ -23,7 +22,7 @@ const PlayerRankings: React.FC<PlayerRankingsProps> = ({
           <td>
             <div>
               <span className='player-color-swatch' style={{ backgroundColor: player.color }} />
-              {player.name || player.id.substring(0, 6)} {/* Display name or truncated ID */}
+              {player.name || player.id.substring(0, 6)} {}
               {player.id === localPlayerId ? ' (You)' : ''} {/* Add "(You)" indicator */}
             </div>
           </td>
@@ -35,7 +34,6 @@ const PlayerRankings: React.FC<PlayerRankingsProps> = ({
         </tr>
       ));
     } else {
-      // Handle the "no players" or "not connected" case
       const statusMessage = isConnected ? 'Waiting for players...' : 'Connecting...';
       return (
         <tr>
@@ -58,7 +56,7 @@ const PlayerRankings: React.FC<PlayerRankingsProps> = ({
               <th>Status</th>
             </tr>
           </thead>
-          {/* Use the render function for the body */}
+          {}
           <tbody>{renderTableBody()}</tbody>
         </table>
       </div>

@@ -1,17 +1,15 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom'; // Import jest-dom matchers
+import '@testing-library/jest-dom';
 import GameCanvas from './GameCanvas';
-import { drawGame } from '../game/rendering/renderer'; // Import to mock
+import { drawGame } from '../game/rendering/renderer';
 import { GameState, Direction } from '../game/state/types';
 import { GRID_SIZE, CELL_SIZE } from '../game/constants';
 
-// Mock the drawGame function
 jest.mock('../game/rendering/renderer', () => ({
   drawGame: jest.fn()
 }));
 
-// Helper to create a mock game state
 const createMockGameState = (playerId: string): GameState => ({
   snakes: [
     {
@@ -64,26 +62,23 @@ describe('GameCanvas Component', () => {
   const localPlayerId = 'player-1';
   let mockGameState: GameState;
 
-  // Create a simple object to represent the mock context
   const mockContext = { mock: 'context' } as unknown as CanvasRenderingContext2D;
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockGameState = createMockGameState(localPlayerId);
 
-    // Mock the prototype before each test
     jest
       .spyOn(HTMLCanvasElement.prototype, 'getContext')
       .mockImplementation((contextId: string): CanvasRenderingContext2D | null => {
         if (contextId === '2d') {
-          return mockContext; // Return our simple mock context
+          return mockContext;
         }
         return null;
       });
   });
 
   afterEach(() => {
-    // Restore all mocks after each test
     jest.restoreAllMocks();
   });
 
@@ -93,12 +88,11 @@ describe('GameCanvas Component', () => {
     expect(canvas).toBeInTheDocument();
     expect(canvas).toHaveAttribute('width', String(GRID_SIZE.width * CELL_SIZE));
     expect(canvas).toHaveAttribute('height', String(GRID_SIZE.height * CELL_SIZE));
-    // Verify getContext was called (implicitly tested by drawGame check below)
   });
 
   it('should get the 2D context and call drawGame on mount', () => {
     render(<GameCanvas gameState={mockGameState} localPlayerId={localPlayerId} />);
-    // Check drawGame was called with the mock context
+
     expect(drawGame).toHaveBeenCalledTimes(1);
     expect(drawGame).toHaveBeenCalledWith(mockContext, mockGameState, localPlayerId);
   });
@@ -107,7 +101,7 @@ describe('GameCanvas Component', () => {
     const { rerender } = render(
       <GameCanvas gameState={mockGameState} localPlayerId={localPlayerId} />
     );
-    expect(drawGame).toHaveBeenCalledTimes(1); // Initial render
+    expect(drawGame).toHaveBeenCalledTimes(1);
 
     const updatedGameState = {
       ...mockGameState,
@@ -131,20 +125,11 @@ describe('GameCanvas Component', () => {
   });
 
   it('should not call drawGame if canvas context cannot be obtained', () => {
-    // Override the prototype mock specifically for this test
     jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
 
     render(<GameCanvas gameState={mockGameState} localPlayerId={localPlayerId} />);
 
-    // Verify getContext was attempted but drawGame was not called
     expect(HTMLCanvasElement.prototype.getContext).toHaveBeenCalledWith('2d');
     expect(drawGame).not.toHaveBeenCalled();
   });
-
-  // Removed the problematic test for null canvas ref
-  /*
-  it('should not attempt to get context or draw if canvas ref is null', () => {
-    // ... implementation removed ...
-  });
-  */
 });

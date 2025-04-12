@@ -10,21 +10,16 @@ export const useGameLoop = (draw: () => void, isActive: boolean) => {
     };
 
     if (isActive) {
-      // Start the loop
       animationFrameId.current = requestAnimationFrame(loop);
     }
-    // The cleanup function handles stopping the loop when isActive becomes false
 
-    // Cleanup function to stop the loop when the component unmounts
-    // or when isActive/draw changes
     return () => {
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
         animationFrameId.current = null;
       }
     };
-  }, [isActive, draw]); // Re-run effect if isActive or draw changes
+  }, [isActive, draw]);
 
-  // The hook doesn't need to return anything for now
   return {};
 };

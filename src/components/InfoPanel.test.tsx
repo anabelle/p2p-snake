@@ -5,7 +5,6 @@ import InfoPanel from './InfoPanel';
 import { UserProfile } from '../types';
 import { GameState } from '../game/state/types';
 
-// Mock child components
 jest.mock('./UserInfoSection', () => () => <div data-testid='mock-user-info'>UserInfoSection</div>);
 jest.mock('./PlayerRankings', () => () => (
   <div data-testid='mock-player-rankings'>PlayerRankings</div>
@@ -17,7 +16,7 @@ jest.mock('./PowerUpLegend', () => () => (
 describe('InfoPanel', () => {
   const mockProfile: UserProfile = { id: 'p1', name: 'Tester', color: '#fff' };
   const mockGameState: GameState = {
-    /* minimal mock */ snakes: [],
+    snakes: [],
     food: [],
     powerUps: [],
     activePowerUps: [],
@@ -60,10 +59,8 @@ describe('InfoPanel', () => {
   test('renders children components and wrapper when conditions are met', () => {
     render(<InfoPanel {...baseProps} />);
 
-    // Check for the wrapper div first
     expect(screen.getByTestId('info-panel-wrapper')).toBeInTheDocument();
 
-    // Check for mocked children
     expect(screen.getByTestId('mock-user-info')).toBeInTheDocument();
     expect(screen.getByTestId('mock-player-rankings')).toBeInTheDocument();
     expect(screen.getByTestId('mock-powerup-legend')).toBeInTheDocument();

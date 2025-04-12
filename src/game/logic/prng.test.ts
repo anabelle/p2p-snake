@@ -4,9 +4,8 @@ import {
   mulberry32,
   getOccupiedPositions
 } from './prng';
-import { Point } from '../state/types'; // Assuming Point is defined here
+import { Point } from '../state/types';
 
-// Mock state structure compatible with getOccupiedPositions
 interface MockState {
   snakes: { body: Point[] }[];
   food: { position: Point }[];
@@ -44,17 +43,16 @@ describe('PRNG Logic', () => {
 
   describe('generateRandomColor', () => {
     it('should return a color string from the list using the provided random function', () => {
-      const mockRandomFunc = jest.fn().mockReturnValue(0); // Always pick the first color
+      const mockRandomFunc = jest.fn().mockReturnValue(0);
       const color = generateRandomColor(mockRandomFunc);
       expect(typeof color).toBe('string');
       expect(color).toMatch(/^#[0-9A-F]{6}$/i);
       expect(mockRandomFunc).toHaveBeenCalledTimes(1);
 
-      // Test another value
       mockRandomFunc.mockReturnValue(0.5);
       const color2 = generateRandomColor(mockRandomFunc);
       expect(typeof color2).toBe('string');
-      expect(color2).not.toEqual(color); // Should likely be different
+      expect(color2).not.toEqual(color);
     });
   });
 
@@ -63,7 +61,7 @@ describe('PRNG Logic', () => {
     let randomFunc: () => number;
 
     beforeEach(() => {
-      randomFunc = mulberry32(Date.now()); // Use a different seed each time
+      randomFunc = mulberry32(Date.now());
     });
 
     it('should generate a position within grid bounds', () => {
@@ -81,14 +79,14 @@ describe('PRNG Logic', () => {
         { x: 0, y: 0 },
         { x: 1, y: 1 }
       ];
-      // Mock random to eventually produce an unoccupied spot (e.g., 2,2)
+
       const mockRandomFunc = jest
         .fn()
-        .mockReturnValueOnce(0 / 3) // Tries 0,0 (occupied)
         .mockReturnValueOnce(0 / 3)
-        .mockReturnValueOnce(1 / 3) // Tries 1,1 (occupied)
+        .mockReturnValueOnce(0 / 3)
         .mockReturnValueOnce(1 / 3)
-        .mockReturnValueOnce(2 / 3) // Tries 2,2 (unoccupied)
+        .mockReturnValueOnce(1 / 3)
+        .mockReturnValueOnce(2 / 3)
         .mockReturnValueOnce(2 / 3);
 
       const pos = generateRandomPosition(gridSize, occupied, mockRandomFunc);
@@ -184,7 +182,7 @@ describe('PRNG Logic', () => {
     it('should include duplicate positions if present', () => {
       const state: MockState = {
         snakes: [{ body: [{ x: 0, y: 0 }] }],
-        food: [{ position: { x: 0, y: 0 } }], // Food on snake
+        food: [{ position: { x: 0, y: 0 } }],
         powerUps: []
       };
       const expected = [

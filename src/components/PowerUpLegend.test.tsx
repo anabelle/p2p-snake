@@ -14,10 +14,9 @@ describe('PowerUpLegend', () => {
     const listItems = screen.getAllByRole('listitem');
     expect(listItems).toHaveLength(4);
 
-    // Check text content within each list item more specifically
     const speedItem = listItems[0];
     expect(within(speedItem).getByText('S')).toHaveClass('powerup-symbol speed');
-    expect(within(speedItem).getByText(/Speed Boost/)).toBeInTheDocument(); // Check description
+    expect(within(speedItem).getByText(/Speed Boost/)).toBeInTheDocument();
 
     const slowItem = listItems[1];
     expect(within(slowItem).getByText('W')).toHaveClass('powerup-symbol slow');

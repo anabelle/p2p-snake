@@ -1,29 +1,25 @@
 import { renderHook } from '@testing-library/react';
 import { useGameControls } from './useGameControls';
-import userEvent from '@testing-library/user-event'; // For simulating key presses
-import { Socket } from 'socket.io-client'; // Import Socket type
+import userEvent from '@testing-library/user-event';
+import { Socket } from 'socket.io-client';
 
-// Mock Socket.IO client
 const mockEmit = jest.fn();
-// Cast the mock to satisfy the hook's expected type during build
+
 const mockSocket = { emit: mockEmit } as any as Socket;
 
-// Mock game container ref
 const mockGameContainerRef = {
-  current: document.createElement('div') // A basic element for event listeners
+  current: document.createElement('div')
 };
 
 describe('useGameControls', () => {
   beforeEach(() => {
-    // Reset mocks before each test
     mockEmit.mockClear();
-    // Add the mock element to the document body so events can bubble
+
     document.body.appendChild(mockGameContainerRef.current);
-    mockGameContainerRef.current.focus(); // Element needs focus to receive keyboard events
+    mockGameContainerRef.current.focus();
   });
 
   afterEach(() => {
-    // Clean up the element after each test
     document.body.removeChild(mockGameContainerRef.current);
   });
 
@@ -64,7 +60,4 @@ describe('useGameControls', () => {
     expect(mockEmit).toHaveBeenCalledWith('input', { dx: 1, dy: 0 });
     expect(mockEmit).toHaveBeenCalledTimes(1);
   });
-
-  // Add tests for touch/swipe events if useGameInput supports them and they are needed
-  // For now, focusing on keyboard input based on the existing App.tsx logic
 });

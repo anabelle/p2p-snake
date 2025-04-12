@@ -22,15 +22,12 @@ const GameArea: React.FC<GameAreaProps> = ({
   syncedGameState,
   isFullscreen
 }) => {
-  // Determine overlay visibility
   const showOverlay = !isConnected && profileStatus !== 'loaded' && !isProfileModalOpen;
   const overlayText = profileStatus === 'loading' ? 'Loading Profile...' : 'Connecting...';
 
-  // Determine player count badge visibility
   const showPlayerCount =
     isConnected && syncedGameState?.playerCount && syncedGameState.playerCount > 0;
 
-  // Conditionally define container styles
   const containerStyle: React.CSSProperties = {
     ['--canvas-width' as string]: `${canvasWidth}px`
   };
@@ -46,15 +43,15 @@ const GameArea: React.FC<GameAreaProps> = ({
       data-testid='game-area-container'
       style={containerStyle}
     >
-      {/* Conditional Overlays */}
+      {}
       {showOverlay && <div className='connecting-overlay'>{overlayText}</div>}
 
-      {/* Conditional Player Count Badge */}
+      {}
       {showPlayerCount && (
         <div className='player-count-badge'>Players: {syncedGameState?.playerCount}</div>
       )}
 
-      {/* The canvas element itself is appended here by the useCanvasElement hook */}
+      {}
     </div>
   );
 };

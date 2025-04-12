@@ -4,7 +4,6 @@ import '@testing-library/jest-dom';
 import GameArea from './GameArea';
 import { GameState, PlayerStats } from '../game/state/types';
 
-// Define base mock state locally
 const baseMockGameState: Omit<GameState, 'playerStats' | 'playerCount'> & {
   playerStats: Record<string, Partial<PlayerStats>>;
 } = {
@@ -12,12 +11,12 @@ const baseMockGameState: Omit<GameState, 'playerStats' | 'playerCount'> & {
   food: [],
   powerUps: [],
   activePowerUps: [],
-  gridSize: { width: 20, height: 20 }, // Example size
+  gridSize: { width: 20, height: 20 },
   timestamp: 1234567890,
   sequence: 0,
   rngSeed: 12345,
   powerUpCounter: 0,
-  // Allow partial PlayerStats for easier test setup
+
   playerStats: {}
 };
 
@@ -36,7 +35,7 @@ describe('GameArea', () => {
 
   test('renders the main container div with correct styles and test id', () => {
     render(<GameArea {...baseProps} />);
-    // Use getByTestId after adding it to the component
+
     const gameContainer = screen.getByTestId('game-area-container');
 
     expect(gameContainer).toBeInTheDocument();
@@ -72,7 +71,7 @@ describe('GameArea', () => {
     render(<GameArea {...baseProps} isConnected={false} profileStatus='loading' />);
     expect(screen.getByText(/Loading Profile.../)).toBeInTheDocument();
     expect(screen.getByText(/Loading Profile.../)).toHaveClass('connecting-overlay');
-    expect(screen.queryByText(/Connecting.../)).not.toBeInTheDocument(); // Should show loading instead
+    expect(screen.queryByText(/Connecting.../)).not.toBeInTheDocument();
   });
 
   test('does not render connecting overlay if profile modal is open', () => {

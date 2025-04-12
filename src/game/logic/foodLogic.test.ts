@@ -1,24 +1,22 @@
 import { generateFood } from './foodLogic';
 import { Point } from '../state/types';
-import * as prng from './prng'; // Import all exports from prng
+import * as prng from './prng';
 import { FOOD_VALUE } from '../constants';
 
-// Mock the generateRandomPosition function from prng module
 jest.mock('./prng', () => ({
-  ...jest.requireActual('./prng'), // Keep other exports intact
+  ...jest.requireActual('./prng'),
   generateRandomPosition: jest.fn()
 }));
 
 describe('Food Logic', () => {
   const gridSize = { width: 5, height: 5 };
   const occupiedPositions: Point[] = [{ x: 0, y: 0 }];
-  const mockRandomFunc = jest.fn(); // Mock random function (though its usage is inside the mocked generateRandomPosition)
+  const mockRandomFunc = jest.fn();
   const generateRandomPositionMock = prng.generateRandomPosition as jest.Mock;
 
   beforeEach(() => {
-    // Reset mocks before each test
     jest.clearAllMocks();
-    // Restore console spy if it exists
+
     if (jest.isMockFunction(console.warn)) {
       (console.warn as jest.Mock).mockRestore();
     }
@@ -44,7 +42,7 @@ describe('Food Logic', () => {
 
   it('should return null and log a warning if generateRandomPosition returns null', () => {
     generateRandomPositionMock.mockReturnValue(null);
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {}); // Spy on console.warn
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     const food = generateFood(gridSize, occupiedPositions, mockRandomFunc);
 
@@ -56,7 +54,7 @@ describe('Food Logic', () => {
     expect(food).toBeNull();
     expect(warnSpy).toHaveBeenCalledWith('Could not generate food: No unoccupied position found.');
 
-    warnSpy.mockRestore(); // Clean up the spy
+    warnSpy.mockRestore();
   });
 
   it('should use the correct FOOD_VALUE constant', () => {
@@ -66,6 +64,6 @@ describe('Food Logic', () => {
     const food = generateFood(gridSize, occupiedPositions, mockRandomFunc);
 
     expect(food).not.toBeNull();
-    expect(food!.value).toBe(FOOD_VALUE); // Check against the imported constant
+    expect(food!.value).toBe(FOOD_VALUE);
   });
 });

@@ -1,25 +1,23 @@
 import { generateNewSnake, getNextHeadPosition, moveSnakeBody, growSnake } from './snakeLogic';
-import { Point, Snake, Direction } from '../state/types'; // Removed unused PowerUp import
+import { Point, Snake, Direction } from '../state/types';
 import * as prng from './prng';
-import { PLAYER_COLORS, GRID_SIZE as CONST_GRID_SIZE } from '../constants'; // Import GRID_SIZE from constants
+import { PLAYER_COLORS, GRID_SIZE as CONST_GRID_SIZE } from '../constants';
 import logger from '../../utils/logger';
 
-// Mock dependencies from prng
 jest.mock('./prng', () => ({
-  ...jest.requireActual('./prng'), // Keep real mulberry32 etc.
+  ...jest.requireActual('./prng'),
   generateRandomPosition: jest.fn().mockImplementation(() => ({ x: 5, y: 5 }))
 }));
 
 describe('Snake Logic', () => {
-  // Use constant GRID_SIZE
   const gridSize = CONST_GRID_SIZE;
   const mockRandomFunc = jest.fn();
   const generateRandomPositionMock = prng.generateRandomPosition as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockRandomFunc.mockReturnValue(0.5); // Default mock random value
-    // Restore console spies if they are mock functions
+    mockRandomFunc.mockReturnValue(0.5);
+
     if (jest.isMockFunction(logger.error)) {
       (logger.error as jest.Mock).mockRestore();
     }
@@ -27,28 +25,25 @@ describe('Snake Logic', () => {
       (logger.debug as jest.Mock).mockRestore();
     }
     if (jest.isMockFunction(logger.warn)) {
-      // Add warn spy restore
       (logger.warn as jest.Mock).mockRestore();
     }
   });
 
-  // --- generateNewSnake Tests ---
   describe('generateNewSnake', () => {
     const snakeId = 'player1';
     const occupied: Point[] = [];
 
     it('should generate a snake with a random position and direction (UP)', () => {
-      // Clarify UP
       const expectedPos = { x: 3, y: 3 };
       generateRandomPositionMock.mockReturnValue(expectedPos);
-      mockRandomFunc.mockReturnValue(0); // To select Direction.UP (index 0)
+      mockRandomFunc.mockReturnValue(0);
 
       const snake = generateNewSnake(snakeId, gridSize, occupied, mockRandomFunc);
 
       expect(generateRandomPositionMock).toHaveBeenCalledWith(gridSize, occupied, mockRandomFunc);
       expect(snake.id).toBe(snakeId);
       expect(snake.body).toEqual([expectedPos]);
-      expect(snake.direction).toBe(Direction.UP); // Based on mockRandomFunc returning 0
+      expect(snake.direction).toBe(Direction.UP);
       expect(snake.score).toBe(0);
       expect(snake.activePowerUps).toEqual([]);
       expect(PLAYER_COLORS).toContain(snake.color);
@@ -57,8 +52,8 @@ describe('Snake Logic', () => {
     it('should assign Direction.DOWN based on randomFunc', () => {
       const expectedPos = { x: 3, y: 3 };
       generateRandomPositionMock.mockReturnValue(expectedPos);
-      // Assuming Direction enum order: UP, DOWN, LEFT, RIGHT
-      mockRandomFunc.mockReturnValue(0.25); // Should result in index 1 (DOWN)
+
+      mockRandomFunc.mockReturnValue(0.25);
 
       const snake = generateNewSnake(snakeId, gridSize, occupied, mockRandomFunc);
       expect(snake.direction).toBe(Direction.DOWN);
@@ -67,8 +62,8 @@ describe('Snake Logic', () => {
     it('should assign Direction.LEFT based on randomFunc', () => {
       const expectedPos = { x: 3, y: 3 };
       generateRandomPositionMock.mockReturnValue(expectedPos);
-      // Assuming Direction enum order: UP, DOWN, LEFT, RIGHT
-      mockRandomFunc.mockReturnValue(0.5); // Should result in index 2 (LEFT)
+
+      mockRandomFunc.mockReturnValue(0.5);
 
       const snake = generateNewSnake(snakeId, gridSize, occupied, mockRandomFunc);
       expect(snake.direction).toBe(Direction.LEFT);
@@ -77,8 +72,8 @@ describe('Snake Logic', () => {
     it('should assign Direction.RIGHT based on randomFunc', () => {
       const expectedPos = { x: 3, y: 3 };
       generateRandomPositionMock.mockReturnValue(expectedPos);
-      // Assuming Direction enum order: UP, DOWN, LEFT, RIGHT
-      mockRandomFunc.mockReturnValue(0.75); // Should result in index 3 (RIGHT)
+
+      mockRandomFunc.mockReturnValue(0.75);
 
       const snake = generateNewSnake(snakeId, gridSize, occupied, mockRandomFunc);
       expect(snake.direction).toBe(Direction.RIGHT);
@@ -101,7 +96,7 @@ describe('Snake Logic', () => {
 
       const snake = generateNewSnake(snakeId, gridSize, occupied, mockRandomFunc, preferredColor);
       expect(snake.color).not.toBe(preferredColor);
-      expect(PLAYER_COLORS).toContain(snake.color); // Should be one of the defaults
+      expect(PLAYER_COLORS).toContain(snake.color);
       expect(logSpy).toHaveBeenCalledWith(
         expect.stringContaining(`Preferred color '${preferredColor}' for ${snakeId} invalid`)
       );
@@ -113,14 +108,14 @@ describe('Snake Logic', () => {
       generateRandomPositionMock.mockReturnValue(expectedPos);
 
       const snake = generateNewSnake(snakeId, gridSize, occupied, mockRandomFunc);
-      expect(PLAYER_COLORS).toContain(snake.color); // Should be one of the defaults
+      expect(PLAYER_COLORS).toContain(snake.color);
       expect(logSpy).toHaveBeenCalledWith(
         expect.stringContaining(`Preferred color 'undefined' for ${snakeId} invalid`)
-      ); // Check log message
+      );
     });
 
     it('should handle grid full scenario and return a dummy snake at 0,0', () => {
-      generateRandomPositionMock.mockReturnValue(null); // Simulate full grid
+      generateRandomPositionMock.mockReturnValue(null);
       const errorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
 
       const snake = generateNewSnake(snakeId, gridSize, occupied, mockRandomFunc);
@@ -131,19 +126,18 @@ describe('Snake Logic', () => {
       expect(snake.body).toEqual([{ x: 0, y: 0 }]);
       expect(snake.id).toBe(snakeId);
       expect(snake.score).toBe(0);
-      expect(snake.direction).toBe(Direction.RIGHT); // Default direction if grid full
+      expect(snake.direction).toBe(Direction.RIGHT);
       expect(PLAYER_COLORS).toContain(snake.color);
     });
   });
 
-  // --- getNextHeadPosition Tests ---
   describe('getNextHeadPosition', () => {
     const baseSnake: Snake = {
       id: 's1',
       color: 'red',
       score: 0,
       activePowerUps: [],
-      body: [{ x: 5, y: 5 }], // Simple snake head
+      body: [{ x: 5, y: 5 }],
       direction: Direction.RIGHT
     };
 
@@ -203,14 +197,13 @@ describe('Snake Logic', () => {
       const warnSpy = jest.spyOn(logger, 'warn').mockImplementation(() => {});
       const s = { ...baseSnake, body: [] };
       const nextPos = getNextHeadPosition(s, gridSize);
-      expect(nextPos).toEqual({ x: 0, y: 0 }); // Returns default
+      expect(nextPos).toEqual({ x: 0, y: 0 });
       expect(warnSpy).toHaveBeenCalledWith(
         expect.stringContaining(`Snake ${s.id} has empty body.`)
       );
     });
   });
 
-  // --- moveSnakeBody Tests ---
   describe('moveSnakeBody', () => {
     const baseSnake: Snake = {
       id: 's1',
@@ -273,7 +266,6 @@ describe('Snake Logic', () => {
     });
   });
 
-  // --- growSnake Tests ---
   describe('growSnake', () => {
     const baseSnake: Snake = {
       id: 's1',

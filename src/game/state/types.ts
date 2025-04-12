@@ -9,7 +9,7 @@ export interface Snake {
   body: Point[];
   direction: Direction;
   score: number;
-  activePowerUps: PowerUp[]; // Keep track of active power-ups with expiry
+  activePowerUps: PowerUp[];
 }
 
 export interface Food {
@@ -25,22 +25,22 @@ export enum PowerUpType {
 }
 
 export interface PowerUp {
-  id: string; // Unique ID for each power-up instance
+  id: string;
   type: PowerUpType;
   position: Point;
-  expiresAt: number; // Timestamp when this specific power-up instance expires from the game board
+  expiresAt: number;
 }
 
 export interface ActivePowerUp {
   type: PowerUpType;
-  playerId: string; // ID of the snake affected
-  expiresAt: number; // Timestamp when the effect expires for this snake
+  playerId: string;
+  expiresAt: number;
 }
 
 export interface PlayerStats {
   id: string;
-  name?: string; // Add optional name field
-  color: string; // Store color here for persistence
+  name?: string;
+  color: string;
   score: number;
   deaths: number;
   isConnected: boolean;
@@ -49,18 +49,18 @@ export interface PlayerStats {
 export interface GameState {
   snakes: Snake[];
   food: Food[];
-  powerUps: PowerUp[]; // Power-ups available on the grid
-  activePowerUps: ActivePowerUp[]; // Power-ups currently affecting snakes
+  powerUps: PowerUp[];
+  activePowerUps: ActivePowerUp[];
   gridSize: {
     width: number;
     height: number;
   };
-  timestamp: number; // Consider removing if unused by core logic
-  sequence: number; // Managed by NetplayJS adapter
-  rngSeed: number; // For deterministic randomness
-  playerCount: number; // Number of active players
-  powerUpCounter: number; // Counter for deterministic power-up IDs
-  playerStats: Record<string, PlayerStats>; // Add map for player stats
+  timestamp: number;
+  sequence: number;
+  rngSeed: number;
+  playerCount: number;
+  powerUpCounter: number;
+  playerStats: Record<string, PlayerStats>;
 }
 
 export enum Direction {

@@ -1,10 +1,6 @@
 import React from 'react';
 
-/**
- * A static component displaying the legend for in-game power-ups.
- */
 const PowerUpLegend: React.FC = () => {
-  // Copied directly from App.tsx
   return (
     <div className='info-section' id='powerup-legend'>
       <h3>Power-Up Legend</h3>

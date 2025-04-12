@@ -22,18 +22,16 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   localPlayerId,
   openProfileModal
 }) => {
-  // Condition from App.tsx
   const shouldRender = isConnected && currentUserProfile && profileStatus === 'loaded';
 
   if (!shouldRender) {
-    return null; // Render nothing if conditions aren't met
+    return null;
   }
 
-  // Moved from App.tsx
   return (
     <div className='info-sections-wrapper' data-testid='info-panel-wrapper'>
       <UserInfoSection
-        currentUserProfile={currentUserProfile} // Pass the profile
+        currentUserProfile={currentUserProfile}
         syncedGameState={syncedGameState}
         localPlayerId={localPlayerId}
         openProfileModal={openProfileModal}
@@ -41,7 +39,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
       <PlayerRankings
         syncedGameState={syncedGameState}
         localPlayerId={localPlayerId}
-        isConnected={isConnected} // isConnected is true if we render this
+        isConnected={isConnected}
       />
       <PowerUpLegend />
     </div>

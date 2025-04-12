@@ -2,11 +2,8 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import App from './App';
-import { UserProfile } from './types'; // Assuming types are in src/types.ts or similar
+import { UserProfile } from './types';
 
-// --- Mock Custom Hooks ---
-
-// Mock useWebSocket
 jest.mock('./hooks/useWebSocket', () => ({
   useWebSocket: jest.fn(() => ({
     isConnected: false,
@@ -17,7 +14,6 @@ jest.mock('./hooks/useWebSocket', () => ({
   }))
 }));
 
-// Mock useUserProfile
 const mockOpenProfileModal = jest.fn();
 const mockCloseProfileModal = jest.fn();
 const mockSaveProfile = jest.fn();
@@ -25,7 +21,7 @@ jest.mock('./hooks/useUserProfile', () => ({
   useUserProfile: jest.fn(() => ({
     currentUserProfile: null as UserProfile | null,
     isProfileModalOpen: false,
-    profileStatus: 'loading', // Default mock status
+    profileStatus: 'loading',
     localPlayerId: null,
     openProfileModal: mockOpenProfileModal,
     closeProfileModal: mockCloseProfileModal,
@@ -33,12 +29,10 @@ jest.mock('./hooks/useUserProfile', () => ({
   }))
 }));
 
-// Mock useGameAdapter
 jest.mock('./hooks/useGameAdapter', () => ({
-  useGameAdapter: jest.fn(() => ({ current: null })) // Simple mock for now
+  useGameAdapter: jest.fn(() => ({ current: null }))
 }));
 
-// Mock useGameStateSync
 jest.mock('./hooks/useGameStateSync', () => ({
   useGameStateSync: jest.fn(() => ({
     syncedGameState: null,
@@ -46,25 +40,21 @@ jest.mock('./hooks/useGameStateSync', () => ({
   }))
 }));
 
-// Mock useGameControls (doesn't return anything, just sets up listeners)
 jest.mock('./hooks/useGameControls', () => ({
   useGameControls: jest.fn()
 }));
 
-// Mock useGameRenderer (doesn't return anything, just sets up rendering)
 jest.mock('./hooks/useGameRenderer', () => ({
   useGameRenderer: jest.fn()
 }));
 
-// Mock useCanvasElement
 jest.mock('./hooks/useCanvasElement', () => ({
-  __esModule: true, // Necessary for default exports if applicable
+  __esModule: true,
   default: jest.fn(() => ({
-    canvasRef: { current: null } // Mock canvas ref
+    canvasRef: { current: null }
   }))
 }));
 
-// Mock Child Components (Optional but can simplify App testing)
 jest.mock('./components/ProfileModal', () => ({
   __esModule: true,
   default: ({ isOpen }: { isOpen: boolean }) =>
@@ -79,22 +69,16 @@ jest.mock('./components/InfoPanel', () => ({
   default: () => <div data-testid='mock-info-panel'>Info Panel</div>
 }));
 
-// Mock react-modal setAppElement to avoid errors in test environment
 jest.mock('react-modal', () => {
   const modal = jest.requireActual('react-modal');
-  modal.setAppElement = jest.fn(); // Mock setAppElement
+  modal.setAppElement = jest.fn();
   return modal;
 });
 
-// --- Test Suite ---
-
 describe('<App />', () => {
-  // Clear mocks before each test
   beforeEach(() => {
-    // Reset mocks for individual tests if needed
     jest.clearAllMocks();
 
-    // Reset specific hook mocks to default states
     (require('./hooks/useWebSocket').useWebSocket as jest.Mock).mockReturnValue({
       isConnected: false,
       socket: null,
@@ -125,7 +109,7 @@ describe('<App />', () => {
 
   it('renders without crashing', () => {
     render(<App />);
-    // Check for a high-level element, like the main heading
+
     expect(screen.getByRole('heading', { name: /multiplayer snake game/i })).toBeInTheDocument();
   });
 
@@ -141,10 +125,9 @@ describe('<App />', () => {
   });
 
   it('opens the ProfileModal when profileStatus is "needed"', async () => {
-    // Arrange: Set useUserProfile mock to return 'needed' status
     (require('./hooks/useUserProfile').useUserProfile as jest.Mock).mockReturnValue({
       currentUserProfile: null,
-      isProfileModalOpen: true, // Simulate modal being open based on status change
+      isProfileModalOpen: true,
       profileStatus: 'needed',
       localPlayerId: null,
       openProfileModal: mockOpenProfileModal,
@@ -154,21 +137,17 @@ describe('<App />', () => {
 
     render(<App />);
 
-    // Act & Assert: Check if the modal appears (or the mock component is rendered)
-    // Need to wait because the effect that calls openProfileModal is async
     await waitFor(() => {
-      // Wait specifically for the modal to appear
       expect(screen.getByTestId('mock-profile-modal')).toBeInTheDocument();
     });
-    // After waiting, assert that the function was called
+
     expect(mockOpenProfileModal).toHaveBeenCalled();
   });
 
   it('opens the ProfileModal when profileStatus is "error"', async () => {
-    // Arrange: Set useUserProfile mock to return 'error' status
     (require('./hooks/useUserProfile').useUserProfile as jest.Mock).mockReturnValue({
       currentUserProfile: null,
-      isProfileModalOpen: true, // Simulate modal being open based on status change
+      isProfileModalOpen: true,
       profileStatus: 'error',
       localPlayerId: null,
       openProfileModal: mockOpenProfileModal,
@@ -178,12 +157,10 @@ describe('<App />', () => {
 
     render(<App />);
 
-    // Act & Assert: Check if the modal appears
     await waitFor(() => {
-      // Wait specifically for the modal to appear
       expect(screen.getByTestId('mock-profile-modal')).toBeInTheDocument();
     });
-    // After waiting, assert that the function was called
+
     expect(mockOpenProfileModal).toHaveBeenCalled();
   });
 

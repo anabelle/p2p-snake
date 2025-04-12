@@ -4,16 +4,11 @@ import { UserProfile } from '../types';
 import { Socket } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 
-// --- Type Definitions for Hook Props and Return ---
 interface UseUserProfileProps {
   connectWebSocket: jest.Mock<(profile: UserProfile) => void>;
   socket: Socket | null;
-  // Add gameState later if needed for sync tests
-  // latestGameState?: GameState | null;
 }
 
-// Refine the return type definition (already present at the end)
-// Ensure this matches the actual return type defined at the end of the file
 type UseUserProfileReturn = {
   currentUserProfile: UserProfile | null;
   isProfileModalOpen: boolean;
@@ -24,7 +19,6 @@ type UseUserProfileReturn = {
   localPlayerId: string | null;
 };
 
-// Mock localStorage
 const localStorageMock = (() => {
   let store: { [key: string]: string } = {};
   return {
@@ -42,8 +36,7 @@ const localStorageMock = (() => {
 })();
 Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
-// Mock dependencies
-const mockConnectWebSocket: jest.Mock<(profile: UserProfile) => void> = jest.fn(); // Correct typing
+const mockConnectWebSocket: jest.Mock<(profile: UserProfile) => void> = jest.fn();
 const mockDisconnectWebSocket = jest.fn();
 const mockEmitConnected = jest.fn();
 const mockEmitDisconnected = jest.fn();
@@ -51,46 +44,42 @@ const mockEmitDisconnected = jest.fn();
 const mockSocket = {
   emit: mockEmitConnected,
   connected: true
-} as unknown as Socket; // Cast through unknown
+} as unknown as Socket;
 
 const disconnectedSocket = {
   emit: mockEmitDisconnected,
   connected: false
-} as unknown as Socket; // Cast through unknown
+} as unknown as Socket;
 
-// Mock uuid
 jest.mock('uuid', () => ({
   v4: jest.fn(() => 'mock-uuid-1234')
 }));
 
 describe('useUserProfile', () => {
   beforeEach(() => {
-    // Reset mocks and localStorage before each test
     localStorageMock.clear();
     mockConnectWebSocket.mockClear();
     mockDisconnectWebSocket.mockClear();
-    // Clear the specific mock functions for emit
+
     mockEmitConnected.mockClear();
     mockEmitDisconnected.mockClear();
     (uuidv4 as jest.Mock).mockClear();
-    (uuidv4 as jest.Mock).mockReturnValue('mock-uuid-1234'); // Ensure consistent UUID
+    (uuidv4 as jest.Mock).mockReturnValue('mock-uuid-1234');
   });
 
   it('should initialize with no profile and modal closed if localStorage is empty', () => {
-    // Correct generic order: Result, Props
     const { result } = renderHook<UseUserProfileReturn, UseUserProfileProps>(() =>
       useUserProfile({
         connectWebSocket: mockConnectWebSocket,
         socket: null
       })
     );
-    // Now accessing result.current properties should align with UseUserProfileReturn
+
     expect(result.current.currentUserProfile).toBeNull();
     expect(result.current.isProfileModalOpen).toBe(false);
   });
 
   it('should indicate profile initialization is needed when localStorage is empty', () => {
-    // Correct generic order: Result, Props
     const { result } = renderHook<UseUserProfileReturn, UseUserProfileProps>(() =>
       useUserProfile({
         connectWebSocket: mockConnectWebSocket,
@@ -105,7 +94,7 @@ describe('useUserProfile', () => {
   it('should load profile from localStorage on initialization and connect', () => {
     const existingProfile: UserProfile = { id: 'user-1', name: 'Test', color: '#111111' };
     localStorageMock.setItem('snakeUserProfile', JSON.stringify(existingProfile));
-    // Correct generic order: Result, Props
+
     const { result } = renderHook<UseUserProfileReturn, UseUserProfileProps>(() =>
       useUserProfile({
         connectWebSocket: mockConnectWebSocket,
@@ -121,7 +110,7 @@ describe('useUserProfile', () => {
 
   it('should handle invalid JSON in localStorage', () => {
     localStorageMock.setItem('snakeUserProfile', 'invalid json');
-    // Correct generic order: Result, Props
+
     const { result } = renderHook<UseUserProfileReturn, UseUserProfileProps>(() =>
       useUserProfile({
         connectWebSocket: mockConnectWebSocket,
@@ -129,7 +118,7 @@ describe('useUserProfile', () => {
       })
     );
     expect(result.current.currentUserProfile).toBeNull();
-    expect(result.current.profileStatus).toBe('needed'); // Should require new profile
+    expect(result.current.profileStatus).toBe('needed');
     expect(mockConnectWebSocket).not.toHaveBeenCalled();
   });
 
@@ -137,8 +126,8 @@ describe('useUserProfile', () => {
     localStorageMock.setItem(
       'snakeUserProfile',
       JSON.stringify({ id: 'user-2', name: 'Incomplete' })
-    ); // Missing color
-    // Correct generic order: Result, Props
+    );
+
     const { result } = renderHook<UseUserProfileReturn, UseUserProfileProps>(() =>
       useUserProfile({
         connectWebSocket: mockConnectWebSocket,
@@ -151,7 +140,6 @@ describe('useUserProfile', () => {
   });
 
   it('should open and close the profile modal', () => {
-    // Correct generic order: Result, Props
     const { result } = renderHook<UseUserProfileReturn, UseUserProfileProps>(() =>
       useUserProfile({
         connectWebSocket: mockConnectWebSocket,
@@ -170,11 +158,10 @@ describe('useUserProfile', () => {
   });
 
   it('should save a new profile, update state, save to localStorage, and connect', () => {
-    // Correct generic order: Result, Props
     const { result } = renderHook<UseUserProfileReturn, UseUserProfileProps>(() =>
       useUserProfile({
         connectWebSocket: mockConnectWebSocket,
-        socket: null // Socket is null when saving a *new* profile initially
+        socket: null
       })
     );
     const newProfileData: Omit<UserProfile, 'id'> = { name: 'Newbie', color: '#ff0000' };
@@ -185,10 +172,10 @@ describe('useUserProfile', () => {
     expect(result.current.currentUserProfile).toEqual(expectedProfile);
     expect(result.current.profileStatus).toBe('loaded');
     expect(localStorageMock.getItem('snakeUserProfile')).toEqual(JSON.stringify(expectedProfile));
-    expect(result.current.isProfileModalOpen).toBe(false); // Should close modal on save
+    expect(result.current.isProfileModalOpen).toBe(false);
     expect(mockConnectWebSocket).toHaveBeenCalledTimes(1);
     expect(mockConnectWebSocket).toHaveBeenCalledWith(expectedProfile);
-    expect(mockEmitConnected).not.toHaveBeenCalled(); // Check specific emit mock
+    expect(mockEmitConnected).not.toHaveBeenCalled();
     expect(uuidv4).toHaveBeenCalledTimes(1);
   });
 
@@ -199,7 +186,7 @@ describe('useUserProfile', () => {
       color: '#00ff00'
     };
     localStorageMock.setItem('snakeUserProfile', JSON.stringify(existingProfile));
-    // Correct generic order: Result, Props
+
     const { result, rerender } = renderHook<UseUserProfileReturn, UseUserProfileProps>(
       (props) => useUserProfile(props),
       { initialProps: { connectWebSocket: mockConnectWebSocket, socket: null } }
@@ -239,7 +226,7 @@ describe('useUserProfile', () => {
       color: '#cccccc'
     };
     localStorageMock.setItem('snakeUserProfile', JSON.stringify(existingProfile));
-    // Correct generic order: Result, Props
+
     const { result, rerender } = renderHook<UseUserProfileReturn, UseUserProfileProps>(
       (props) => useUserProfile(props),
       { initialProps: { connectWebSocket: mockConnectWebSocket, socket: null } }
@@ -258,11 +245,4 @@ describe('useUserProfile', () => {
     expect(mockEmitConnected).not.toHaveBeenCalled();
     expect(mockConnectWebSocket).not.toHaveBeenCalled();
   });
-
-  // Add tests for the sync effect (handling updates from server) later
-  // This requires mocking the gameState update mechanism, which is outside this hook's direct responsibility
-  // but the hook needs to react to it. We'll pass gameState as a prop for this.
 });
-
-// Remove the duplicate type definition at the end if it exists, keep the one at the top.
-// type UseUserProfileReturn = { ... }; // REMOVE this if duplicated

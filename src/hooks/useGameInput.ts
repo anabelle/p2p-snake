@@ -17,13 +17,12 @@ export const useGameInput = (
   setDirection: (direction: Direction) => void
 ) => {
   const touchStartPos = useRef<{ x: number; y: number } | null>(null);
-  const swipeThreshold = 30; // Minimum distance for a swipe
+  const swipeThreshold = 30;
 
-  // --- Keyboard Handler ---
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       const target = event.target as HTMLElement;
-      // Ignore input if focus is on an input field
+
       if (
         target &&
         (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')
@@ -35,7 +34,7 @@ export const useGameInput = (
 
       if (direction) {
         setDirection(direction);
-        // Prevent default browser behavior for arrow keys (scrolling)
+
         if (event.key.startsWith('Arrow')) {
           event.preventDefault();
         }
@@ -44,7 +43,6 @@ export const useGameInput = (
     [setDirection]
   );
 
-  // --- Effect for Keyboard Listeners ---
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     return () => {
@@ -52,21 +50,17 @@ export const useGameInput = (
     };
   }, [handleKeyDown]);
 
-  // --- Effect for Touch Listeners ---
   useEffect(() => {
     const gameArea = gameContainerRef.current;
     if (!gameArea) return;
 
-    // --- Touch Handlers ---
     const handleTouchStart = (event: TouchEvent) => {
       if (event.touches.length === 1) {
-        // Only handle single touch swipes
         touchStartPos.current = { x: event.touches[0].clientX, y: event.touches[0].clientY };
       }
     };
 
     const handleTouchMove = (event: TouchEvent) => {
-      // Prevent scrolling while dragging finger (if touch started inside gameArea)
       if (touchStartPos.current) {
         event.preventDefault();
       }
@@ -84,39 +78,35 @@ export const useGameInput = (
       const distance = Math.sqrt(dx * dx + dy * dy);
 
       if (distance > swipeThreshold) {
-        const angle = (Math.atan2(dy, dx) * 180) / Math.PI; // Angle in degrees
+        const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
         let detectedDirection: Direction | null = null;
 
-        // Determine direction based on angle ranges
         if (angle >= -45 && angle < 45) {
           detectedDirection = Direction.RIGHT;
         } else if (angle >= 45 && angle < 135) {
-          detectedDirection = Direction.DOWN; // Screen Y increases downwards
+          detectedDirection = Direction.DOWN;
         } else if (angle >= 135 || angle < -135) {
           detectedDirection = Direction.LEFT;
         } else if (angle >= -135 && angle < -45) {
-          detectedDirection = Direction.UP; // Screen Y decreases upwards
+          detectedDirection = Direction.UP;
         }
 
-        // Call setDirection if a swipe direction was detected
         if (detectedDirection) {
           setDirection(detectedDirection);
         }
       }
 
-      touchStartPos.current = null; // Reset start position
+      touchStartPos.current = null;
     };
 
-    // Add listeners
     gameArea.addEventListener('touchstart', handleTouchStart, { passive: false });
     gameArea.addEventListener('touchmove', handleTouchMove, { passive: false });
     gameArea.addEventListener('touchend', handleTouchEnd, { passive: true });
 
-    // Cleanup listeners
     return () => {
       gameArea.removeEventListener('touchstart', handleTouchStart);
       gameArea.removeEventListener('touchmove', handleTouchMove);
       gameArea.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [gameContainerRef, setDirection, swipeThreshold]); // Include swipeThreshold if it might change
+  }, [gameContainerRef, setDirection, swipeThreshold]);
 };

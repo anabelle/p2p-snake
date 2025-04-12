@@ -3,17 +3,13 @@ import { render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import PlayerRankings from './PlayerRankings';
 import { GameState } from '../game/state/types';
-// No direct import from __mocks__ needed here
 
-// Mock the game state data structure we expect
-// We aren't mocking a specific module export here, but rather providing mock data
-// to be used in the tests where GameState is expected.
 const baseMockGameState: Omit<GameState, 'playerStats' | 'playerCount'> = {
   snakes: [],
   food: [],
   powerUps: [],
   activePowerUps: [],
-  gridSize: { width: 20, height: 20 }, // Example size
+  gridSize: { width: 20, height: 20 },
   timestamp: 1234567890,
   sequence: 0,
   rngSeed: 12345,
@@ -39,7 +35,7 @@ describe('PlayerRankings', () => {
 
   test('renders waiting message when connected but no players', () => {
     const emptyGameState: GameState = {
-      ...baseMockGameState, // Use the base mock
+      ...baseMockGameState,
       playerStats: {},
       playerCount: 0
     };
@@ -95,44 +91,31 @@ describe('PlayerRankings', () => {
     const rows = screen.getAllByRole('row');
     expect(rows).toHaveLength(4);
 
-    // Row 0 is the header - Order might change due to score change
-    // Bob now has score 0 (due to null), Alice 100, Charlie 50
-    // Expected order: Alice (100), Charlie (50), Bob (0)
     const aliceRow = rows[1];
     const charlieRow = rows[2];
     const bobRow = rows[3];
 
-    // Check sorting and content within each row
-    // Check Alice (score 100, deaths 0)
     expect(within(aliceRow).getByText(/^Alice/)).toBeInTheDocument();
     expect(within(aliceRow).getByText('100')).toBeInTheDocument();
-    expect(within(aliceRow).getByText('0')).toBeInTheDocument(); // Deaths should default to 0
+    expect(within(aliceRow).getByText('0')).toBeInTheDocument();
     expect(within(aliceRow).getByText('Online')).toHaveClass('status-online');
 
-    // Check Charlie (score 50, deaths 2)
     expect(within(charlieRow).getByText(/^Charlie$/)).toBeInTheDocument();
     expect(within(charlieRow).getByText('50')).toBeInTheDocument();
     expect(within(charlieRow).getByText('2')).toBeInTheDocument();
     expect(within(charlieRow).getByText('Offline')).toHaveClass('status-offline');
 
-    // Check Bob (score 0, deaths 0)
     expect(within(bobRow).getByText(/^Bob$/)).toBeInTheDocument();
-    // Find cells within Bob's row
+
     const bobCells = within(bobRow).getAllByRole('cell');
-    expect(bobCells).toHaveLength(4); // Player, Score, Deaths, Status
-    // Check Score cell (index 1)
-    expect(bobCells[1]).toHaveTextContent('0'); // Score should default to 0
-    // Check Deaths cell (index 2)
-    expect(bobCells[2]).toHaveTextContent('0'); // Deaths should be 0
-    // Check Status cell (index 3)
+    expect(bobCells).toHaveLength(4);
+
+    expect(bobCells[1]).toHaveTextContent('0');
+
+    expect(bobCells[2]).toHaveTextContent('0');
+
     expect(bobCells[3]).toHaveTextContent('Online');
     expect(bobCells[3]).toHaveClass('status-online');
-
-    // Remove the less specific checks
-    // expect(within(bobRow).getByText('0')).toBeInTheDocument();
-    // const bobDeathsCell = within(bobRow).getAllByText('0')[1];
-    // expect(bobDeathsCell).toBeInTheDocument();
-    // expect(within(bobRow).getByText('Online')).toHaveClass('status-online');
   });
 
   test('highlights the local player row', () => {
@@ -161,12 +144,11 @@ describe('PlayerRankings', () => {
     render(
       <PlayerRankings
         syncedGameState={gameStateWithPlayers}
-        localPlayerId={localPlayerId} // Alice is local
+        localPlayerId={localPlayerId}
         isConnected={true}
       />
     );
 
-    // Find rows by unique content within them using getAllByRole and within
     const rows = screen.getAllByRole('row');
     let aliceRow: HTMLElement | null = null;
     let bobRow: HTMLElement | null = null;
@@ -212,7 +194,7 @@ describe('PlayerRankings', () => {
     render(
       <PlayerRankings
         syncedGameState={gameStateWithPlayers}
-        localPlayerId={localPlayerId} // Alice is local
+        localPlayerId={localPlayerId}
         isConnected={true}
       />
     );
@@ -232,14 +214,13 @@ describe('PlayerRankings', () => {
     render(
       <PlayerRankings
         syncedGameState={gameStateWithoutName}
-        localPlayerId='otherPlayer' // Not the local player
+        localPlayerId='otherPlayer'
         isConnected={true}
       />
     );
 
-    // Check for the specific substring (first 6 chars of 'player1longid')
     expect(screen.getByText('player')).toBeInTheDocument();
-    // Ensure the full ID isn't shown
+
     expect(screen.queryByText('player1longid')).not.toBeInTheDocument();
   });
 });

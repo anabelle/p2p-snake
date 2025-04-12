@@ -1,4 +1,3 @@
-// src/components/UserInfoSection.test.tsx
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
@@ -7,7 +6,6 @@ import { UserProfile } from '../types';
 import { GameState, PowerUpType, ActivePowerUp } from '../game/state/types';
 import userEvent from '@testing-library/user-event';
 
-// Mock data
 const mockProfile: UserProfile = { id: 'p1', name: 'Test User', color: '#ff0000' };
 const mockGameStateBase: Partial<GameState> = {
   timestamp: Date.now(),
@@ -21,12 +19,12 @@ const mockOpenModal = jest.fn();
 const mockActivePowerUp: ActivePowerUp = {
   playerId: 'p1',
   type: PowerUpType.SPEED,
-  expiresAt: Date.now() + 5000 // Expires in 5 seconds
+  expiresAt: Date.now() + 5000
 };
 
 describe('UserInfoSection', () => {
   beforeEach(() => {
-    mockOpenModal.mockClear(); // Clear mocks before each test
+    mockOpenModal.mockClear();
   });
 
   it('should render the "Your Snake" heading', () => {
@@ -42,7 +40,6 @@ describe('UserInfoSection', () => {
   });
 
   it('should return null if currentUserProfile or localPlayerId is null', () => {
-    // Test case 1: currentUserProfile is null
     render(
       <UserInfoSection
         currentUserProfile={null}
@@ -51,11 +48,9 @@ describe('UserInfoSection', () => {
         openProfileModal={mockOpenModal}
       />
     );
-    // Use queryByTestId to assert the component's main div is not rendered
+
     expect(screen.queryByTestId('your-snake-info')).toBeNull();
 
-    // Test case 2: localPlayerId is null
-    // Re-render for the second case (or use cleanup)
     render(
       <UserInfoSection
         currentUserProfile={mockProfile}
@@ -64,7 +59,7 @@ describe('UserInfoSection', () => {
         openProfileModal={mockOpenModal}
       />
     );
-    // Use queryByTestId again
+
     expect(screen.queryByTestId('your-snake-info')).toBeNull();
   });
 
@@ -90,7 +85,7 @@ describe('UserInfoSection', () => {
         openProfileModal={mockOpenModal}
       />
     );
-    // Use testid for the swatch
+
     const swatch = screen.getByTestId('user-info-color-swatch');
     expect(swatch).toBeInTheDocument();
     expect(swatch).toHaveStyle(`background-color: ${mockProfile.color}`);
@@ -105,10 +100,10 @@ describe('UserInfoSection', () => {
         openProfileModal={mockOpenModal}
       />
     );
-    // Use testid for the container
+
     const nameContainer = screen.getByTestId('user-info-name-container');
     expect(nameContainer).toBeInTheDocument();
-    expect(screen.getByText(mockProfile.name)).toBeInTheDocument(); // Verify name is still there
+    expect(screen.getByText(mockProfile.name)).toBeInTheDocument();
     expect(nameContainer).toHaveClass('editable-profile-item');
     expect(nameContainer).toHaveAttribute('title', 'Click to edit profile');
     await userEvent.click(nameContainer);
@@ -124,10 +119,10 @@ describe('UserInfoSection', () => {
         openProfileModal={mockOpenModal}
       />
     );
-    // Use testid for the container
+
     const colorContainer = screen.getByTestId('user-info-color-container');
     expect(colorContainer).toBeInTheDocument();
-    expect(screen.getByTestId('user-info-color-swatch')).toBeInTheDocument(); // Verify swatch is still there
+    expect(screen.getByTestId('user-info-color-swatch')).toBeInTheDocument();
     expect(colorContainer).toHaveClass('editable-profile-item');
     expect(colorContainer).toHaveAttribute('title', 'Click to edit profile');
     await userEvent.click(colorContainer);
@@ -151,7 +146,7 @@ describe('UserInfoSection', () => {
     render(
       <UserInfoSection
         currentUserProfile={mockProfile}
-        syncedGameState={mockGameStateBase as GameState | null} // Base has empty activePowerUps
+        syncedGameState={mockGameStateBase as GameState | null}
         localPlayerId='p1'
         openProfileModal={mockOpenModal}
       />
@@ -180,9 +175,8 @@ describe('UserInfoSection', () => {
   });
 
   it('should display active powerup description and time remaining', () => {
-    // Make expiresAt predictable
     const now = Date.now();
-    const expiresAt = now + 5300; // ~5 seconds
+    const expiresAt = now + 5300;
     const powerUp: ActivePowerUp = { playerId: 'p1', type: PowerUpType.SPEED, expiresAt };
     const gameState: Partial<GameState> = {
       ...mockGameStateBase,
@@ -200,7 +194,6 @@ describe('UserInfoSection', () => {
     );
     expect(screen.getByText('Active Effects:')).toBeInTheDocument();
 
-    // Use testid for the container
     const effectContainerDiv = screen.getByTestId('active-effect-SPEED');
     expect(effectContainerDiv).toBeInTheDocument();
     expect(effectContainerDiv).toHaveTextContent(/Speed Boost \(~\d+s\)/i);
@@ -232,7 +225,7 @@ describe('UserInfoSection', () => {
         openProfileModal={mockOpenModal}
       />
     );
-    // Use testids for containers
+
     const speedEffect = screen.getByTestId('active-effect-SPEED');
     const invincibilityEffect = screen.getByTestId('active-effect-INVINCIBILITY');
     expect(speedEffect).toBeInTheDocument();
@@ -247,7 +240,7 @@ describe('UserInfoSection', () => {
       playerId: 'p1',
       type: PowerUpType.SPEED,
       expiresAt: now - 1000
-    }; // Expired 1 sec ago
+    };
     const gameState: Partial<GameState> = {
       ...mockGameStateBase,
       timestamp: now,
@@ -290,10 +283,8 @@ describe('UserInfoSection', () => {
     expect(screen.getByText('Active Effects:')).toBeInTheDocument();
     const effectContainerDiv = screen.getByTestId(`active-effect-${unknownType}`);
     expect(effectContainerDiv).toBeInTheDocument();
-    // Expect the raw type name to be displayed since it's not in `descriptions`
+
     expect(effectContainerDiv).toHaveTextContent(`${unknownType} (~5s)`);
     expect(effectContainerDiv).toHaveAttribute('title', `${unknownType} (~5s)`);
   });
-
-  // Add more tests here later...
 });

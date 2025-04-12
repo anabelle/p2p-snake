@@ -5,7 +5,6 @@ import GameInfo from './GameInfo';
 import { GameState, Direction, PowerUpType, Snake, PowerUp } from '../game/state/types';
 import { GRID_SIZE } from '../game/constants';
 
-// Helper to create a baseline mock game state
 const createBaseMockGameState = (playerId: string): GameState => ({
   snakes: [
     {

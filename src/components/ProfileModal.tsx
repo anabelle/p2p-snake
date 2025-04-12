@@ -1,25 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Modal from 'react-modal';
 import { CirclePicker, ColorResult } from 'react-color';
-import { UserProfile } from './../types'; // Correct path relative to src/components
-import { PLAYER_COLORS } from '../game/constants'; // For default color suggestion
+import { UserProfile } from './../types';
+import { PLAYER_COLORS } from '../game/constants';
 
 interface ProfileModalProps {
   isOpen: boolean;
   onRequestClose: () => void;
   onSave: (profile: UserProfile) => void;
-  initialProfile: UserProfile | null; // Pass current profile for editing, or null for creation
+  initialProfile: UserProfile | null;
 }
-
-/*
- * Important: react-modal accessibility
- * For screen readers, the modal needs to know what the root application element is.
- * Call Modal.setAppElement once in your application's entry point (e.g., App.tsx or index.tsx).
- * Example: Modal.setAppElement('#root'); // Or your app's main container ID
- */
-// if (typeof window !== 'undefined') { // Check if running in browser
-//   Modal.setAppElement(document.getElementById('root') || document.body); // Fallback to body if #root isn't found
-// }
 
 const ProfileModal: React.FC<ProfileModalProps> = ({
   isOpen,
@@ -78,13 +68,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
     // Trim name and ensure it's not empty before saving
     const trimmedName = name.trim();
     if (!trimmedName) {
-      // Provide user feedback through component state instead of console
-      setIsDirty(true); // Keep form in dirty state
-      return; // Prevent saving with empty name
+      setIsDirty(true);
+      return;
     }
-    // const finalName = name.trim() || `Player_${initialProfile?.id?.substring(0, 4) || Math.random().toString(16).substring(2, 6)}`; // Provide default name if empty
+
     const finalProfile: UserProfile = {
-      // Use existing ID if editing, otherwise rely on parent to generate ID for new profile
       id: initialProfile?.id || '', // ID should be handled by the parent component (App.tsx)
       name: trimmedName, // Use the validated, trimmed name
       color: color
@@ -103,15 +91,13 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
       }
       // If user clicks 'Cancel' in the confirm dialog, do nothing (modal stays open)
     } else {
-      onRequestClose(); // Close directly if no changes were made
+      onRequestClose();
     }
   };
 
   const isNameValid = name.trim().length > 0;
 
-  // Focus the modal title when modal opens
   const handleAfterOpen = () => {
-    // Focus the modal title for accessibility
     if (modalTitleRef.current) {
       modalTitleRef.current.focus();
     }
@@ -123,9 +109,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
       onRequestClose={handleRequestClose}
       onAfterOpen={handleAfterOpen}
       contentLabel='User Profile'
-      className='profile-modal' // Add CSS class for styling
-      overlayClassName='profile-modal-overlay' // Add CSS class for styling
-      ariaHideApp={process.env.NODE_ENV !== 'test'} // Prevent warning in tests
+      className='profile-modal'
+      overlayClassName='profile-modal-overlay'
+      ariaHideApp={process.env.NODE_ENV !== 'test'}
       aria-modal='true'
       role='dialog'
       shouldCloseOnEsc={false}
@@ -142,10 +128,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
             type='text'
             id='profileName'
             value={name}
-            onChange={handleNameChange} // Use handler
+            onChange={handleNameChange}
             placeholder='Enter your name'
-            aria-required='true' // Indicate name is required
-            aria-invalid={!isNameValid} // Indicate invalid state if name is empty
+            aria-required='true'
+            aria-invalid={!isNameValid}
             aria-describedby={!isNameValid ? 'name-error' : undefined}
           />
           {!isNameValid && (

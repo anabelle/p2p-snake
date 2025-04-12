@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import FullscreenButton from './FullscreenButton'; // This import will fail initially
+import FullscreenButton from './FullscreenButton';
 
 describe('FullscreenButton', () => {
   const mockToggleFullscreen = jest.fn();
@@ -28,8 +28,6 @@ describe('FullscreenButton', () => {
 
     const button = screen.getByRole('button', { name: 'Enter Fullscreen' });
     expect(button).toBeInTheDocument();
-    // Optionally, check for the specific SVG content if needed, though label is often enough
-    // expect(button.querySelector('svg path[d*="M3 8V5"]')).toBeInTheDocument(); // Enter fullscreen icon path
   });
 
   it('should render "Exit Fullscreen" button when fullscreen', () => {
@@ -43,8 +41,6 @@ describe('FullscreenButton', () => {
 
     const button = screen.getByRole('button', { name: 'Exit Fullscreen' });
     expect(button).toBeInTheDocument();
-    // Optionally, check for the specific SVG content
-    // expect(button.querySelector('svg path[d*="M8 3v3"]')).toBeInTheDocument(); // Exit fullscreen icon path
   });
 
   it('should call toggleFullscreen when clicked', () => {

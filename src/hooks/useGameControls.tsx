@@ -1,16 +1,8 @@
 import { useCallback, RefObject } from 'react';
-import { Socket } from 'socket.io-client'; // Assuming Socket type from socket.io-client
+import { Socket } from 'socket.io-client';
 import { Direction } from '../game/state/types';
-import { useGameInput } from './useGameInput'; // Reuse the underlying input listener
+import { useGameInput } from './useGameInput';
 
-/**
- * Hook to handle game input controls (keyboard/touch) and send corresponding
- * events via a WebSocket connection.
- *
- * @param socket The Socket.IO client instance.
- * @param isConnected Whether the socket is currently connected.
- * @param gameContainerRef Ref to the DOM element that should capture input events.
- */
 export const useGameControls = (
   socket: Socket | null,
   isConnected: boolean,
@@ -35,21 +27,12 @@ export const useGameControls = (
             break;
         }
         if (inputToSend) {
-          // console.log(`useGameControls: Emitting input ${JSON.stringify(inputToSend)}`);
           socket.emit('input', inputToSend);
         }
       }
-      // else {
-      //   console.log(
-      //     `useGameControls: Input ignored (socket: ${!!socket}, connected: ${isConnected})`
-      //   );
-      // }
     },
-    [socket, isConnected] // Dependencies: socket instance and connection status
+    [socket, isConnected]
   );
 
-  // Use the existing useGameInput hook to capture raw input
   useGameInput(gameContainerRef, handleDirectionChange);
-
-  // This hook doesn't return anything, it just sets up the effect
 };

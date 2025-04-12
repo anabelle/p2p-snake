@@ -4,7 +4,7 @@ import {
   checkFoodCollision,
   checkPowerUpCollision
 } from './collision';
-import { Snake, Food, PowerUp, Direction, PowerUpType } from '../state/types'; // Import necessary types
+import { Snake, Food, PowerUp, Direction, PowerUpType } from '../state/types';
 
 describe('Collision Logic', () => {
   const gridSize = { width: 10, height: 10 };
@@ -66,7 +66,6 @@ describe('Collision Logic', () => {
       ]
     };
     const singleSegmentSnake: Snake = {
-      // Added for edge case testing
       id: 's3',
       color: 'green',
       score: 0,
@@ -77,23 +76,20 @@ describe('Collision Logic', () => {
     const snakes = [snake1, snake2, singleSegmentSnake];
 
     it('should return true if point collides with another snake body', () => {
-      expect(hasCollidedWithSnake({ x: 2, y: 1 }, snakes)).toBe(true); // Collides with snake2's body
+      expect(hasCollidedWithSnake({ x: 2, y: 1 }, snakes)).toBe(true);
     });
 
     it('should return true if point collides with own snake body (excluding head)', () => {
-      // Point collides with snake1's second segment
       expect(hasCollidedWithSnake({ x: 4, y: 5 }, snakes, 's1')).toBe(true);
-      // Point collides with snake1's third segment
+
       expect(hasCollidedWithSnake({ x: 3, y: 5 }, snakes, 's1')).toBe(true);
     });
 
     it('should return false if point collides with own snake head when currentSnakeId is provided', () => {
-      // Point is snake1's head
       expect(hasCollidedWithSnake({ x: 5, y: 5 }, snakes, 's1')).toBe(false);
     });
 
     it('should return true if point collides with own snake head when currentSnakeId is NOT provided', () => {
-      // Point is snake1's head, but we don't exclude it
       expect(hasCollidedWithSnake({ x: 5, y: 5 }, snakes)).toBe(true);
     });
 
@@ -111,11 +107,11 @@ describe('Collision Logic', () => {
     });
 
     it('should return true if point collides with the head of a single-segment snake (not current)', () => {
-      expect(hasCollidedWithSnake({ x: 8, y: 8 }, snakes, 's1')).toBe(true); // Check collision with s3 head as s1
+      expect(hasCollidedWithSnake({ x: 8, y: 8 }, snakes, 's1')).toBe(true);
     });
 
     it('should return true if point collides with the head of a single-segment snake (no current ID)', () => {
-      expect(hasCollidedWithSnake({ x: 8, y: 8 }, snakes)).toBe(true); // Check collision with s3 head without excluding
+      expect(hasCollidedWithSnake({ x: 8, y: 8 }, snakes)).toBe(true);
     });
   });
 

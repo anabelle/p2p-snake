@@ -1,11 +1,10 @@
 import SimplePeer from 'simple-peer';
 
-// Extend the SimplePeer.Instance type to include custom properties
 export interface ExtendedPeerInstance extends SimplePeer.Instance {
   _fixStreams?: () => void;
   _readableState?: any;
   stream?: any;
-  [key: string]: any; // Allow dynamic property access
+  [key: string]: any;
 }
 
 export interface PeerMessage {
@@ -25,5 +24,5 @@ export interface PeerMessage {
 
 export interface Peer {
   id: string;
-  connection: ExtendedPeerInstance | null; // Use ExtendedPeerInstance again
+  connection: ExtendedPeerInstance | null;
 }

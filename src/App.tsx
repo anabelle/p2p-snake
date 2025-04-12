@@ -1,94 +1,75 @@
-import React, { useEffect, useRef /* useState, */ } from 'react';
-import Modal from 'react-modal'; // Import Modal
-// import { NetplayAdapter } from './game/network/NetplayAdapter';
-// Types might still be needed for state-sync
-import {} from /* GameState, */ /* Direction */ './game/state/types'; // Removed unused Direction
+import React, { useEffect, useRef } from 'react';
+import Modal from 'react-modal';
+
+import {} from './game/state/types';
 import { GRID_SIZE, CELL_SIZE } from './game/constants';
-import ProfileModal from './components/ProfileModal'; // Import the modal component
-// import { useGameInput } from './hooks/useGameInput'; // Removed
-import { useWebSocket } from './hooks/useWebSocket'; // Import the WebSocket hook
-import { useUserProfile } from './hooks/useUserProfile'; // Import the new profile hook
-import { useGameAdapter } from './hooks/useGameAdapter'; // Import the game adapter hook
-import { useGameStateSync } from './hooks/useGameStateSync'; // Import the new state sync hook
-import { useGameControls } from './hooks/useGameControls'; // Import the new controls hook
-import { useGameRenderer } from './hooks/useGameRenderer'; // Import the new renderer hook
-import useCanvasElement from './hooks/useCanvasElement'; // Import the new hook
-import { useFullscreen } from './hooks/useFullscreen'; // Import the fullscreen hook
-// import UserInfoSection from './components/UserInfoSection'; // No longer needed here
-// import PlayerRankings from './components/PlayerRankings'; // No longer needed here
-// import PowerUpLegend from './components/PowerUpLegend'; // No longer needed here
-import GameArea from './components/GameArea'; // Import the game area component
-import InfoPanel from './components/InfoPanel'; // Import the info panel component
-import Footer from './components/Footer'; // Import the Footer component
-import FullscreenButton from './components/FullscreenButton'; // Import the new component
+import ProfileModal from './components/ProfileModal';
 
-import './App.css'; // Import the CSS file
+import { useWebSocket } from './hooks/useWebSocket';
+import { useUserProfile } from './hooks/useUserProfile';
+import { useGameAdapter } from './hooks/useGameAdapter';
+import { useGameStateSync } from './hooks/useGameStateSync';
+import { useGameControls } from './hooks/useGameControls';
+import { useGameRenderer } from './hooks/useGameRenderer';
+import useCanvasElement from './hooks/useCanvasElement';
+import { useFullscreen } from './hooks/useFullscreen';
 
-// Bind modal to app element (important for accessibility)
+import GameArea from './components/GameArea';
+import InfoPanel from './components/InfoPanel';
+import Footer from './components/Footer';
+import FullscreenButton from './components/FullscreenButton';
+
+import './App.css';
+
 if (typeof window !== 'undefined') {
   Modal.setAppElement(document.getElementById('root') || document.body);
 }
 
 const App: React.FC = () => {
-  const appRef = useRef<HTMLDivElement>(null); // Ref for the main App div
-  const gameContainerRef = useRef<HTMLDivElement>(null); // Ref for touch events and canvas container
-  // const canvasRef = useRef<HTMLCanvasElement | null>(null); // Removed: Now managed by useCanvasElement
+  const appRef = useRef<HTMLDivElement>(null);
+  const gameContainerRef = useRef<HTMLDivElement>(null);
 
-  // --- Calculate Canvas Size from Constants ---
   const canvasWidth = GRID_SIZE.width * CELL_SIZE;
   const canvasHeight = GRID_SIZE.height * CELL_SIZE;
 
-  // --- Use the new Canvas Element Hook ---
   const { canvasRef } = useCanvasElement({
     width: canvasWidth,
     height: canvasHeight,
-    containerRef: gameContainerRef // Pass the container ref
+    containerRef: gameContainerRef
   });
 
-  // --- WebSocket Hook Integration ---
   const {
     isConnected,
-    socket, // Use this from the hook
+    socket,
     latestGameState,
-    connect: connectWebSocket, // Use this function from the hook
-    disconnect: disconnectWebSocket // Use this function from the hook
+    connect: connectWebSocket,
+    disconnect: disconnectWebSocket
   } = useWebSocket();
 
-  // --- Use User Profile Hook ---
   const {
-    currentUserProfile, // State from hook
-    isProfileModalOpen, // State from hook
-    profileStatus, // State from hook ('loading', 'loaded', 'needed', 'error')
-    localPlayerId, // Value from hook
-    openProfileModal, // Function from hook
-    closeProfileModal, // Function from hook
-    saveProfile // Function from hook
+    currentUserProfile,
+    isProfileModalOpen,
+    profileStatus,
+    localPlayerId,
+    openProfileModal,
+    closeProfileModal,
+    saveProfile
   } = useUserProfile({
-    connectWebSocket, // Pass the connect function from useWebSocket
-    socket // Pass the socket instance from useWebSocket
-    // Pass latestGameState later for server sync
-    // latestGameState,
+    connectWebSocket,
+    socket
   });
 
-  // --- Use Game Adapter Hook ---
   const gameAdapterRef = useGameAdapter({
-    canvasRef, // Pass the ref from useCanvasElement
+    canvasRef,
     localPlayerId,
     isConnected,
     profileStatus
   });
 
-  // --- Game State Synchronization (New Hook) ---
   const { syncedGameState, gameStateRef } = useGameStateSync(latestGameState);
 
-  // --- React State ---
-  // const [localGameState, setLocalGameState] = useState<GameState | null>(null); // Removed
-  // const gameStateRef = useRef<GameState | null>(localGameState); // Removed
-
-  // --- Input Handling (New Hook) ---
   useGameControls(socket, isConnected, gameContainerRef);
 
-  // --- Use the new Game Renderer Hook ---
   useGameRenderer({
     canvasRef,
     gameAdapterRef,
@@ -98,47 +79,40 @@ const App: React.FC = () => {
     localPlayerId
   });
 
-  // --- Use Fullscreen Hook ---
   const { isFullscreen, toggleFullscreen, isFullscreenEnabled } = useFullscreen(
     appRef,
-    canvasRef, // Pass the ref to the canvas element
-    canvasWidth, // Pass original width
-    canvasHeight // Pass original height
+    canvasRef,
+    canvasWidth,
+    canvasHeight
   );
 
-  // --- Effect to handle profile status changes (e.g., open modal) ---
   useEffect(() => {
     if (profileStatus === 'needed') {
       openProfileModal();
     }
-    // Handle 'error' status if needed (e.g., show an error message)
+
     if (profileStatus === 'error') {
-      // Potentially show a persistent error message to the user here
-      // For now, we still open the modal to allow creating a new one.
       openProfileModal();
     }
   }, [profileStatus, openProfileModal]);
 
-  // --- New Simple Effect for WebSocket Cleanup ---
   useEffect(() => {
-    // Return the disconnect function directly for cleanup
     return () => {
       disconnectWebSocket();
     };
-  }, [disconnectWebSocket]); // Only depends on the disconnect function
+  }, [disconnectWebSocket]);
 
-  // --- Render function ---
   return (
     <div className={`App ${isFullscreen ? 'App-fullscreen' : ''}`} ref={appRef}>
-      <h1>Multiplayer Snake Game</h1> {/* Render unconditionally */}
+      <h1>Multiplayer Snake Game</h1> {}
       <ProfileModal
         isOpen={isProfileModalOpen}
         onRequestClose={closeProfileModal}
         onSave={saveProfile}
         initialProfile={currentUserProfile}
       />{' '}
-      {/* Render unconditionally */}
-      {/* Container for Game Area and Fullscreen Button */}
+      {}
+      {}
       <div className='game-area-wrapper'>
         <GameArea
           gameContainerRef={gameContainerRef}
@@ -148,7 +122,7 @@ const App: React.FC = () => {
           profileStatus={profileStatus}
           isProfileModalOpen={isProfileModalOpen}
           syncedGameState={syncedGameState}
-          isFullscreen={isFullscreen} // Keep passing prop
+          isFullscreen={isFullscreen}
         />
         <FullscreenButton
           isFullscreen={isFullscreen}
@@ -164,8 +138,8 @@ const App: React.FC = () => {
         localPlayerId={localPlayerId}
         openProfileModal={openProfileModal}
       />{' '}
-      {/* Render unconditionally */}
-      <Footer /> {/* Render unconditionally */}
+      {}
+      <Footer /> {}
     </div>
   );
 };

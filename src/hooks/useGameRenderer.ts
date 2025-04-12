@@ -12,10 +12,6 @@ interface UseGameRendererProps {
   localPlayerId: string | null;
 }
 
-/**
- * Hook responsible for managing the game rendering loop.
- * It determines when the loop should be active and executes the drawing logic.
- */
 export const useGameRenderer = ({
   canvasRef,
   gameAdapterRef,
@@ -24,7 +20,6 @@ export const useGameRenderer = ({
   profileStatus,
   localPlayerId
 }: UseGameRendererProps): void => {
-  // --- Determine if Game Loop Should Be Active (Logic from App.tsx) --- //
   const isGameLoopActive =
     isConnected &&
     profileStatus === 'loaded' &&
@@ -32,9 +27,7 @@ export const useGameRenderer = ({
     !!gameAdapterRef.current &&
     !!localPlayerId;
 
-  // --- Draw Frame Callback (Logic from App.tsx) --- //
   const drawFrame = useCallback(() => {
-    // Check if drawing is possible
     if (canvasRef.current && gameAdapterRef.current && gameStateRef.current) {
       try {
         gameAdapterRef.current.draw(canvasRef.current, gameStateRef.current);
@@ -42,9 +35,7 @@ export const useGameRenderer = ({
         console.error('Error during gameAdapter.draw:', e);
       }
     }
-    // No need to request next frame here, useGameLoop handles it
-  }, [gameAdapterRef, gameStateRef, canvasRef]); // Dependencies
+  }, [gameAdapterRef, gameStateRef, canvasRef]);
 
-  // --- Use the Game Loop Hook --- //
   useGameLoop(drawFrame, isGameLoopActive);
 };

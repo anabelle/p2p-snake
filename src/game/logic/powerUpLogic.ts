@@ -2,7 +2,6 @@ import { Point, PowerUp, PowerUpType, ActivePowerUp, Snake } from '../state/type
 import { generateRandomPosition } from './prng';
 import { POWER_UP_GRID_DURATION, POWER_UP_EFFECT_DURATION } from '../constants';
 
-// Generate a new power-up at a random position
 export const generatePowerUp = (
   gridSize: { width: number; height: number },
   occupiedPositions: Point[],
@@ -13,7 +12,7 @@ export const generatePowerUp = (
   const position = generateRandomPosition(gridSize, occupiedPositions, randomFunc);
   if (!position) {
     console.warn('Could not generate power-up: No unoccupied position found.');
-    return null; // Grid might be full
+    return null;
   }
 
   const powerUpTypes = Object.values(PowerUpType);
@@ -27,7 +26,6 @@ export const generatePowerUp = (
   };
 };
 
-// Activate a power-up effect for a snake
 export const activatePowerUp = (
   snake: Snake,
   powerUp: PowerUp,
@@ -40,7 +38,6 @@ export const activatePowerUp = (
   };
 };
 
-// Check if a specific power-up type is active for a snake at the current time
 export const isPowerUpActive = (
   type: PowerUpType,
   snakeId: string,
@@ -52,7 +49,6 @@ export const isPowerUpActive = (
   );
 };
 
-// Remove expired active power-ups for all snakes
 export const cleanupExpiredActivePowerUps = (
   activePowerUps: ActivePowerUp[],
   currentTime: number
@@ -60,30 +56,24 @@ export const cleanupExpiredActivePowerUps = (
   return activePowerUps.filter((ap) => ap.expiresAt > currentTime);
 };
 
-// Remove expired power-ups from the grid
 export const cleanupExpiredGridPowerUps = (powerUps: PowerUp[], currentTime: number): PowerUp[] => {
   return powerUps.filter((p) => p.expiresAt > currentTime);
 };
 
-// --- Effect Calculation Functions ---
-
-// Get the speed factor based on active power-ups
-// Returns 1 for normal, >1 for faster, <1 for slower
 export const getSpeedFactor = (
   snakeId: string,
   activePowerUps: ActivePowerUp[],
   currentTime: number
 ): number => {
   if (isPowerUpActive(PowerUpType.SPEED, snakeId, activePowerUps, currentTime)) {
-    return 1.5; // Example: 50% faster
+    return 1.5;
   }
   if (isPowerUpActive(PowerUpType.SLOW, snakeId, activePowerUps, currentTime)) {
-    return 0.5; // Example: 50% slower
+    return 0.5;
   }
-  return 1; // Normal speed
+  return 1;
 };
 
-// Get the score multiplier based on active power-ups
 export const getScoreMultiplier = (
   snakeId: string,
   activePowerUps: ActivePowerUp[],
@@ -95,7 +85,6 @@ export const getScoreMultiplier = (
   return 1;
 };
 
-// Check if the snake is invincible
 export const isInvincible = (
   snakeId: string,
   activePowerUps: ActivePowerUp[],

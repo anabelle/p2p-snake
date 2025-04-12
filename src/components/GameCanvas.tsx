@@ -11,7 +11,6 @@ interface GameCanvasProps {
 const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, localPlayerId }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Render the game on canvas using the imported drawGame function
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -19,9 +18,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, localPlayerId }) => 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Let drawGame handle setting canvas size, clearing, and drawing everything
     drawGame(ctx, gameState, localPlayerId);
-  }, [gameState, localPlayerId]); // Dependencies: re-render if gameState or localPlayerId changes
+  }, [gameState, localPlayerId]);
 
   return (
     <canvas

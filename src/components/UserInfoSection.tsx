@@ -1,4 +1,3 @@
-// src/components/UserInfoSection.tsx
 import React from 'react';
 import { UserProfile } from '../types';
 import { GameState, PowerUpType } from '../game/state/types';
@@ -17,10 +16,9 @@ const UserInfoSection: React.FC<UserInfoSectionProps> = ({
   openProfileModal
 }) => {
   if (!currentUserProfile || !localPlayerId) {
-    return null; // Or some placeholder/loading state
+    return null;
   }
 
-  // --- Helper Function to Render Active Effects ---
   const renderActiveEffects = () => {
     if (!syncedGameState?.activePowerUps || !syncedGameState.timestamp) {
       return <span style={{ fontStyle: 'italic', opacity: 0.7 }}> None</span>;
@@ -62,9 +60,9 @@ const UserInfoSection: React.FC<UserInfoSectionProps> = ({
   return (
     <div className='info-section' id='your-snake-info'>
       <h3>Your Snake</h3>
-      {/* Rest of the content will be added progressively */}
+      {}
 
-      {/* Add Name Display */}
+      {}
       <div
         className='editable-profile-item'
         onClick={openProfileModal}
@@ -76,7 +74,7 @@ const UserInfoSection: React.FC<UserInfoSectionProps> = ({
         </span>
       </div>
 
-      {/* Add Color Display */}
+      {}
       <div
         className='editable-profile-item'
         onClick={openProfileModal}

@@ -7,7 +7,6 @@ interface GameInfoProps {
   connectedPlayers: number;
 }
 
-// Function to get a user-friendly name for power-up types
 const getPowerUpName = (type: PowerUpType): string => {
   switch (type) {
     case PowerUpType.SPEED:
@@ -24,10 +23,8 @@ const getPowerUpName = (type: PowerUpType): string => {
 };
 
 const GameInfo: React.FC<GameInfoProps> = ({ gameState, localPlayerId, connectedPlayers }) => {
-  // Find the local player's snake
   const localSnake = gameState.snakes.find((snake) => snake.id === localPlayerId);
 
-  // Format the power-ups with user-friendly names
   const formatPowerUps = () => {
     if (!localSnake || localSnake.activePowerUps.length === 0) {
       return 'None';

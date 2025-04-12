@@ -1,8 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { useGameStateSync } from './useGameStateSync';
-import { GameState } from '../game/state/types'; // Assuming GameState type path
+import { GameState } from '../game/state/types';
 
-// Mock GameState for testing
 const mockGameState1: GameState = {
   snakes: [],
   food: [],
@@ -36,40 +35,33 @@ describe('useGameStateSync', () => {
       { initialProps: { latestGameState: null as GameState | null } }
     );
 
-    // Initial state check
     expect(result.current.syncedGameState).toBeNull();
     expect(result.current.gameStateRef.current).toBeNull();
 
-    // Rerender with first game state
     rerender({ latestGameState: mockGameState1 });
 
     expect(result.current.syncedGameState).toEqual(mockGameState1);
     expect(result.current.gameStateRef.current).toEqual(mockGameState1);
 
-    // Rerender with second game state
     rerender({ latestGameState: mockGameState2 });
 
     expect(result.current.syncedGameState).toEqual(mockGameState2);
     expect(result.current.gameStateRef.current).toEqual(mockGameState2);
   });
 
-  // Define the props type for the hook in this test
   type TestPropsRevertToNull = { latestGameState: GameState | null };
 
   it('should handle reverting latestGameState back to null', () => {
     const { result, rerender } = renderHook<
       ReturnType<typeof useGameStateSync>,
       TestPropsRevertToNull
-    >(
-      ({ latestGameState }) => useGameStateSync(latestGameState),
-      { initialProps: { latestGameState: mockGameState1 } } // Start with non-null
-    );
+    >(({ latestGameState }) => useGameStateSync(latestGameState), {
+      initialProps: { latestGameState: mockGameState1 }
+    });
 
-    // Initial state with game state
     expect(result.current.syncedGameState).toEqual(mockGameState1);
     expect(result.current.gameStateRef.current).toEqual(mockGameState1);
 
-    // Rerender with null - now type-safe due to explicit hook typing
     rerender({ latestGameState: null });
 
     expect(result.current.syncedGameState).toBeNull();
