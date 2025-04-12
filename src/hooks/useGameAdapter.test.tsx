@@ -4,13 +4,13 @@ import { useGameAdapter, UseGameAdapterProps } from './useGameAdapter';
 import { NetplayAdapter } from '../game/network/NetplayAdapter';
 
 jest.mock('../game/network/NetplayAdapter');
-const MockNetplayAdapter = NetplayAdapter as jest.MockedClass<typeof NetplayAdapter>;
+const MockedNetplayAdapter = NetplayAdapter as any;
 
 describe('useGameAdapter', () => {
   let mockCanvasRef: React.RefObject<HTMLCanvasElement>;
 
   beforeEach(() => {
-    MockNetplayAdapter.mockClear();
+    MockedNetplayAdapter.mockClear();
 
     const mockCanvas = document.createElement('canvas');
     mockCanvasRef = { current: mockCanvas };
@@ -43,7 +43,7 @@ describe('useGameAdapter', () => {
     });
 
     expect(result.current.current).toBeNull();
-    expect(MockNetplayAdapter).not.toHaveBeenCalled();
+    expect(MockedNetplayAdapter).not.toHaveBeenCalled();
 
     rerender({
       canvasRef: mockCanvasRef,
@@ -52,9 +52,9 @@ describe('useGameAdapter', () => {
       profileStatus: 'loaded'
     });
 
-    expect(result.current.current).toBeInstanceOf(MockNetplayAdapter);
-    expect(MockNetplayAdapter).toHaveBeenCalledTimes(1);
-    expect(MockNetplayAdapter).toHaveBeenCalledWith(mockCanvasRef.current, playerId);
+    expect(result.current.current).toBeInstanceOf(MockedNetplayAdapter);
+    expect(MockedNetplayAdapter).toHaveBeenCalledTimes(1);
+    expect(MockedNetplayAdapter).toHaveBeenCalledWith(mockCanvasRef.current, playerId);
   });
 
   it('should not create adapter if canvas is missing', () => {
@@ -66,7 +66,7 @@ describe('useGameAdapter', () => {
         profileStatus: 'loaded'
       })
     );
-    expect(MockNetplayAdapter).not.toHaveBeenCalled();
+    expect(MockedNetplayAdapter).not.toHaveBeenCalled();
   });
 
   it('should not create adapter if not connected', () => {
@@ -78,7 +78,7 @@ describe('useGameAdapter', () => {
         profileStatus: 'loaded'
       })
     );
-    expect(MockNetplayAdapter).not.toHaveBeenCalled();
+    expect(MockedNetplayAdapter).not.toHaveBeenCalled();
   });
 
   it('should not create adapter if profile not loaded', () => {
@@ -90,7 +90,7 @@ describe('useGameAdapter', () => {
         profileStatus: 'needed'
       })
     );
-    expect(MockNetplayAdapter).not.toHaveBeenCalled();
+    expect(MockedNetplayAdapter).not.toHaveBeenCalled();
   });
 
   it('should clear the adapter ref when conditions are no longer met', () => {
@@ -107,8 +107,8 @@ describe('useGameAdapter', () => {
       }
     });
 
-    expect(result.current.current).toBeInstanceOf(MockNetplayAdapter);
-    expect(MockNetplayAdapter).toHaveBeenCalledTimes(1);
+    expect(result.current.current).toBeInstanceOf(MockedNetplayAdapter);
+    expect(MockedNetplayAdapter).toHaveBeenCalledTimes(1);
 
     rerender({
       canvasRef: mockCanvasRef,
@@ -134,7 +134,7 @@ describe('useGameAdapter', () => {
       }
     });
 
-    expect(result.current.current).toBeInstanceOf(MockNetplayAdapter);
+    expect(result.current.current).toBeInstanceOf(MockedNetplayAdapter);
 
     rerender({
       canvasRef: mockCanvasRef,

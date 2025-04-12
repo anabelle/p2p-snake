@@ -293,7 +293,11 @@ describe('Game Renderer', () => {
       direction: Direction.UP,
       score: 0,
       activePowerUps: [],
-      body: [headPos]
+      body: [headPos],
+      isAlive: true,
+      partsToGrow: 0,
+      speed: 1,
+      effects: []
     };
 
     const testEyeDirection = (
@@ -404,7 +408,11 @@ describe('Game Renderer', () => {
       id: 'player1',
       color: 'cyan',
       score: 0,
-      activePowerUps: []
+      activePowerUps: [],
+      isAlive: true,
+      partsToGrow: 0,
+      speed: 1,
+      effects: []
     };
 
     it('should draw a non-local snake correctly', () => {
@@ -538,7 +546,11 @@ describe('Game Renderer', () => {
             direction: Direction.RIGHT,
             color: 'red',
             score: 0,
-            activePowerUps: []
+            activePowerUps: [],
+            isAlive: true,
+            partsToGrow: 0,
+            speed: 1,
+            effects: []
           },
           {
             id: 'p2',
@@ -546,7 +558,11 @@ describe('Game Renderer', () => {
             direction: Direction.LEFT,
             color: 'blue',
             score: 0,
-            activePowerUps: []
+            activePowerUps: [],
+            isAlive: true,
+            partsToGrow: 0,
+            speed: 1,
+            effects: []
           }
         ],
         food: [
@@ -694,7 +710,11 @@ describe('Game Renderer Scaling', () => {
           body: [snakeHead],
           direction: Direction.RIGHT,
           score: 0,
-          activePowerUps: []
+          activePowerUps: [],
+          isAlive: true,
+          partsToGrow: 0,
+          speed: 1,
+          effects: []
         } as Snake
       ],
       food: [foodItem],

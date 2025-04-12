@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import {
   generatePowerUp,
   activatePowerUp,
@@ -13,42 +11,49 @@ import {
 import { Point, PowerUp, PowerUpType, ActivePowerUp, Snake, Direction } from '../state/types';
 import * as prng from './prng';
 import { POWER_UP_GRID_DURATION, POWER_UP_EFFECT_DURATION } from '../constants';
-
-jest.mock('./prng', () => ({
-  ...jest.requireActual('./prng'),
-  generateRandomPosition: jest.fn()
-}));
+import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 
 describe('PowerUp Logic', () => {
   const gridSize = { width: 10, height: 10 };
   const occupiedPositions: Point[] = [];
-  const mockRandomFunc = jest.fn();
-  const generateRandomPositionMock = prng.generateRandomPosition;
+  const mockRandomFunc = jest.fn(() => 0.5);
   const mockSnake: Snake = {
     id: 's1',
     body: [{ x: 1, y: 1 }],
     color: 'red',
     direction: Direction.RIGHT,
     score: 0,
-    activePowerUps: []
+    activePowerUps: [],
+    isAlive: true,
+    partsToGrow: 0,
+    speed: 1,
+    effects: {}
   };
   const currentTime = 10000;
 
+  let generateRandomPositionSpy: ReturnType<typeof jest.spyOn>;
+  let consoleWarnSpy: ReturnType<typeof jest.spyOn>;
+
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockRandomFunc.mockReturnValue(0);
-    generateRandomPositionMock.mockReturnValue({ x: 5, y: 5 });
-    if (jest.isMockFunction(console.warn)) {
-      console.warn.mockRestore();
-    }
+    jest.useFakeTimers();
+    jest.setSystemTime(currentTime);
+    generateRandomPositionSpy = jest.spyOn(prng, 'generateRandomPosition');
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    generateRandomPositionSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
+    jest.useRealTimers();
   });
 
   describe('generatePowerUp', () => {
     it('should generate a power-up with random type and position', () => {
       const powerUpId = 1;
       const expectedPosition = { x: 5, y: 5 };
-      const expectedType = PowerUpType.SPEED;
-      generateRandomPositionMock.mockReturnValue(expectedPosition);
+      mockRandomFunc.mockReturnValue(0);
+      const expectedType = Object.values(PowerUpType)[0];
+      generateRandomPositionSpy.mockReturnValue(expectedPosition);
 
       const powerUp = generatePowerUp(
         gridSize,
@@ -58,7 +63,7 @@ describe('PowerUp Logic', () => {
         powerUpId
       );
 
-      expect(generateRandomPositionMock).toHaveBeenCalledWith(
+      expect(generateRandomPositionSpy).toHaveBeenCalledWith(
         gridSize,
         occupiedPositions,
         mockRandomFunc
@@ -73,14 +78,21 @@ describe('PowerUp Logic', () => {
     });
 
     it('should return null if no position can be found', () => {
-      generateRandomPositionMock.mockReturnValue(null);
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-      const powerUp = generatePowerUp(gridSize, occupiedPositions, mockRandomFunc, currentTime, 1);
+      generateRandomPositionSpy.mockReturnValue(null);
+      const powerUpId = 2;
+
+      const powerUp = generatePowerUp(
+        gridSize,
+        occupiedPositions,
+        mockRandomFunc,
+        currentTime,
+        powerUpId
+      );
+
       expect(powerUp).toBeNull();
-      expect(warnSpy).toHaveBeenCalledWith(
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
         'Could not generate power-up: No unoccupied position found.'
       );
-      warnSpy.mockRestore();
     });
   });
 

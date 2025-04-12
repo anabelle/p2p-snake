@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import { Direction, GameState, Snake } from '../state/types';
 import { AI_SNAKE_ID, getAIDirection } from './aiSnake';
 import * as collision from './collision';
@@ -18,7 +16,11 @@ describe('AI Snake Logic', () => {
       body: aiSnakeBody,
       direction: aiDirection,
       score: 0,
-      activePowerUps: []
+      activePowerUps: [],
+      isAlive: true,
+      partsToGrow: 0,
+      speed: 1,
+      effects: {}
     };
 
     return {
@@ -44,6 +46,24 @@ describe('AI Snake Logic', () => {
       }
     };
   };
+
+  const mockGameState: GameState = {
+    snakes: [],
+    food: [],
+    powerUps: [],
+    activePowerUps: [],
+    gridSize: { width: 10, height: 10 },
+    timestamp: Date.now(),
+    sequence: 0,
+    rngSeed: 1,
+    playerCount: 1,
+    powerUpCounter: 0,
+    playerStats: {}
+  };
+
+  beforeEach(() => {
+    mockGameState.snakes = [];
+  });
 
   test('AI snake exists in game state', () => {
     const gameState = createTestGameState();
@@ -82,7 +102,11 @@ describe('AI Snake Logic', () => {
       ],
       direction: Direction.LEFT,
       score: 0,
-      activePowerUps: []
+      activePowerUps: [],
+      isAlive: true,
+      partsToGrow: 0,
+      speed: 1,
+      effects: {}
     });
 
     const aiDirection = getAIDirection(gameState);
@@ -99,7 +123,11 @@ describe('AI Snake Logic', () => {
       body: [{ x: 2, y: 1 }],
       direction: Direction.LEFT,
       score: 0,
-      activePowerUps: []
+      activePowerUps: [],
+      isAlive: true,
+      partsToGrow: 0,
+      speed: 1,
+      effects: {}
     });
 
     gameState.snakes.push({
@@ -108,7 +136,11 @@ describe('AI Snake Logic', () => {
       body: [{ x: 1, y: 2 }],
       direction: Direction.UP,
       score: 0,
-      activePowerUps: []
+      activePowerUps: [],
+      isAlive: true,
+      partsToGrow: 0,
+      speed: 1,
+      effects: {}
     });
 
     gameState.snakes.push({
@@ -117,7 +149,11 @@ describe('AI Snake Logic', () => {
       body: [{ x: 0, y: 1 }],
       direction: Direction.RIGHT,
       score: 0,
-      activePowerUps: []
+      activePowerUps: [],
+      isAlive: true,
+      partsToGrow: 0,
+      speed: 1,
+      effects: {}
     });
 
     const aiDirection = getAIDirection(gameState);
@@ -188,7 +224,11 @@ describe('AI Snake Logic', () => {
       direction: Direction.LEFT,
       score: 0,
       activePowerUps: [],
-      body: [{ x: 6, y: 5 }]
+      body: [{ x: 6, y: 5 }],
+      isAlive: true,
+      partsToGrow: 0,
+      speed: 1,
+      effects: {}
     });
     const aiDirection = getAIDirection(gameState);
     expect(aiDirection).toBe(Direction.DOWN);
@@ -221,7 +261,11 @@ describe('AI Snake Logic', () => {
       direction: Direction.LEFT,
       score: 0,
       activePowerUps: [],
-      body: [{ x: 6, y: 9 }]
+      body: [{ x: 6, y: 9 }],
+      isAlive: true,
+      partsToGrow: 0,
+      speed: 1,
+      effects: {}
     });
     const aiDirection = getAIDirection(gameState);
     expect(aiDirection).toBe(Direction.LEFT);
@@ -238,7 +282,11 @@ describe('AI Snake Logic', () => {
       direction: Direction.LEFT,
       score: 0,
       activePowerUps: [],
-      body: [{ x: 5, y: 9 }]
+      body: [{ x: 5, y: 9 }],
+      isAlive: true,
+      partsToGrow: 0,
+      speed: 1,
+      effects: {}
     });
     const aiDirection = getAIDirection(gameState);
     expect(aiDirection).toBe(Direction.RIGHT);
@@ -273,12 +321,15 @@ describe('AI Snake Logic', () => {
         { x: 5, y: 26 },
         { x: 5, y: 27 },
         { x: 5, y: 28 },
-        { x: 5, y: 29 },
-        { x: 5, y: 30 }
+        { x: 5, y: 29 }
       ],
       direction: Direction.UP,
       score: 0,
-      activePowerUps: []
+      activePowerUps: [],
+      isAlive: true,
+      partsToGrow: 0,
+      speed: 1,
+      effects: {}
     };
 
     const otherSnake: Snake = {
@@ -290,7 +341,11 @@ describe('AI Snake Logic', () => {
       ],
       direction: Direction.LEFT,
       score: 0,
-      activePowerUps: []
+      activePowerUps: [],
+      isAlive: true,
+      partsToGrow: 0,
+      speed: 1,
+      effects: {}
     };
 
     const gameState: GameState = {

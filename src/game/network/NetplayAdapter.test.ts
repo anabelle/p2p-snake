@@ -47,7 +47,11 @@ describe('NetplayAdapter (Client Helper)', () => {
           direction: Direction.RIGHT,
           color: '#f00',
           score: 0,
-          activePowerUps: []
+          activePowerUps: [],
+          isAlive: true,
+          partsToGrow: 0,
+          speed: 1,
+          effects: []
         }
       ],
       food: [],
@@ -90,7 +94,8 @@ describe('NetplayAdapter (Client Helper)', () => {
     });
 
     it('should not call drawGame if context cannot be obtained', () => {
-      (mockCanvas.getContext as jest.Mock).mockReturnValueOnce(null);
+      const mockedGetContext = mockCanvas.getContext as any;
+      mockedGetContext.mockReturnValueOnce(null);
 
       adapter.draw(mockCanvas, mockGameState);
 

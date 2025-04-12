@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import {
   hasCollidedWithWall,
   hasCollidedWithSnake,
@@ -53,7 +51,11 @@ describe('Collision Logic', () => {
         { x: 5, y: 5 },
         { x: 4, y: 5 },
         { x: 3, y: 5 }
-      ]
+      ],
+      isAlive: true,
+      partsToGrow: 0,
+      speed: 1,
+      effects: {}
     };
     const snake2: Snake = {
       id: 's2',
@@ -65,7 +67,11 @@ describe('Collision Logic', () => {
         { x: 1, y: 1 },
         { x: 2, y: 1 },
         { x: 3, y: 1 }
-      ]
+      ],
+      isAlive: true,
+      partsToGrow: 0,
+      speed: 1,
+      effects: {}
     };
     const singleSegmentSnake: Snake = {
       id: 's3',
@@ -73,7 +79,11 @@ describe('Collision Logic', () => {
       score: 0,
       direction: Direction.UP,
       activePowerUps: [],
-      body: [{ x: 8, y: 8 }]
+      body: [{ x: 8, y: 8 }],
+      isAlive: true,
+      partsToGrow: 0,
+      speed: 1,
+      effects: {}
     };
     const snakes = [snake1, snake2, singleSegmentSnake];
 

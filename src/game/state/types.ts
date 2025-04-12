@@ -10,6 +10,10 @@ export interface Snake {
   direction: Direction;
   score: number;
   activePowerUps: PowerUp[];
+  isAlive: boolean;
+  partsToGrow: number;
+  speed: number;
+  effects: Record<string, any>;
 }
 
 export interface Food {

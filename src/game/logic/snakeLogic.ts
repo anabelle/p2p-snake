@@ -29,16 +29,23 @@ export const generateNewSnake = (
     finalColor = getPlayerColor(id);
   }
 
+  const initialProps = {
+    isAlive: true,
+    partsToGrow: 0,
+    speed: 1,
+    effects: {},
+    activePowerUps: []
+  };
+
   if (!position) {
     logger.error(`Could not generate initial position for snake ${id}`);
-
     return {
       id,
       color: finalColor,
       body: [{ x: 0, y: 0 }],
       direction: Direction.RIGHT,
       score: 0,
-      activePowerUps: []
+      ...initialProps
     };
   }
 
@@ -51,7 +58,7 @@ export const generateNewSnake = (
     body: [position],
     direction: initialDirection,
     score: 0,
-    activePowerUps: []
+    ...initialProps
   };
 };
 

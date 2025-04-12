@@ -13,15 +13,23 @@ const createBaseMockGameState = (playerId: string): GameState => ({
       direction: Direction.RIGHT,
       color: '#ff0000',
       score: 10,
-      activePowerUps: []
+      activePowerUps: [],
+      isAlive: true,
+      partsToGrow: 0,
+      speed: 1,
+      effects: {}
     },
     {
       id: 'other-player',
       body: [{ x: 5, y: 5 }],
       direction: Direction.LEFT,
-      color: '#0000ff',
+      color: '#00ff00',
       score: 5,
-      activePowerUps: []
+      activePowerUps: [],
+      isAlive: true,
+      partsToGrow: 2,
+      speed: 1.5,
+      effects: { speedBoost: { timer: 1234 } }
     }
   ],
   food: [{ position: { x: 10, y: 10 }, value: 1 }],

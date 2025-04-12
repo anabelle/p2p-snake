@@ -18,15 +18,23 @@ const createMockGameState = (playerId: string): GameState => ({
       direction: Direction.RIGHT,
       color: '#ff0000',
       score: 0,
-      activePowerUps: []
+      activePowerUps: [],
+      isAlive: true,
+      partsToGrow: 0,
+      speed: 1,
+      effects: {}
     },
     {
       id: 'other-player',
       body: [{ x: 5, y: 5 }],
       direction: Direction.LEFT,
-      color: '#0000ff',
-      score: 0,
-      activePowerUps: []
+      color: '#00ff00',
+      score: 10,
+      activePowerUps: [],
+      isAlive: true,
+      partsToGrow: 0,
+      speed: 1,
+      effects: {}
     }
   ],
   food: [{ position: { x: 10, y: 10 }, value: 1 }],
@@ -45,8 +53,8 @@ const createMockGameState = (playerId: string): GameState => ({
     'other-player': {
       id: 'other-player',
       name: 'Opponent',
-      color: '#0000ff',
-      score: 0,
+      color: '#00ff00',
+      score: 10,
       deaths: 0,
       isConnected: true
     }
