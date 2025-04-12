@@ -11,7 +11,9 @@ alwaysApply: true
 
 # Code Qualiy
 
-- Use TDD always
+- Read package.json and create a file tree map as a first step always.
+- Use TDD always, first verify the issue by writing either unit or cypress tests, then fix it or implement the new feature
+- during development feel free to run only unit tests or cypress tests specific to the file you need to reduce overhead, hoever use verify when it makes sense to check for regressions
 - If you see overlay of webpack-dev-server-client-overlay in cypress, run npm run build to see the error instead of forcing anything.
 - Before making any edits run the following command to get context: "npm run verify"
 - After making any edits run the following commands to verify you didnt break anything: "npm run verify"

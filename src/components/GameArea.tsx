@@ -9,6 +9,7 @@ interface GameAreaProps {
   profileStatus: 'loading' | 'loaded' | 'needed' | 'error';
   isProfileModalOpen: boolean;
   syncedGameState: GameState | null;
+  isFullscreen: boolean;
 }
 
 const GameArea: React.FC<GameAreaProps> = ({
@@ -18,7 +19,8 @@ const GameArea: React.FC<GameAreaProps> = ({
   isConnected,
   profileStatus,
   isProfileModalOpen,
-  syncedGameState
+  syncedGameState,
+  isFullscreen
 }) => {
   // Determine overlay visibility
   const showOverlay = !isConnected && profileStatus !== 'loaded' && !isProfileModalOpen;
@@ -28,16 +30,21 @@ const GameArea: React.FC<GameAreaProps> = ({
   const showPlayerCount =
     isConnected && syncedGameState?.playerCount && syncedGameState.playerCount > 0;
 
+  // Conditionally define container styles
+  const containerStyle: React.CSSProperties = {
+    ['--canvas-width' as string]: `${canvasWidth}px`
+  };
+  if (!isFullscreen) {
+    containerStyle.width = canvasWidth;
+    containerStyle.height = canvasHeight;
+  }
+
   return (
     <div
       ref={gameContainerRef}
       id='game-canvas-container'
       data-testid='game-area-container'
-      style={{
-        width: canvasWidth,
-        height: canvasHeight,
-        ['--canvas-width' as string]: `${canvasWidth}px`
-      }}
+      style={containerStyle}
     >
       {/* Conditional Overlays */}
       {showOverlay && <div className='connecting-overlay'>{overlayText}</div>}

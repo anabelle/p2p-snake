@@ -51,6 +51,7 @@ h1 {
   color: var(--primary-color);
   margin-bottom: var(--spacing-sm);
   text-align: center;
+  display: block; /* Ensure default */
 }
 
 /* --- Game Area --- */
@@ -486,4 +487,120 @@ tbody tr:hover {
   cursor: pointer;
   /* Add vertical-align if needed depending on surrounding text */
   vertical-align: middle;
+}
+
+/* Game Area Wrapper */
+.game-area-wrapper {
+  position: relative; /* Ensure default has relative positioning for the button */
+  display: inline-block; /* Or block, match original intent */
+}
+
+/* Fullscreen Button Styling */
+.fullscreen-button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  padding: 5px 10px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8em;
+  z-index: 10; /* Ensure it's above the canvas */
+}
+
+.fullscreen-button:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.fullscreen-button:focus {
+  outline: 2px solid dodgerblue; /* Accessibility */
+  outline-offset: 2px;
+}
+
+/* App-fullscreen: Use flex to center content */
+.App-fullscreen {
+  background-color: #000;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  padding: 0; /* Remove padding to maximize space */
+  box-sizing: border-box;
+}
+
+/* Re-add rules for hiding elements */
+.App-fullscreen h1,
+.App-fullscreen [data-testid='info-panel-wrapper'],
+.App-fullscreen .profile-modal-overlay, /* Ensure modal hidden too */
+.App-fullscreen footer {
+  display: none;
+}
+
+/* Ensure the wrapper fills the centered space */
+.App-fullscreen .game-area-wrapper {
+  flex-shrink: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Style the canvas container to fill the wrapper */
+.App-fullscreen > .game-area-wrapper > #game-canvas-container {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: flex; /* Keep flex to center canvas if needed, though canvas fills it now */
+  justify-content: center;
+  align-items: center;
+  /* Remove aspect-ratio and other constraints */
+  aspect-ratio: unset;
+  max-width: none;
+}
+
+/* Make the canvas element's *box* fill its container */
+.App-fullscreen > .game-area-wrapper > #game-canvas-container canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Remove object-fit: contain; size is controlled by attributes now */
+}
+
+/* Footer default */
+footer {
+  /* ... existing footer styles ... */
+  display: block; /* Ensure default */
+}
+
+/* Ensure the game canvas container maintains aspect ratio if needed */
+/* This might require more complex logic depending on desired behavior */
+/* .App-fullscreen #game-canvas-container { */
+/* Example: */
+/* max-width: 100vw; */
+/* max-height: 100vh; */
+/* object-fit: contain; */
+/* } */
+
+/* Note: True browser fullscreen styling might require ::backdrop pseudo-element */
+/* or targeting the :fullscreen pseudo-class on the element itself */
+
+/* Default display styles */
+h1 {
+  display: block;
+}
+
+/* Use data-testid for InfoPanel wrapper */
+[data-testid='info-panel-wrapper'] {
+  display: block; /* Or grid, depending on its actual default */
+}
+
+footer {
+  display: block;
 }

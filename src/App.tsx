@@ -13,6 +13,7 @@ import { useGameStateSync } from './hooks/useGameStateSync'; // Import the new s
 import { useGameControls } from './hooks/useGameControls'; // Import the new controls hook
 import { useGameRenderer } from './hooks/useGameRenderer'; // Import the new renderer hook
 import useCanvasElement from './hooks/useCanvasElement'; // Import the new hook
+import { useFullscreen } from './hooks/useFullscreen'; // Import the fullscreen hook
 // import UserInfoSection from './components/UserInfoSection'; // No longer needed here
 // import PlayerRankings from './components/PlayerRankings'; // No longer needed here
 // import PowerUpLegend from './components/PowerUpLegend'; // No longer needed here
@@ -28,6 +29,7 @@ if (typeof window !== 'undefined') {
 }
 
 const App: React.FC = () => {
+  const appRef = useRef<HTMLDivElement>(null); // Ref for the main App div
   const gameContainerRef = useRef<HTMLDivElement>(null); // Ref for touch events and canvas container
   // const canvasRef = useRef<HTMLCanvasElement | null>(null); // Removed: Now managed by useCanvasElement
 
@@ -95,6 +97,14 @@ const App: React.FC = () => {
     localPlayerId
   });
 
+  // --- Use Fullscreen Hook ---
+  const { isFullscreen, toggleFullscreen, isFullscreenEnabled } = useFullscreen(
+    appRef,
+    canvasRef, // Pass the ref to the canvas element
+    canvasWidth, // Pass original width
+    canvasHeight // Pass original height
+  );
+
   // --- Effect to handle profile status changes (e.g., open modal) ---
   useEffect(() => {
     if (profileStatus === 'needed') {
@@ -119,28 +129,40 @@ const App: React.FC = () => {
     };
   }, [disconnectWebSocket]); // Only depends on the disconnect function
 
-  // --- Render function (Structure remains the same as original) ---
+  // --- Render function ---
   return (
-    <div className='App'>
-      <h1>Multiplayer Snake Game</h1>
-
+    <div className={`App ${isFullscreen ? 'App-fullscreen' : ''}`} ref={appRef}>
+      <h1>Multiplayer Snake Game</h1> {/* Render unconditionally */}
       <ProfileModal
         isOpen={isProfileModalOpen}
         onRequestClose={closeProfileModal}
         onSave={saveProfile}
         initialProfile={currentUserProfile}
-      />
-
-      <GameArea
-        gameContainerRef={gameContainerRef}
-        canvasWidth={canvasWidth}
-        canvasHeight={canvasHeight}
-        isConnected={isConnected}
-        profileStatus={profileStatus}
-        isProfileModalOpen={isProfileModalOpen}
-        syncedGameState={syncedGameState}
-      />
-
+      />{' '}
+      {/* Render unconditionally */}
+      {/* Container for Game Area and Fullscreen Button */}
+      <div className='game-area-wrapper'>
+        <GameArea
+          gameContainerRef={gameContainerRef}
+          canvasWidth={canvasWidth}
+          canvasHeight={canvasHeight}
+          isConnected={isConnected}
+          profileStatus={profileStatus}
+          isProfileModalOpen={isProfileModalOpen}
+          syncedGameState={syncedGameState}
+          isFullscreen={isFullscreen} // Keep passing prop
+        />
+        {isFullscreenEnabled && (
+          <button
+            className='fullscreen-button'
+            onClick={toggleFullscreen}
+            aria-label={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+            title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+          >
+            {isFullscreen ? 'Exit' : 'Fullscreen'}
+          </button>
+        )}
+      </div>
       <InfoPanel
         isConnected={isConnected}
         currentUserProfile={currentUserProfile}
@@ -148,9 +170,9 @@ const App: React.FC = () => {
         syncedGameState={syncedGameState}
         localPlayerId={localPlayerId}
         openProfileModal={openProfileModal}
-      />
-
-      <Footer />
+      />{' '}
+      {/* Render unconditionally */}
+      <Footer /> {/* Render unconditionally */}
     </div>
   );
 };

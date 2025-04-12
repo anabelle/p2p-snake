@@ -30,7 +30,8 @@ describe('GameArea', () => {
     isConnected: true,
     profileStatus: 'loaded' as const,
     isProfileModalOpen: false,
-    syncedGameState: null
+    syncedGameState: null,
+    isFullscreen: false
   };
 
   test('renders the main container div with correct styles and test id', () => {
@@ -42,6 +43,15 @@ describe('GameArea', () => {
     expect(gameContainer).toHaveAttribute('id', 'game-canvas-container');
     expect(gameContainer).toHaveStyle('width: 800px');
     expect(gameContainer).toHaveStyle('height: 600px');
+    expect(gameContainer).toHaveStyle('--canvas-width: 800px');
+  });
+
+  test('renders container without inline width/height when isFullscreen is true', () => {
+    render(<GameArea {...baseProps} isFullscreen={true} />);
+    const gameContainer = screen.getByTestId('game-area-container');
+    expect(gameContainer).toBeInTheDocument();
+    expect(gameContainer).not.toHaveStyle('width: 800px');
+    expect(gameContainer).not.toHaveStyle('height: 600px');
     expect(gameContainer).toHaveStyle('--canvas-width: 800px');
   });
 
@@ -120,5 +130,12 @@ describe('GameArea', () => {
     };
     render(<GameArea {...baseProps} isConnected={true} syncedGameState={gameStateNoPlayers} />);
     expect(screen.queryByText(/Players:/)).not.toBeInTheDocument();
+  });
+
+  test('passes the ref to the container div', () => {
+    const testRef = React.createRef<HTMLDivElement>();
+    render(<GameArea {...baseProps} gameContainerRef={testRef} />);
+    expect(testRef.current).toBeInTheDocument();
+    expect(testRef.current?.id).toBe('game-canvas-container');
   });
 });
