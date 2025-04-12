@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { UserProfile } from '../types';
 import { Socket } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
+import logger from '../utils/logger';
 
 // Replicate the props interface from the test file
 interface UseUserProfileProps {
@@ -38,7 +39,7 @@ export const useUserProfile = ({
 
   // Effect to load profile from localStorage on initial mount
   useEffect(() => {
-    console.log('useUserProfile: Initial load effect running...');
+    logger.debug('useUserProfile: Initial load effect running...');
     setProfileStatus('loading'); // Explicitly set loading at the start
     try {
       const storedProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
@@ -46,23 +47,23 @@ export const useUserProfile = ({
         const profile: UserProfile = JSON.parse(storedProfile);
         // Validate profile structure
         if (profile.id && profile.name && profile.color) {
-          console.log('useUserProfile: Profile loaded from storage:', profile);
+          logger.debug('useUserProfile: Profile loaded from storage:', profile);
           setCurrentUserProfile(profile);
           setLocalPlayerId(profile.id);
           setProfileStatus('loaded');
           // Connect WebSocket automatically if profile is loaded
           connectWebSocket(profile);
         } else {
-          console.warn('useUserProfile: Invalid profile structure found in storage. Removing.');
+          logger.warn('useUserProfile: Invalid profile structure found in storage. Removing.');
           localStorage.removeItem(PROFILE_STORAGE_KEY);
           setProfileStatus('needed'); // Needs a new profile
         }
       } else {
-        console.log('useUserProfile: No profile found in storage.');
+        logger.debug('useUserProfile: No profile found in storage.');
         setProfileStatus('needed'); // Needs a profile
       }
     } catch (e) {
-      console.error(`useUserProfile: Error parsing profile from storage: ${e}`);
+      logger.error(`useUserProfile: Error parsing profile from storage: ${e}`);
       localStorage.removeItem(PROFILE_STORAGE_KEY); // Clear corrupted data
       setProfileStatus('needed'); // Set to needed instead of error
     }
@@ -85,7 +86,7 @@ export const useUserProfile = ({
         id: isNewUser ? uuidv4() : (profileData as UserProfile).id
       };
 
-      console.log(
+      logger.debug(
         isNewUser
           ? 'useUserProfile: Saving NEW profile:'
           : 'useUserProfile: Saving UPDATED profile:',
@@ -98,16 +99,16 @@ export const useUserProfile = ({
       setIsProfileModalOpen(false); // Close modal after saving
 
       if (isNewUser) {
-        console.log('useUserProfile: Connecting WebSocket for new user...');
+        logger.debug('useUserProfile: Connecting WebSocket for new user...');
         // Ensure connectWebSocket is called with the final profile including the generated ID
         connectWebSocket(profileToSave);
       } else if (socket?.connected) {
         // For existing users, emit an update event if the socket is connected
         const updatePayload = { name: profileToSave.name, color: profileToSave.color };
-        console.log('useUserProfile: Emitting profile update to server:', updatePayload);
+        logger.debug('useUserProfile: Emitting profile update to server:', updatePayload);
         socket.emit('updateProfile', updatePayload);
       } else {
-        console.warn(
+        logger.warn(
           'useUserProfile: Profile updated, but socket not connected. Update will be sent on next connection or profile sync.'
         );
         // Consider if we need to queue the update or rely on a server-side sync mechanism

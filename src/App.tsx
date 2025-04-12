@@ -109,12 +109,10 @@ const App: React.FC = () => {
   // --- Effect to handle profile status changes (e.g., open modal) ---
   useEffect(() => {
     if (profileStatus === 'needed') {
-      console.log("Profile status is 'needed', opening profile modal.");
       openProfileModal();
     }
     // Handle 'error' status if needed (e.g., show an error message)
     if (profileStatus === 'error') {
-      console.error("Profile status is 'error'. Could not load or parse profile.");
       // Potentially show a persistent error message to the user here
       // For now, we still open the modal to allow creating a new one.
       openProfileModal();
@@ -125,7 +123,6 @@ const App: React.FC = () => {
   useEffect(() => {
     // Return the disconnect function directly for cleanup
     return () => {
-      console.log('App unmounting, ensuring WebSocket disconnects...');
       disconnectWebSocket();
     };
   }, [disconnectWebSocket]); // Only depends on the disconnect function

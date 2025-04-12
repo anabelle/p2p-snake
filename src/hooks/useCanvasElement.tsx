@@ -1,4 +1,5 @@
 import { useRef, useEffect, RefObject } from 'react';
+import logger from '../utils/logger';
 
 interface UseCanvasElementProps {
   width: number;
@@ -14,7 +15,7 @@ const useCanvasElement = ({ width, height, containerRef }: UseCanvasElementProps
     const container = containerRef.current; // Capture container.current at the start of the effect
 
     if (!canvasRef.current && container) {
-      console.log('useCanvasElement: Creating canvas element...');
+      logger.debug('useCanvasElement: Creating canvas element...');
       const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
@@ -34,11 +35,11 @@ const useCanvasElement = ({ width, height, containerRef }: UseCanvasElementProps
       // Use the captured container variable from the effect scope
       // and the canvas element captured before the return
       if (canvasElementCreated && canvasToRemove && container?.contains(canvasToRemove)) {
-        console.log('useCanvasElement: Removing canvas element on cleanup.');
+        logger.debug('useCanvasElement: Removing canvas element on cleanup.');
         try {
           container.removeChild(canvasToRemove);
         } catch (error) {
-          console.error('useCanvasElement: Error removing canvas during cleanup:', error);
+          logger.error('useCanvasElement: Error removing canvas during cleanup:', error);
         }
         // Remove logging
         // console.log('Cleanup - canvasRef.current:', canvasRef.current);

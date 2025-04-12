@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import io, { Socket } from 'socket.io-client';
 import { GameState } from '../game/state/types'; // Adjust path as necessary
 import { UserProfile } from '../types'; // Adjust path as necessary
+import logger from '../utils/logger';
 
 // Define the shape of the return value for the hook
 interface UseWebSocketReturn {
@@ -25,18 +26,18 @@ export const useWebSocket = (): UseWebSocketReturn => {
 
   const connect = useCallback((profile: UserProfile) => {
     if (socketRef.current) {
-      console.log('WebSocket already connected or connecting.');
+      logger.debug('WebSocket already connected or connecting.');
       return; // Avoid reconnecting if already connected
     }
 
-    console.log(
+    logger.debug(
       `Connecting to WebSocket with Profile: ID=${profile.id}, Name=${profile.name}, Color=${profile.color}`
     );
 
     // Use environment variable for the server URL, falling back to production URL
     const SIGNALING_SERVER_URI =
       process.env.REACT_APP_SIGNALING_SERVER_URL || 'https://snake-api-974c0cc98060.herokuapp.com';
-    console.log(`Using signaling server: ${SIGNALING_SERVER_URI}`);
+    logger.debug(`Using signaling server: ${SIGNALING_SERVER_URI}`);
 
     const newSocket = io(SIGNALING_SERVER_URI, {
       query: {
@@ -54,13 +55,13 @@ export const useWebSocket = (): UseWebSocketReturn => {
 
     // --- Event Listeners ---
     newSocket.on('connect', () => {
-      console.log('Connected to signaling server');
+      logger.debug('Connected to signaling server');
       setIsConnected(true);
       // Game adapter initialization logic is removed from here - App will handle it
     });
 
     newSocket.on('disconnect', (reason) => {
-      console.log('Disconnected from signaling server:', reason);
+      logger.debug('Disconnected from signaling server:', reason);
       setIsConnected(false);
       // Game loop stopping and adapter clearing are removed - App will handle it
       // We might still need to clean up the socket ref here
@@ -69,7 +70,7 @@ export const useWebSocket = (): UseWebSocketReturn => {
     });
 
     newSocket.on('connect_error', (err) => {
-      console.error('Signaling connection error:', err);
+      logger.error('Signaling connection error:', err);
       setIsConnected(false);
       // socketRef.current = null; // Keep ref for auto-reconnect attempts
       setLatestGameState(null);
@@ -81,7 +82,7 @@ export const useWebSocket = (): UseWebSocketReturn => {
       if (serverState) {
         setLatestGameState(serverState);
       } else {
-        console.warn('Received null or undefined state-sync data');
+        logger.warn('Received null or undefined state-sync data');
       }
       // Profile sync logic is removed - App will handle it using latestGameState
     });
@@ -89,7 +90,7 @@ export const useWebSocket = (): UseWebSocketReturn => {
 
   // Placeholder for the disconnect function
   const disconnect = useCallback(() => {
-    console.log('Disconnect function called');
+    logger.debug('Disconnect function called');
     if (socketRef.current) {
       socketRef.current.off('connect'); // Clean up listeners
       socketRef.current.off('disconnect');
@@ -107,7 +108,7 @@ export const useWebSocket = (): UseWebSocketReturn => {
     // Return a cleanup function
     return () => {
       if (socketRef.current) {
-        console.log('Cleaning up socket connection on component unmount...');
+        logger.debug('Cleaning up socket connection on component unmount...');
         socketRef.current.off('connect');
         socketRef.current.off('disconnect');
         socketRef.current.off('connect_error');

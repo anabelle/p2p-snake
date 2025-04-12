@@ -1,6 +1,7 @@
 import { GameState } from '../state/types';
 import { GRID_SIZE, CELL_SIZE } from '../constants';
 import { drawGame } from '../rendering/renderer';
+import logger from '../../utils/logger';
 
 // NOTE: This class NO LONGER inherits from netplayjs.Game
 // It's a client-side helper for state deserialization and drawing.
@@ -14,7 +15,7 @@ export class NetplayAdapter {
   constructor(canvas: HTMLCanvasElement, localPlayerId: string) {
     this.localPlayerId = localPlayerId;
 
-    console.log('Client NetplayAdapter (Helper) initialized.');
+    logger.debug('Client NetplayAdapter (Helper) initialized.');
   }
 
   draw(canvas: HTMLCanvasElement, state: GameState): void {

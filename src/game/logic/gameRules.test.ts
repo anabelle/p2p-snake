@@ -23,6 +23,7 @@ import * as powerUpLogic from './powerUpLogic';
 import * as collision from './collision';
 import * as prng from './prng';
 import { AI_SNAKE_ID } from './aiSnake';
+import logger from '../../utils/logger';
 
 // --- Mocks ---
 jest.mock('./snakeLogic', () => ({
@@ -142,11 +143,11 @@ describe('Game Rules - updateGame', () => {
     checkFoodCollisionMock.mockReturnValue(null);
     checkPowerUpCollisionMock.mockReturnValue(null);
     getSpeedFactorMock.mockReturnValue(1);
-    if (jest.isMockFunction(console.log)) {
-      (console.log as jest.Mock).mockRestore();
+    if (jest.isMockFunction(logger.debug)) {
+      (logger.debug as jest.Mock).mockRestore();
     }
-    if (jest.isMockFunction(console.error)) {
-      (console.error as jest.Mock).mockRestore();
+    if (jest.isMockFunction(logger.error)) {
+      (logger.error as jest.Mock).mockRestore();
     }
     // Ensure cleanup mock is consistently applied
     (powerUpLogic.cleanupExpiredGridPowerUps as jest.Mock).mockImplementation((arr: PowerUp[]) =>
@@ -235,7 +236,7 @@ describe('Game Rules - updateGame', () => {
         return createMockSnake(id, [{ x: 9, y: 9 }]); // Default fallback shouldn't be hit
       });
 
-      const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+      const logSpy = jest.spyOn(logger, 'debug').mockImplementation(() => {});
 
       const nextState = updateGame(initialState, inputs, currentTime, currentPlayerIDs);
 
@@ -300,7 +301,7 @@ describe('Game Rules - updateGame', () => {
       const initialState = createInitialState([snake1], [], [], [], playerStats);
       const inputs: PlayerInputs = new Map();
       const currentPlayerIDs = new Set(['p1']);
-      const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+      const logSpy = jest.spyOn(logger, 'debug').mockImplementation(() => {});
 
       const nextState = updateGame(initialState, inputs, currentTime, currentPlayerIDs);
 
@@ -322,7 +323,7 @@ describe('Game Rules - updateGame', () => {
       const initialState = createInitialState([snake1], [], [], [], playerStats);
       const inputs: PlayerInputs = new Map();
       const currentPlayerIDs = new Set(['p1']);
-      const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+      const logSpy = jest.spyOn(logger, 'debug').mockImplementation(() => {});
 
       const nextState = updateGame(initialState, inputs, currentTime, currentPlayerIDs);
 

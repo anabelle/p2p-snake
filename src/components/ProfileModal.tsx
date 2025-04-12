@@ -78,8 +78,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
     // Trim name and ensure it's not empty before saving
     const trimmedName = name.trim();
     if (!trimmedName) {
-      // Optionally, provide user feedback here (e.g., set an error state, alert)
-      console.warn('Name cannot be empty.');
+      // Provide user feedback through component state instead of console
+      setIsDirty(true); // Keep form in dirty state
       return; // Prevent saving with empty name
     }
     // const finalName = name.trim() || `Player_${initialProfile?.id?.substring(0, 4) || Math.random().toString(16).substring(2, 6)}`; // Provide default name if empty

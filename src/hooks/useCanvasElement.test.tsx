@@ -4,6 +4,7 @@ import { renderHook, screen, waitFor } from '@testing-library/react';
 // Add jest-dom import for extended matchers
 import '@testing-library/jest-dom';
 import useCanvasElement from './useCanvasElement';
+import logger from '../utils/logger';
 
 // Mock canvas element and context - Removed as it's unused
 // const mockContext = {
@@ -128,8 +129,8 @@ describe('useCanvasElement', () => {
     const width = 320;
     const height = 240;
 
-    // Mock console.error
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    // Mock logger.error instead of console.error
+    const errorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
 
     // Mock removeChild to throw an error
     const removeChildSpy = jest.spyOn(container, 'removeChild').mockImplementation(() => {
@@ -149,7 +150,7 @@ describe('useCanvasElement', () => {
 
     // Verify removeChild was called (and threw)
     expect(removeChildSpy).toHaveBeenCalledTimes(1);
-    // Verify console.error was called
+    // Verify logger.error was called
     expect(errorSpy).toHaveBeenCalled();
     expect(errorSpy).toHaveBeenCalledWith(
       'useCanvasElement: Error removing canvas during cleanup:',

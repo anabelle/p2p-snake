@@ -14,6 +14,7 @@ import {
 } from './powerUpLogic';
 import { POWERUP_SPAWN_CHANCE } from '../constants'; // Import the constant
 import { AI_SNAKE_ID, getAIDirection } from './aiSnake'; // Import AI snake functions
+import logger from '../../utils/logger';
 
 // Define the structure for player inputs for a single tick
 export type PlayerInputs = Map<string, Direction>; // Map<playerId, intendedDirection>
@@ -164,7 +165,7 @@ export const updateGame = (
       } else if (existingSnake && nextPlayerStats[playerId]) {
         // Sync score between snake and playerStats (in case they got out of sync)
         if (existingSnake.score !== nextPlayerStats[playerId].score) {
-          console.log(
+          logger.debug(
             `Syncing score for ${playerId}: Snake=${existingSnake.score}, Stats=${nextPlayerStats[playerId].score}`
           );
           // Prefer the higher score to avoid losing progress

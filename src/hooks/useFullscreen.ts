@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import logger from '../utils/logger';
 
 interface FullscreenApi {
   requestFullscreen?: (options?: FullscreenOptions) => Promise<void>;
@@ -91,7 +92,7 @@ export function useFullscreen(
     (targetWidth: number, targetHeight: number) => {
       if (!canvasRef.current) return;
 
-      console.log(`Updating canvas attributes to: ${targetWidth}x${targetHeight}`);
+      logger.debug(`Updating canvas attributes to: ${targetWidth}x${targetHeight}`);
       canvasRef.current.width = targetWidth;
       canvasRef.current.height = targetHeight;
       // Force re-render if necessary, though direct attribute change might be enough
@@ -105,7 +106,7 @@ export function useFullscreen(
     // Use innerWidth/Height for viewport size
     const maxWidth = window.innerWidth;
     const maxHeight = window.innerHeight;
-    console.log(`Viewport dimensions: ${maxWidth}x${maxHeight}`);
+    logger.debug(`Viewport dimensions: ${maxWidth}x${maxHeight}`);
 
     // For test cases, match exact window dimensions first
     // This is necessary for test cases to pass
@@ -133,7 +134,7 @@ export function useFullscreen(
     newWidth = Math.floor(newWidth);
     newHeight = Math.floor(newHeight);
 
-    console.log(`Calculated fullscreen canvas size: ${newWidth}x${newHeight}`);
+    logger.debug(`Calculated fullscreen canvas size: ${newWidth}x${newHeight}`);
     return { width: newWidth, height: newHeight };
   }, []);
 
@@ -141,7 +142,7 @@ export function useFullscreen(
     const currentFullscreenElement = api.fullscreenElement ? api.fullscreenElement() : null;
     const currentlyFullscreen = currentFullscreenElement === elementRef.current;
 
-    console.log('Fullscreen change event detected, currently fullscreen:', currentlyFullscreen);
+    logger.debug('Fullscreen change event detected, currently fullscreen:', currentlyFullscreen);
     setIsFullscreen(currentlyFullscreen);
 
     // Update canvas size based on state after event
@@ -205,14 +206,14 @@ export function useFullscreen(
       if (api.requestFullscreen) {
         try {
           await api.requestFullscreen.call(elementRef.current);
-          console.log('Fullscreen requested, optimistically setting state and canvas size');
+          logger.debug('Fullscreen requested, optimistically setting state and canvas size');
           // Optimistically update state AND canvas size
           // Event handler will confirm/correct later if needed
           const { width, height } = calculateFullscreenCanvasSize();
           updateCanvasAttributes(width, height);
           setIsFullscreen(true);
         } catch (err) {
-          console.error(
+          logger.error(
             `Error attempting to enable full-screen mode: ${err} (${(err as Error).message})`
           );
           // Revert canvas size and state on error
@@ -228,7 +229,7 @@ export function useFullscreen(
       if (api.exitFullscreen) {
         try {
           await api.exitFullscreen.call(document);
-          console.log('Fullscreen exit requested, optimistically setting state and canvas size');
+          logger.debug('Fullscreen exit requested, optimistically setting state and canvas size');
           // Optimistically update state AND canvas size
           // Event handler will confirm/correct later if needed
           updateCanvasAttributes(
@@ -237,7 +238,7 @@ export function useFullscreen(
           );
           setIsFullscreen(false);
         } catch (err) {
-          console.error(
+          logger.error(
             `Error attempting to exit full-screen mode: ${err} (${(err as Error).message})`
           );
           // If exit fails, event handler should correct the canvas size/state
@@ -250,7 +251,7 @@ export function useFullscreen(
   useEffect(() => {
     const handleResize = () => {
       if (isFullscreen) {
-        console.log('Resize event detected while fullscreen, recalculating canvas size...');
+        logger.debug('Resize event detected while fullscreen, recalculating canvas size...');
         const { width, height } = calculateFullscreenCanvasSize();
         updateCanvasAttributes(width, height);
       }

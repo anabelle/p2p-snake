@@ -1,6 +1,7 @@
 import { Direction, Point, Snake } from '../state/types';
 import { generateRandomPosition } from './prng';
 import { PLAYER_COLORS } from '../constants'; // Import player colors
+import logger from '../../utils/logger';
 
 // Helper function to get a color for a player ID
 // Uses a simple hash modulo to assign a deterministic color from the list
@@ -29,13 +30,13 @@ export const generateNewSnake = (
   let finalColor = preferredColor;
   const hexColorRegex = /^#[0-9A-F]{6}$/i;
   if (!finalColor || !hexColorRegex.test(finalColor)) {
-    console.log(`Preferred color '${preferredColor}' for ${id} invalid or missing, using hash.`);
+    logger.debug(`Preferred color '${preferredColor}' for ${id} invalid or missing, using hash.`);
     finalColor = getPlayerColor(id);
   }
 
   if (!position) {
     // Handle the rare case where no position could be found (grid full)
-    console.error(`Could not generate initial position for snake ${id}`);
+    logger.error(`Could not generate initial position for snake ${id}`);
     // Return a dummy snake or throw an error, depending on desired handling
     // For now, placing it at 0,0, which might cause immediate collision
     return {
@@ -68,7 +69,7 @@ export const getNextHeadPosition = (
 ): Point => {
   if (snake.body.length === 0) {
     // Should not happen for a valid snake
-    console.warn(`Snake ${snake.id} has empty body.`);
+    logger.warn(`Snake ${snake.id} has empty body.`);
     return { x: 0, y: 0 };
   }
   const head = { ...snake.body[0] };

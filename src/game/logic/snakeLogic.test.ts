@@ -2,11 +2,12 @@ import { generateNewSnake, getNextHeadPosition, moveSnakeBody, growSnake } from 
 import { Point, Snake, Direction } from '../state/types'; // Removed unused PowerUp import
 import * as prng from './prng';
 import { PLAYER_COLORS, GRID_SIZE as CONST_GRID_SIZE } from '../constants'; // Import GRID_SIZE from constants
+import logger from '../../utils/logger';
 
 // Mock dependencies from prng
 jest.mock('./prng', () => ({
   ...jest.requireActual('./prng'), // Keep real mulberry32 etc.
-  generateRandomPosition: jest.fn()
+  generateRandomPosition: jest.fn().mockImplementation(() => ({ x: 5, y: 5 }))
 }));
 
 describe('Snake Logic', () => {
@@ -19,15 +20,15 @@ describe('Snake Logic', () => {
     jest.clearAllMocks();
     mockRandomFunc.mockReturnValue(0.5); // Default mock random value
     // Restore console spies if they are mock functions
-    if (jest.isMockFunction(console.error)) {
-      (console.error as jest.Mock).mockRestore();
+    if (jest.isMockFunction(logger.error)) {
+      (logger.error as jest.Mock).mockRestore();
     }
-    if (jest.isMockFunction(console.log)) {
-      (console.log as jest.Mock).mockRestore();
+    if (jest.isMockFunction(logger.debug)) {
+      (logger.debug as jest.Mock).mockRestore();
     }
-    if (jest.isMockFunction(console.warn)) {
+    if (jest.isMockFunction(logger.warn)) {
       // Add warn spy restore
-      (console.warn as jest.Mock).mockRestore();
+      (logger.warn as jest.Mock).mockRestore();
     }
   });
 
@@ -93,7 +94,7 @@ describe('Snake Logic', () => {
     });
 
     it('should fall back to hashed color if preferredColor is invalid', () => {
-      const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+      const logSpy = jest.spyOn(logger, 'debug').mockImplementation(() => {});
       const preferredColor = 'invalid-color';
       const expectedPos = { x: 5, y: 5 };
       generateRandomPositionMock.mockReturnValue(expectedPos);
@@ -107,7 +108,7 @@ describe('Snake Logic', () => {
     });
 
     it('should fall back to hashed color if preferredColor is missing', () => {
-      const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+      const logSpy = jest.spyOn(logger, 'debug').mockImplementation(() => {});
       const expectedPos = { x: 6, y: 6 };
       generateRandomPositionMock.mockReturnValue(expectedPos);
 
@@ -120,7 +121,7 @@ describe('Snake Logic', () => {
 
     it('should handle grid full scenario and return a dummy snake at 0,0', () => {
       generateRandomPositionMock.mockReturnValue(null); // Simulate full grid
-      const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const errorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
 
       const snake = generateNewSnake(snakeId, gridSize, occupied, mockRandomFunc);
 
@@ -199,7 +200,7 @@ describe('Snake Logic', () => {
     });
 
     it('should handle empty snake body gracefully', () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      const warnSpy = jest.spyOn(logger, 'warn').mockImplementation(() => {});
       const s = { ...baseSnake, body: [] };
       const nextPos = getNextHeadPosition(s, gridSize);
       expect(nextPos).toEqual({ x: 0, y: 0 }); // Returns default

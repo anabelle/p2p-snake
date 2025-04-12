@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { NetplayAdapter } from '../game/network/NetplayAdapter';
+import logger from '../utils/logger';
 // import { ProfileStatus } from './useUserProfile'; // Type is not exported
 
 // Define the possible profile statuses directly
@@ -27,34 +28,22 @@ export const useGameAdapter = ({
   // --- Actual Game Adapter Initialization Logic (Moved from App.tsx) ---
   const startGameAdapter = useCallback(
     (playerId: string | null) => {
-      // --- Cleanup Logic ---
+      // If given a null id, clean up the ref and exit early
       if (!playerId) {
-        if (gameAdapterRef.current) {
-          console.warn('useGameAdapter: Cleaning up NetplayAdapter due to missing playerId.');
-          // Potentially add adapter.dispose() or similar cleanup if needed in the future
-          gameAdapterRef.current = null;
-        }
-        return;
-      }
-
-      // --- Creation Logic ---
-      // Avoid recreating if adapter already exists for this player
-      // (Note: NetplayAdapter constructor might handle internal state reuse if called again)
-      if (gameAdapterRef.current) {
-        // console.log('useGameAdapter: Adapter already exists.');
+        gameAdapterRef.current = null;
         return;
       }
 
       try {
         if (!canvasRef.current) {
-          console.error('useGameAdapter: startGameAdapter called but canvasRef is null!');
+          logger.error('useGameAdapter: startGameAdapter called but canvasRef is null!');
           return;
         }
-        console.log(`useGameAdapter: Creating NetplayAdapter for player ${playerId}...`);
+        logger.debug(`useGameAdapter: Creating NetplayAdapter for player ${playerId}...`);
         gameAdapterRef.current = new NetplayAdapter(canvasRef.current, playerId);
-        console.log('useGameAdapter: NetplayAdapter created.');
+        logger.debug('useGameAdapter: NetplayAdapter created.');
       } catch (e) {
-        console.error('useGameAdapter: Error creating NetplayAdapter instance:', e);
+        logger.error('useGameAdapter: Error creating NetplayAdapter instance:', e);
         gameAdapterRef.current = null; // Ensure ref is null on error
       }
     },
@@ -68,14 +57,14 @@ export const useGameAdapter = ({
 
     if (shouldHaveAdapter) {
       // Conditions met, ensure adapter exists
-      console.log(
+      logger.debug(
         `useGameAdapter: Conditions met for player ${localPlayerId}. Ensuring game adapter.`
       );
       startGameAdapter(localPlayerId);
     } else {
       // Conditions not met, ensure adapter is cleaned up
       if (gameAdapterRef.current) {
-        console.log(
+        logger.debug(
           'useGameAdapter: Conditions no longer met (disconnected, no profile, etc). Cleaning up adapter.'
         );
         // Call with null to trigger cleanup logic inside startGameAdapter
