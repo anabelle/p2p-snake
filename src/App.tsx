@@ -20,6 +20,7 @@ import { useFullscreen } from './hooks/useFullscreen'; // Import the fullscreen 
 import GameArea from './components/GameArea'; // Import the game area component
 import InfoPanel from './components/InfoPanel'; // Import the info panel component
 import Footer from './components/Footer'; // Import the Footer component
+import FullscreenButton from './components/FullscreenButton'; // Import the new component
 
 import './App.css'; // Import the CSS file
 
@@ -152,46 +153,11 @@ const App: React.FC = () => {
           syncedGameState={syncedGameState}
           isFullscreen={isFullscreen} // Keep passing prop
         />
-        {isFullscreenEnabled && (
-          <button
-            className='fullscreen-button'
-            onClick={toggleFullscreen}
-            aria-label={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-            title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-          >
-            {isFullscreen ? (
-              <svg
-                aria-hidden='true'
-                xmlns='http://www.w3.org/2000/svg'
-                width='24'
-                height='24'
-                viewBox='0 0 24 24'
-                fill='none'
-                stroke='currentColor'
-                strokeWidth='2'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-              >
-                <path d='M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3'></path>
-              </svg>
-            ) : (
-              <svg
-                aria-hidden='true'
-                xmlns='http://www.w3.org/2000/svg'
-                width='24'
-                height='24'
-                viewBox='0 0 24 24'
-                fill='none'
-                stroke='currentColor'
-                strokeWidth='2'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-              >
-                <path d='M3 8V5a2 2 0 0 1 2-2h3m11 0h3a2 2 0 0 1 2 2v3m0 11v3a2 2 0 0 1-2 2h-3m-11 0H5a2 2 0 0 1-2-2v-3'></path>
-              </svg>
-            )}
-          </button>
-        )}
+        <FullscreenButton
+          isFullscreen={isFullscreen}
+          toggleFullscreen={toggleFullscreen}
+          isFullscreenEnabled={isFullscreenEnabled}
+        />
       </div>
       <InfoPanel
         isConnected={isConnected}
