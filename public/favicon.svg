@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <title>Snake Game Favicon</title>
+  <defs>
+    <linearGradient id="snakeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4CAF50" />
+      <stop offset="100%" stop-color="#2E7D32" />
+    </linearGradient>
+    <pattern id="snakePattern" patternUnits="userSpaceOnUse" width="10" height="10" patternTransform="rotate(45)">
+      <rect width="6" height="6" fill="#43A047" fill-opacity="0.2"/>
+    </pattern>
+  </defs>
+  <style>
+    .snake-body {
+      fill: url(#snakeGradient);
+      stroke: #388E3C;
+      stroke-width: 1.5;
+    }
+    .snake-pattern {
+      fill: url(#snakePattern);
+    }
+    .snake-eye {
+      fill: #000000;
+    }
+    .tongue {
+      fill: #FF5252;
+    }
+    
+    @keyframes slither {
+      0% { transform: translateX(0) translateY(0); }
+      50% { transform: translateX(2px) translateY(-2px); }
+      100% { transform: translateX(0) translateY(0); }
+    }
+    
+    .snake-head {
+      animation: slither 2s infinite ease-in-out;
+    }
+    
+    @keyframes flick {
+      0% { transform: scaleX(1); }
+      50% { transform: scaleX(1.2); }
+      100% { transform: scaleX(1); }
+    }
+    
+    .tongue {
+      animation: flick 1s infinite ease-in-out;
+      transform-origin: 72px 35px;
+    }
+  </style>
+  
+  <!-- Snake Body -->
+  <g class="snake-body">
+    <!-- Tail -->
+    <path d="M10,80 C20,90 30,90 40,80 S55,60 65,60 S80,65 90,80" />
+    <!-- Main body -->
+    <path d="M65,60 C55,60 45,70 40,80 S25,90 15,80" />
+    <!-- Head -->
+    <g class="snake-head">
+      <path d="M65,60 C75,60 85,50 85,40 C85,30 75,25 65,30 C60,32 58,36 58,40 C58,50 60,55 65,60 Z" />
+      <!-- Pattern overlay -->
+      <path class="snake-pattern" d="M65,60 C75,60 85,50 85,40 C85,30 75,25 65,30 C60,32 58,36 58,40 C58,50 60,55 65,60 Z" />
+      <!-- Eye -->
+      <circle class="snake-eye" cx="70" cy="35" r="4" />
+      <!-- Tongue -->
+      <path class="tongue" d="M72,35 L85,30 L82,35 L85,40 L72,35" />
+    </g>
+  </g>
+</svg> 
