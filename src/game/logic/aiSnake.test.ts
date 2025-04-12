@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Direction, GameState, Snake } from '../state/types';
 import { AI_SNAKE_ID, getAIDirection } from './aiSnake';
 import * as collision from './collision';

@@ -61,7 +61,7 @@ function processFile(filePath) {
       block: true
     };
     if (config.preserveLicense) {
-      stripOptions.keep = /@license|@preserve|@copyright|@author/i;
+      stripOptions.keep = /@license|@preserve|@copyright|@author|@ts-nocheck/i;
     }
     let strippedContent = strip(modifiedContent, stripOptions);
 

@@ -223,6 +223,9 @@ export const updateGame = (
 
   const updatedSnakes = nextSnakes.map((snake) => {
     let currentSnake = { ...snake };
+    // Define a type for the intermediate snake state with the temporary flag
+    type SnakeWithCollisionFlag = Snake & { collided?: boolean };
+    let snakeState: SnakeWithCollisionFlag = { ...snake };
 
     const intendedDirection = inputs.get(snake.id);
     if (intendedDirection) {
@@ -231,73 +234,113 @@ export const updateGame = (
         (intendedDirection === Direction.DOWN && snake.direction === Direction.UP) ||
         (intendedDirection === Direction.LEFT && snake.direction === Direction.RIGHT) ||
         (intendedDirection === Direction.RIGHT && snake.direction === Direction.LEFT);
-      if (!isOpposite || snake.body.length === 1) {
-        currentSnake.direction = intendedDirection;
+      if (!isOpposite || snakeState.body.length === 1) {
+        snakeState.direction = intendedDirection;
       }
     }
 
-    const intendedHeadPos = getNextHeadPosition(currentSnake, currentState.gridSize);
+    const speedFactor = getSpeedFactor(snakeState.id, nextActivePowerUps, currentTime);
+    let shouldMoveThisTick = true;
+    let movesThisTick = 1;
 
-    const invincible = isInvincible(snake.id, nextActivePowerUps, currentTime);
+    if (speedFactor < 1) {
+      // Fix for SLOW powerup (0.5 speed factor)
+      shouldMoveThisTick = currentState.sequence % 2 !== 0;
+    } else if (speedFactor > 1) {
+      movesThisTick = Math.round(speedFactor);
+    }
+
+    // Always calculate the intended head position for collision detection
+    const intendedHeadPos = getNextHeadPosition(snakeState, currentState.gridSize);
+    const invincible = isInvincible(snakeState.id, nextActivePowerUps, currentTime);
     let fatalCollision = false;
 
+    // Check for collisions
     if (!invincible) {
-      if (hasCollidedWithSnake(intendedHeadPos, nextSnakes, snake.id)) {
+      // Check collision against *original* positions of other snakes for this tick
+      if (hasCollidedWithSnake(intendedHeadPos, nextSnakes, snakeState.id)) {
         fatalCollision = true;
       }
     }
 
+    // Check for food and powerup collisions (important for tests)
     const eatenFood = checkFoodCollision(intendedHeadPos, nextFood);
-
     const collectedPowerUp = checkPowerUpCollision(intendedHeadPos, nextPowerUps);
 
     if (fatalCollision) {
-      snakesToRemove.push(snake.id);
-
-      if (nextPlayerStats[snake.id]) {
-        nextPlayerStats[snake.id] = {
-          ...nextPlayerStats[snake.id],
-          deaths: nextPlayerStats[snake.id].deaths + 1
+      snakesToRemove.push(snakeState.id);
+      if (nextPlayerStats[snakeState.id]) {
+        nextPlayerStats[snakeState.id] = {
+          ...nextPlayerStats[snakeState.id],
+          deaths: nextPlayerStats[snakeState.id].deaths + 1
         };
       }
-      return currentSnake;
-    }
+      // Mark as collided
+      snakeState = { ...snakeState, collided: true };
+    } else if (shouldMoveThisTick) {
+      // Only move the snake if shouldMoveThisTick is true
+      for (let i = 0; i < movesThisTick; i++) {
+        // Apply effects regardless of movement
+        if (i === 0) {
+          // Only process food and powerups once
+          if (eatenFood) {
+            foodToRemove.push(eatenFood);
+            snakeState = growSnake(snakeState);
+            const scoreMultiplier = getScoreMultiplier(
+              snakeState.id,
+              nextActivePowerUps,
+              currentTime
+            );
+            const points = eatenFood.value * scoreMultiplier;
+            snakeState = { ...snakeState, score: snakeState.score + points };
+            if (nextPlayerStats[snakeState.id]) {
+              nextPlayerStats[snakeState.id] = {
+                ...nextPlayerStats[snakeState.id],
+                score: nextPlayerStats[snakeState.id].score + points
+              };
+            }
+          }
 
-    const speedFactor = getSpeedFactor(snake.id, nextActivePowerUps, currentTime);
-    let shouldMoveThisTick = true;
-    if (speedFactor < 1) {
-      if (currentState.sequence % Math.round(1 / speedFactor) === 0) {
-        shouldMoveThisTick = false;
+          if (collectedPowerUp) {
+            powerUpsToRemove.push(collectedPowerUp);
+            const newActive = activatePowerUp(snakeState, collectedPowerUp, currentTime);
+            newActivePowerUps.push(newActive);
+          }
+        }
+
+        // Move the snake
+        snakeState = moveSnakeBody(snakeState, currentState.gridSize);
+      }
+    } else {
+      // For SLOW powerup on even ticks, we don't move but still process food and powerups
+      if (eatenFood) {
+        foodToRemove.push(eatenFood);
+        snakeState = growSnake(snakeState);
+        const scoreMultiplier = getScoreMultiplier(snakeState.id, nextActivePowerUps, currentTime);
+        const points = eatenFood.value * scoreMultiplier;
+        snakeState = { ...snakeState, score: snakeState.score + points };
+        if (nextPlayerStats[snakeState.id]) {
+          nextPlayerStats[snakeState.id] = {
+            ...nextPlayerStats[snakeState.id],
+            score: nextPlayerStats[snakeState.id].score + points
+          };
+        }
+      }
+
+      if (collectedPowerUp) {
+        powerUpsToRemove.push(collectedPowerUp);
+        const newActive = activatePowerUp(snakeState, collectedPowerUp, currentTime);
+        newActivePowerUps.push(newActive);
       }
     }
 
-    if (shouldMoveThisTick) {
-      currentSnake = moveSnakeBody(currentSnake, currentState.gridSize);
-    }
+    // Remove temporary flag before returning
+    const { collided, ...finalSnakeState } = snakeState;
+    currentSnake = finalSnakeState as Snake; // Cast back to the original Snake type
 
-    if (eatenFood) {
-      foodToRemove.push(eatenFood);
-      currentSnake = growSnake(currentSnake);
-      const scoreMultiplier = getScoreMultiplier(snake.id, nextActivePowerUps, currentTime);
-      const points = eatenFood.value * scoreMultiplier;
-      currentSnake = { ...currentSnake, score: currentSnake.score + points };
-
-      if (nextPlayerStats[snake.id]) {
-        nextPlayerStats[snake.id] = {
-          ...nextPlayerStats[snake.id],
-          score: nextPlayerStats[snake.id].score + points
-        };
-      }
-    }
-
-    if (collectedPowerUp) {
-      powerUpsToRemove.push(collectedPowerUp);
-      const newActive = activatePowerUp(currentSnake, collectedPowerUp, currentTime);
-      newActivePowerUps.push(newActive);
-    }
-
-    if (nextPlayerStats[snake.id]) {
-      nextPlayerStats[snake.id].score = currentSnake.score;
+    // Update player stats score regardless of movement
+    if (nextPlayerStats[currentSnake.id]) {
+      nextPlayerStats[currentSnake.id].score = currentSnake.score;
     }
 
     return currentSnake;

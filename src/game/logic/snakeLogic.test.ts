@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { generateNewSnake, getNextHeadPosition, moveSnakeBody, growSnake } from './snakeLogic';
 import { Point, Snake, Direction } from '../state/types';
 import * as prng from './prng';

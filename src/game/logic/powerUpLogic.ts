@@ -66,7 +66,7 @@ export const getSpeedFactor = (
   currentTime: number
 ): number => {
   if (isPowerUpActive(PowerUpType.SPEED, snakeId, activePowerUps, currentTime)) {
-    return 1.5;
+    return 2;
   }
   if (isPowerUpActive(PowerUpType.SLOW, snakeId, activePowerUps, currentTime)) {
     return 0.5;
