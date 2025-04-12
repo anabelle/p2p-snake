@@ -29,14 +29,22 @@ function processFile(filePath) {
   try {
     const content = fs.readFileSync(filePath, 'utf8');
     const lines = content.split(/\r?\n/);
-    const eslintComments = {};
+    const preservedComments = {};
     let placeholderIndex = 0;
 
-    // 1. Find and replace eslint comments with placeholders
+    // 1. Find and replace comments to preserve with placeholders
     const modifiedLines = lines.map((line, index) => {
+      // Preserve @ts-nocheck comments at beginning of file
+      if (line.trim() === '// @ts-nocheck' || line.trim() === '/* @ts-nocheck */') {
+        const placeholder = `__PRESERVED_COMMENT_PLACEHOLDER_${placeholderIndex}__`;
+        preservedComments[placeholder] = line;
+        placeholderIndex++;
+        return placeholder;
+      }
+      // Preserve eslint comments
       if (line.includes('eslint-disable') || line.includes('eslint-enable')) {
-        const placeholder = `__ESLINT_COMMENT_PLACEHOLDER_${placeholderIndex}__`;
-        eslintComments[placeholder] = line;
+        const placeholder = `__PRESERVED_COMMENT_PLACEHOLDER_${placeholderIndex}__`;
+        preservedComments[placeholder] = line;
         placeholderIndex++;
         return placeholder;
       } else if (
@@ -44,8 +52,8 @@ function processFile(filePath) {
         line.trim().startsWith('/* eslint-enable')
       ) {
         // Handle block comments spanning multiple lines if needed (simple case for now)
-        const placeholder = `__ESLINT_COMMENT_PLACEHOLDER_${placeholderIndex}__`;
-        eslintComments[placeholder] = line;
+        const placeholder = `__PRESERVED_COMMENT_PLACEHOLDER_${placeholderIndex}__`;
+        preservedComments[placeholder] = line;
         placeholderIndex++;
         return placeholder;
       }
@@ -61,18 +69,18 @@ function processFile(filePath) {
       block: true
     };
     if (config.preserveLicense) {
-      stripOptions.keep = /@license|@preserve|@copyright|@author|@ts-nocheck/i;
+      stripOptions.keep = /@license|@preserve|@copyright|@author/i;
     }
     let strippedContent = strip(modifiedContent, stripOptions);
 
-    // 3. Restore eslint comments from placeholders
-    Object.keys(eslintComments).forEach((placeholder) => {
+    // 3. Restore preserved comments from placeholders
+    Object.keys(preservedComments).forEach((placeholder) => {
       // Use a regex for safer replacement (avoids issues if placeholder appears in code)
       const placeholderRegex = new RegExp(
         placeholder.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&'),
         'g'
       );
-      strippedContent = strippedContent.replace(placeholderRegex, eslintComments[placeholder]);
+      strippedContent = strippedContent.replace(placeholderRegex, preservedComments[placeholder]);
     });
 
     // Only write if content changed significantly (ignoring potential whitespace changes from split/join)

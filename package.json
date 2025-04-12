@@ -45,10 +45,12 @@
     "prepare": "husky install",
     "lint": "eslint . --fix --max-warnings=0",
     "format": "prettier . --write",
+    "strip-comments": "node strip-comments.js",
     "verify": "concurrently \"npm run cypress:run\" \"npm test -- --watchAll=false --silent\" \"npm run build\" \"npm run lint\""
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
+      "node strip-comments.js",
       "eslint --fix"
     ],
     "*.{js,jsx,ts,tsx,json,css,scss,md}": [

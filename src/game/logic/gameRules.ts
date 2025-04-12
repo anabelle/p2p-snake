@@ -223,7 +223,7 @@ export const updateGame = (
 
   const updatedSnakes = nextSnakes.map((snake) => {
     let currentSnake = { ...snake };
-    // Define a type for the intermediate snake state with the temporary flag
+
     type SnakeWithCollisionFlag = Snake & { collided?: boolean };
     let snakeState: SnakeWithCollisionFlag = { ...snake };
 
