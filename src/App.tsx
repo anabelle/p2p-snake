@@ -18,6 +18,7 @@ import useCanvasElement from './hooks/useCanvasElement'; // Import the new hook
 // import PowerUpLegend from './components/PowerUpLegend'; // No longer needed here
 import GameArea from './components/GameArea'; // Import the game area component
 import InfoPanel from './components/InfoPanel'; // Import the info panel component
+import Footer from './components/Footer'; // Import the Footer component
 
 import './App.css'; // Import the CSS file
 
@@ -148,6 +149,8 @@ const App: React.FC = () => {
         localPlayerId={localPlayerId}
         openProfileModal={openProfileModal}
       />
+
+      <Footer />
     </div>
   );
 };

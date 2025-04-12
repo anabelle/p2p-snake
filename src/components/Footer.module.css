@@ -1,0 +1,38 @@
+.footer {
+  text-align: center;
+  padding: 1rem 0;
+  margin-top: 2rem; /* Add some space above the footer */
+  /* border-top: 1px solid #ccc; /* Removed border */
+  font-size: 0.9rem; /* Base font size for the footer */
+  color: #eee; /* Changed text color to light gray */
+  background-color: transparent; /* Changed background to transparent */
+}
+
+.mainLine {
+  margin-bottom: 0.5rem; /* Space between the two lines */
+}
+
+.copyleft {
+  display: inline-block; /* Needed for transform */
+  transform: scaleX(-1);
+  margin-right: 0.25em;
+}
+
+.link {
+  color: #add8e6; /* Changed link color to light blue for better contrast */
+  text-decoration: none;
+}
+
+.link:hover,
+.link:focus {
+  text-decoration: underline;
+}
+
+.sourceLine {
+  font-size: 0.8rem; /* Smaller font for the source link */
+}
+
+/* Optional: Add a class specifically for the source link if needed */
+.sourceLink {
+  /* Additional styles specific to the source link if required */
+}

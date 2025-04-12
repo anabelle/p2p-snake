@@ -1,13 +1,19 @@
 ---
 description: 
 globs: 
+alwaysApply: false
+---
+---
+description: 
+globs: 
 alwaysApply: true
 ---
 
 # Code Qualiy
 
 - Use TDD always
-- Before making any edits run the following commands to get context: npm test -- --watchAll=false; npm run cypress:run; and npm run build;
-- After making any edits run the following commands to verify you didnt break anything: npm test -- --watchAll=false; npm run cypress:run; and npm run build;
+- If you see overlay of webpack-dev-server-client-overlay in cypress, run npm run build to see the error instead of forcing anything.
+- Before making any edits run the following command to get context: "npm run verify"
+- After making any edits run the following commands to verify you didnt break anything: "npm run verify"
 - when everything is ok run: npm run lint and npm run format and fix any warnings or errors in the process
-- then run build, and tests after the last modification before saying success.
+- then run "npm run verify" after the last modification before saying success.
