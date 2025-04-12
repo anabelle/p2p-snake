@@ -58,7 +58,31 @@ h1 {
   position: relative; /* For positioning the player count badge */
   border: 1px solid var(--border-color);
   background-color: #000; /* Ensure canvas container bg is distinct if needed */
-  /* width and height will be set inline based on grid */
+  /* width and height will be set inline based on grid - these need overriding on mobile */
+  /* Ensure container shrinks if needed */
+  max-width: 100%;
+}
+
+/* --- Responsive Canvas --- */
+@media (max-width: 767px) {
+  #game-canvas-container {
+    /* Override potential inline width with 100% of parent */
+    width: 100% !important;
+    /* Let height adjust based on aspect ratio */
+    height: auto !important;
+    /* Maintain aspect ratio based on GRID_SIZE (50/30) */
+    aspect-ratio: 50 / 30;
+  }
+
+  #game-canvas-container canvas {
+    /* Ensure canvas fills the scaled container */
+    display: block; /* Remove extra space below canvas */
+    width: 100%;
+    height: 100%;
+    /* Override inline canvas dimensions */
+    max-width: 100%;
+    max-height: 100%;
+  }
 }
 
 .connecting-overlay {
@@ -96,7 +120,13 @@ h1 {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive columns */
   gap: var(--spacing-lg);
   width: 100%;
-  max-width: calc(var(--canvas-width, 600px) + 2px); /* Align with canvas width + borders */
+  /* max-width: calc(var(--canvas-width, 600px) + 2px); Align with canvas width + borders - Moved to media query */
+}
+
+@media (min-width: 768px) {
+  .info-sections-wrapper {
+    max-width: calc(var(--canvas-width, 600px) + 2px);
+  }
 }
 
 .info-section {
