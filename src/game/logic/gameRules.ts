@@ -244,26 +244,21 @@ export const updateGame = (
     let movesThisTick = 1;
 
     if (speedFactor < 1) {
-      // Fix for SLOW powerup (0.5 speed factor)
       shouldMoveThisTick = currentState.sequence % 2 !== 0;
     } else if (speedFactor > 1) {
       movesThisTick = Math.round(speedFactor);
     }
 
-    // Always calculate the intended head position for collision detection
     const intendedHeadPos = getNextHeadPosition(snakeState, currentState.gridSize);
     const invincible = isInvincible(snakeState.id, nextActivePowerUps, currentTime);
     let fatalCollision = false;
 
-    // Check for collisions
     if (!invincible) {
-      // Check collision against *original* positions of other snakes for this tick
       if (hasCollidedWithSnake(intendedHeadPos, nextSnakes, snakeState.id)) {
         fatalCollision = true;
       }
     }
 
-    // Check for food and powerup collisions (important for tests)
     const eatenFood = checkFoodCollision(intendedHeadPos, nextFood);
     const collectedPowerUp = checkPowerUpCollision(intendedHeadPos, nextPowerUps);
 
@@ -275,14 +270,11 @@ export const updateGame = (
           deaths: nextPlayerStats[snakeState.id].deaths + 1
         };
       }
-      // Mark as collided
+
       snakeState = { ...snakeState, collided: true };
     } else if (shouldMoveThisTick) {
-      // Only move the snake if shouldMoveThisTick is true
       for (let i = 0; i < movesThisTick; i++) {
-        // Apply effects regardless of movement
         if (i === 0) {
-          // Only process food and powerups once
           if (eatenFood) {
             foodToRemove.push(eatenFood);
             snakeState = growSnake(snakeState);
@@ -308,11 +300,9 @@ export const updateGame = (
           }
         }
 
-        // Move the snake
         snakeState = moveSnakeBody(snakeState, currentState.gridSize);
       }
     } else {
-      // For SLOW powerup on even ticks, we don't move but still process food and powerups
       if (eatenFood) {
         foodToRemove.push(eatenFood);
         snakeState = growSnake(snakeState);
@@ -334,11 +324,9 @@ export const updateGame = (
       }
     }
 
-    // Remove temporary flag before returning
     const { collided, ...finalSnakeState } = snakeState;
-    currentSnake = finalSnakeState as Snake; // Cast back to the original Snake type
+    currentSnake = finalSnakeState as Snake;
 
-    // Update player stats score regardless of movement
     if (nextPlayerStats[currentSnake.id]) {
       nextPlayerStats[currentSnake.id].score = currentSnake.score;
     }

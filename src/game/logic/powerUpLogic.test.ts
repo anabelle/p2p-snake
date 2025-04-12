@@ -1,4 +1,5 @@
 // @ts-nocheck
+
 import {
   generatePowerUp,
   activatePowerUp,
