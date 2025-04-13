@@ -153,8 +153,6 @@ export const updateGame = (
     nextSnakes = [...nextSnakes, ...snakesToAdd];
   }
 
-  const originalSnakeCount = nextSnakes.length;
-
   const disconnectedSnakes = nextSnakes.filter(
     (snake) =>
       (!currentPlayerIDs.has(snake.id) && snake.id !== AI_SNAKE_ID) ||
@@ -175,9 +173,6 @@ export const updateGame = (
     (snake) =>
       currentPlayerIDs.has(snake.id) || (snake.id === AI_SNAKE_ID && currentPlayerIDs.size > 0)
   );
-
-  if (nextSnakes.length !== originalSnakeCount) {
-  }
 
   for (const playerId of Object.keys(nextPlayerStats)) {
     if (playerId === AI_SNAKE_ID) {

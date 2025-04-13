@@ -116,7 +116,8 @@
     "coveragePathIgnorePatterns": [
       "/node_modules/",
       "src/reportWebVitals.ts",
-      ".*types\\.ts$"
+      ".*types\\.ts$",
+      "src/index.tsx"
     ],
     "watchPlugins": []
   },
