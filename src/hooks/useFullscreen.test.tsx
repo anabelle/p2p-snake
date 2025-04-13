@@ -5,13 +5,11 @@ import logger from '../utils/logger';
 
 import '@testing-library/jest-dom';
 
-// Define mocks for the API functions globally
 const mockRequestFullscreen = jest.fn(() => Promise.resolve());
 const mockExitFullscreen = jest.fn(() => Promise.resolve());
 const mockFullscreenElementGetter = jest.fn(() => null as Element | null);
 const mockFullscreenEnabledGetter = jest.fn(() => true);
 
-// Store original methods
 const originalRequestFullscreen = Element.prototype.requestFullscreen;
 const originalExitFullscreen = document.exitFullscreen;
 const originalFullscreenElement = Object.getOwnPropertyDescriptor(document, 'fullscreenElement');
@@ -27,7 +25,6 @@ describe('useFullscreen - Extended Tests', () => {
   let canvasRef: { current: HTMLCanvasElement | null };
 
   beforeAll(() => {
-    // Apply mocks globally before any tests run
     Element.prototype.requestFullscreen = mockRequestFullscreen;
     document.exitFullscreen = mockExitFullscreen;
     Object.defineProperty(document, 'fullscreenElement', {
@@ -41,7 +38,6 @@ describe('useFullscreen - Extended Tests', () => {
   });
 
   afterAll(() => {
-    // Restore original methods after all tests
     Element.prototype.requestFullscreen = originalRequestFullscreen;
     document.exitFullscreen = originalExitFullscreen;
     if (originalFullscreenElement) {
@@ -50,11 +46,10 @@ describe('useFullscreen - Extended Tests', () => {
     if (originalFullscreenEnabled) {
       Object.defineProperty(document, 'fullscreenEnabled', originalFullscreenEnabled);
     }
-    jest.restoreAllMocks(); // Ensure all mocks/spies are restored
+    jest.restoreAllMocks();
   });
 
   beforeEach(() => {
-    // Reset mocks before each test
     mockRequestFullscreen.mockClear().mockResolvedValue(undefined);
     mockExitFullscreen.mockClear().mockResolvedValue(undefined);
     mockFullscreenElementGetter.mockClear().mockReturnValue(null);
@@ -75,11 +70,6 @@ describe('useFullscreen - Extended Tests', () => {
       configurable: true,
       value: 800
     });
-
-    // Clear spies on logger if needed, keep setup clean
-    // jest.spyOn(logger, 'debug').mockRestore();
-    // jest.spyOn(logger, 'warn').mockRestore();
-    // jest.spyOn(logger, 'error').mockRestore();
   });
 
   afterEach(() => {
@@ -89,8 +79,6 @@ describe('useFullscreen - Extended Tests', () => {
     Object.defineProperty(window, 'innerHeight', {
       value: originalInnerHeight
     });
-    // Restore spies created within tests if necessary (e.g., logger.error)
-    // Spies created with jest.spyOn in beforeEach are typically handled by jest.restoreAllMocks in afterAll
   });
 
   it('should initialize with fullscreen disabled when browser API returns false', () => {
@@ -100,8 +88,6 @@ describe('useFullscreen - Extended Tests', () => {
   });
 
   it('should handle case when fullscreenChangeEvent is not available', () => {
-    // Mock getFullscreenApi locally for this specific test if needed, or rely on hook's internal handling
-    // For this test, we assume the hook handles it gracefully
     const { result } = renderHook(() => useFullscreen(elementRef, canvasRef, 500, 300));
     expect(result.current.isFullscreen).toBe(false);
   });
@@ -114,7 +100,6 @@ describe('useFullscreen - Extended Tests', () => {
   });
 
   it('should handle case when fullscreenElement method is undefined', () => {
-    // To simulate this, make fullscreenEnabled return false
     mockFullscreenEnabledGetter.mockReturnValue(false);
     const { result } = renderHook(() => useFullscreen(elementRef, canvasRef, 500, 300));
 
@@ -225,7 +210,6 @@ describe('useFullscreen - Extended Tests', () => {
 
     mockFullscreenElementGetter.mockReturnValue(elementRef.current);
 
-    // Get the event name *before* unmount, as the hook uses it internally
     const actualChangeEventName = getFullscreenApi().fullscreenChangeEvent;
 
     unmount();
@@ -251,18 +235,17 @@ describe('useFullscreen - Extended Tests', () => {
       });
     } else {
       // If no event name, listener shouldn't have been added/removed
-      // Call expect unconditionally in the else block (disable rule)
+
       // eslint-disable-next-line jest/no-conditional-expect
       expect(removeDocListenerSpy).not.toHaveBeenCalled();
     }
-    // Check window listener unconditionally
+
     await waitFor(() =>
       expect(removeWindowListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function))
     );
   });
 
   it('should work with Mozilla prefixed fullscreen API', async () => {
-    // Temporarily override global mocks for this specific test
     const originalRequestFullscreen = Element.prototype.requestFullscreen;
     const originalExitFullscreen = document.exitFullscreen;
     const originalFullscreenElementDesc = Object.getOwnPropertyDescriptor(
@@ -274,13 +257,11 @@ describe('useFullscreen - Extended Tests', () => {
       'fullscreenEnabled'
     );
 
-    // Simulate non-prefixed API not being available
     delete (Element.prototype as any).requestFullscreen;
     delete (document as any).exitFullscreen;
     if (originalFullscreenElementDesc) delete (document as any).fullscreenElement;
     if (originalFullscreenEnabledDesc) delete (document as any).fullscreenEnabled;
 
-    // Define prefixed mocks and getters
     const mockMozRequestFullScreen = jest.fn(() => Promise.resolve());
     const mockMozCancelFullScreen = jest.fn(() => Promise.resolve());
     const mockMozElementGetter = jest.fn(() => null as Element | null);
@@ -307,14 +288,12 @@ describe('useFullscreen - Extended Tests', () => {
 
     expect(mockMozRequestFullScreen).toHaveBeenCalledTimes(1);
 
-    // Trigger state update by calling the simulation function
     mockMozElementGetter.mockReturnValue(elementRef.current);
     act(() => {
       result.current.simulateFullscreenChange();
     });
     await waitFor(() => expect(result.current.isFullscreen).toBe(true));
 
-    // Restore original APIs and remove prefixed ones
     Element.prototype.requestFullscreen = originalRequestFullscreen;
     document.exitFullscreen = originalExitFullscreen;
     if (originalFullscreenElementDesc)
@@ -328,7 +307,6 @@ describe('useFullscreen - Extended Tests', () => {
   });
 
   it('should handle requestFullscreen rejection and log error', async () => {
-    // Explicitly set enabled to true for this test to counteract potential mock issues
     mockFullscreenEnabledGetter.mockReturnValue(true);
     mockRequestFullscreen.mockRejectedValue(new Error('Fullscreen failed'));
     const loggerErrorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
