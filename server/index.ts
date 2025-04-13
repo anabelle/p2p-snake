@@ -34,11 +34,8 @@ httpServer.listen(PORT, () => {
 const signals = { SIGINT: 2, SIGTERM: 15 };
 
 function shutdown(signal: keyof typeof signals, value: number) {
-  console.log(`\nReceived ${signal}. Shutting down gracefully...`);
   io.close(() => {
-    console.log('Socket.IO server closed.');
     httpServer.close(() => {
-      console.log('HTTP server closed.');
       process.exit(128 + value);
     });
   });

@@ -34,7 +34,6 @@ export function setupSocketHandlers(
         return;
       }
 
-      console.log(`Player connected: ${playerName} (${playerId})`);
       socket.data.playerId = playerId;
 
       gameManager.addPlayer(playerId, playerName, playerColor);
@@ -64,7 +63,6 @@ export function setupSocketHandlers(
       });
 
       socket.on('disconnect', (reason) => {
-        console.log(`Player disconnected: ${playerName} (${playerId}). Reason: ${reason}`);
         gameManager.removePlayer(playerId);
       });
 
