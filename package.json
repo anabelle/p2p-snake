@@ -113,6 +113,11 @@
       "text-summary",
       "lcov"
     ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "src/reportWebVitals.ts",
+      ".*types\\.ts$"
+    ],
     "watchPlugins": []
   },
   "release": {
