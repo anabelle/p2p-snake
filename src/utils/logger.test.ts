@@ -1,3 +1,4 @@
+export {};
 describe('Logger', () => {
   let consoleLogSpy: any;
   let originalNodeEnv: string | undefined;
