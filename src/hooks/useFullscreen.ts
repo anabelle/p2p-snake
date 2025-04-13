@@ -9,7 +9,7 @@ interface FullscreenApi {
   fullscreenChangeEvent?: string | null;
 }
 
-function getFullscreenApi(): FullscreenApi {
+export function getFullscreenApi(): FullscreenApi {
   const doc = document as Document & {
     mozCancelFullScreen?: () => Promise<void>;
     webkitExitFullscreen?: () => Promise<void>;
@@ -68,8 +68,6 @@ function getFullscreenApi(): FullscreenApi {
   };
 }
 
-const api = getFullscreenApi();
-
 const ASPECT_RATIO = 50 / 30;
 
 export function useFullscreen(
@@ -79,8 +77,8 @@ export function useFullscreen(
   originalCanvasHeight: number
 ) {
   const [isFullscreen, setIsFullscreen] = useState(false);
-
   const previousCanvasSize = useRef({ width: originalCanvasWidth, height: originalCanvasHeight });
+  const apiRef = useRef<FullscreenApi>(getFullscreenApi());
 
   const updateCanvasAttributes = useCallback(
     (targetWidth: number, targetHeight: number) => {
@@ -98,14 +96,6 @@ export function useFullscreen(
     const maxHeight = window.innerHeight;
     logger.debug(`Viewport dimensions: ${maxWidth}x${maxHeight}`);
 
-    if (maxWidth === 800 && maxHeight === 900) {
-      return { width: 800, height: Math.floor(800 / ASPECT_RATIO) };
-    } else if (maxWidth === 1600 && maxHeight === 500) {
-      return { width: Math.floor(500 * ASPECT_RATIO), height: 500 };
-    } else if (maxWidth === 1000 && maxHeight === 800) {
-      return { width: 800, height: 480 };
-    }
-
     let newWidth = maxWidth;
     let newHeight = newWidth / ASPECT_RATIO;
 
@@ -121,49 +111,91 @@ export function useFullscreen(
     return { width: newWidth, height: newHeight };
   }, []);
 
-  const handleFullscreenChange = useCallback(() => {
-    const currentFullscreenElement = api.fullscreenElement ? api.fullscreenElement() : null;
+  const checkAndApplyFullscreenState = useCallback(() => {
+    const currentApi = apiRef.current;
+    const currentFullscreenElement = currentApi.fullscreenElement
+      ? currentApi.fullscreenElement()
+      : null;
     const currentlyFullscreen = currentFullscreenElement === elementRef.current;
 
-    logger.debug('Fullscreen change event detected, currently fullscreen:', currentlyFullscreen);
+    logger.debug('Fullscreen check triggered, currently fullscreen:', currentlyFullscreen);
     setIsFullscreen(currentlyFullscreen);
 
     if (currentlyFullscreen) {
       const { width, height } = calculateFullscreenCanvasSize();
       updateCanvasAttributes(width, height);
     } else {
-      updateCanvasAttributes(previousCanvasSize.current.width, previousCanvasSize.current.height);
+      if (previousCanvasSize.current) {
+        updateCanvasAttributes(previousCanvasSize.current.width, previousCanvasSize.current.height);
+      }
+      if (elementRef.current) {
+        elementRef.current.style.position = 'static';
+        elementRef.current.style.width = 'auto';
+        elementRef.current.style.height = 'auto';
+        elementRef.current.style.top = 'auto';
+        elementRef.current.style.left = 'auto';
+      }
     }
   }, [elementRef, calculateFullscreenCanvasSize, updateCanvasAttributes]);
 
+  const handleResize = useCallback(() => {
+    if (isFullscreen) {
+      logger.debug('Resize event detected while fullscreen, recalculating canvas size...');
+      const { width, height } = calculateFullscreenCanvasSize();
+      updateCanvasAttributes(width, height);
+    }
+  }, [isFullscreen, calculateFullscreenCanvasSize, updateCanvasAttributes]);
+
+  const handleFullscreenChange = useCallback(() => {
+    checkAndApplyFullscreenState();
+  }, [checkAndApplyFullscreenState]);
+
   useEffect(() => {
-    const changeEventName = api.fullscreenChangeEvent;
+    const currentApi = apiRef.current;
+    const changeEventName = currentApi.fullscreenChangeEvent;
 
     const currentElement = elementRef.current;
     const currentPreviousSize = previousCanvasSize.current;
 
-    if (changeEventName) {
+    if (changeEventName && currentElement) {
       document.addEventListener(changeEventName, handleFullscreenChange);
-    }
-
-    const initialFullscreenElement = api.fullscreenElement ? api.fullscreenElement() : null;
-    const initiallyFullscreen = initialFullscreenElement === currentElement;
-    setIsFullscreen(initiallyFullscreen);
-
-    if (initiallyFullscreen) {
-      const { width, height } = calculateFullscreenCanvasSize();
-      updateCanvasAttributes(width, height);
+      logger.debug(`Added fullscreenchange listener: ${changeEventName}`);
     } else {
-      updateCanvasAttributes(currentPreviousSize.width, currentPreviousSize.height);
+      logger.debug('Not adding fullscreenchange listener', { changeEventName, currentElement });
     }
 
+    checkAndApplyFullscreenState();
+
+    window.addEventListener('resize', handleResize);
+    logger.debug('Added resize listener');
+
+    const apiForCleanup = apiRef.current;
     return () => {
       if (changeEventName) {
         document.removeEventListener(changeEventName, handleFullscreenChange);
+        logger.debug(`Removed fullscreenchange listener: ${changeEventName}`);
       }
+      window.removeEventListener('resize', handleResize);
+      logger.debug('Removed resize listener');
 
-      if (currentElement && api.fullscreenElement && api.fullscreenElement() === currentElement) {
-        updateCanvasAttributes(currentPreviousSize.width, currentPreviousSize.height);
+      const stillFullscreenElement = apiForCleanup.fullscreenElement
+        ? apiForCleanup.fullscreenElement()
+        : null;
+      if (currentElement && stillFullscreenElement === currentElement) {
+        if (currentPreviousSize) {
+          updateCanvasAttributes(currentPreviousSize.width, currentPreviousSize.height);
+        }
+
+        currentElement.style.position = 'static';
+        currentElement.style.width = 'auto';
+        currentElement.style.height = 'auto';
+        currentElement.style.top = 'auto';
+        currentElement.style.left = 'auto';
+        logger.debug(
+          'Cleanup: Reset canvas size and container styles on unmount while fullscreen.'
+        );
+      } else {
+        logger.debug('Cleanup: Not in fullscreen on unmount or element missing.');
       }
     };
   }, [
@@ -171,73 +203,78 @@ export function useFullscreen(
     handleFullscreenChange,
     calculateFullscreenCanvasSize,
     updateCanvasAttributes,
-    previousCanvasSize
+    previousCanvasSize,
+    checkAndApplyFullscreenState,
+    handleResize
   ]);
 
   const toggleFullscreen = useCallback(async () => {
-    if (!elementRef.current || !(api.fullscreenEnabled ? api.fullscreenEnabled() : false)) return;
+    const currentApi = apiRef.current;
+    const element = elementRef.current;
 
-    const targetState = !isFullscreen;
+    const isEnabled = currentApi.fullscreenEnabled ? currentApi.fullscreenEnabled() : false;
+    logger.debug('[Toggle Check]', {
+      elementExists: !!element,
+      isEnabled,
+      willProceed: !!element && isEnabled
+    });
 
-    if (targetState) {
-      if (api.requestFullscreen) {
+    if (!element || !isEnabled) {
+      logger.debug('Fullscreen toggle aborted: Not enabled or element missing.');
+      return;
+    }
+
+    const targetStateIsFullscreen = !isFullscreen;
+    logger.debug(
+      `Toggling fullscreen. Current: ${isFullscreen}, Target: ${targetStateIsFullscreen}`
+    );
+
+    if (targetStateIsFullscreen) {
+      if (currentApi.requestFullscreen) {
         try {
-          await api.requestFullscreen.call(elementRef.current);
-          logger.debug('Fullscreen requested, optimistically setting state and canvas size');
+          await currentApi.requestFullscreen.call(element);
 
-          const { width, height } = calculateFullscreenCanvasSize();
-          updateCanvasAttributes(width, height);
-          setIsFullscreen(true);
+          logger.debug('Fullscreen request successful (state update relies on event).');
         } catch (err) {
           logger.error(
-            `Error attempting to enable full-screen mode: ${err} (${(err as Error).message})`
+            `Error attempting to enable full-screen mode: ${err} (${(err as Error).message})`,
+            err
           );
 
-          updateCanvasAttributes(
-            previousCanvasSize.current.width,
-            previousCanvasSize.current.height
-          );
           setIsFullscreen(false);
         }
+      } else {
+        logger.debug('Request fullscreen API not available.');
       }
     } else {
-      if (api.exitFullscreen) {
+      if (
+        currentApi.exitFullscreen &&
+        (currentApi.fullscreenElement ? currentApi.fullscreenElement() : null)
+      ) {
         try {
-          await api.exitFullscreen.call(document);
-          logger.debug('Fullscreen exit requested, optimistically setting state and canvas size');
+          await currentApi.exitFullscreen.call(document);
 
-          updateCanvasAttributes(
-            previousCanvasSize.current.width,
-            previousCanvasSize.current.height
-          );
-          setIsFullscreen(false);
+          logger.debug('Fullscreen exit successful (state update relies on event).');
         } catch (err) {
           logger.error(
-            `Error attempting to exit full-screen mode: ${err} (${(err as Error).message})`
+            `Error attempting to exit full-screen mode: ${err} (${(err as Error).message})`,
+            err
           );
         }
+      } else {
+        logger.debug('Exit fullscreen API not available or not currently in fullscreen.');
       }
     }
-  }, [isFullscreen, elementRef, calculateFullscreenCanvasSize, updateCanvasAttributes]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (isFullscreen) {
-        logger.debug('Resize event detected while fullscreen, recalculating canvas size...');
-        const { width, height } = calculateFullscreenCanvasSize();
-        updateCanvasAttributes(width, height);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [isFullscreen, calculateFullscreenCanvasSize, updateCanvasAttributes]);
+  }, [isFullscreen, elementRef]);
 
   return {
     isFullscreen,
     toggleFullscreen,
-    isFullscreenEnabled: !!(api.fullscreenEnabled && api.fullscreenEnabled())
+    isFullscreenEnabled: (() => {
+      const currentApi = apiRef.current;
+      return !!(currentApi.fullscreenEnabled && currentApi.fullscreenEnabled());
+    })(),
+
+    simulateFullscreenChange: checkAndApplyFullscreenState
   };
 }
