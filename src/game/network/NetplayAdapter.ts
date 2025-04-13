@@ -4,7 +4,6 @@ import { drawGame } from '../rendering/renderer';
 import logger from '../../utils/logger';
 
 export class NetplayAdapter {
-  
   static canvasSize = { width: CANVAS.MAX_WIDTH, height: CANVAS.getHeight() };
 
   localPlayerId: string;

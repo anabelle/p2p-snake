@@ -12,7 +12,7 @@ describe('Game Controls Accessibility Tests', () => {
   beforeEach(() => {
     // Set up profile in local storage
     localStorage.setItem('snakeUserProfile', JSON.stringify(testProfile));
-    
+
     // Visit game and wait for it to load
     cy.visit('http://localhost:3000');
     cy.get('#game-canvas-container', { timeout: 10000 }).should('be.visible');
@@ -21,13 +21,13 @@ describe('Game Controls Accessibility Tests', () => {
   it('should handle keyboard arrow key controls', () => {
     // Focus on the game canvas container to ensure keys are captured
     cy.get('#game-canvas-container').focus();
-    
+
     // Trigger arrow key events in all directions
     cy.get('body').trigger('keydown', { key: 'ArrowRight', force: true });
     cy.get('body').trigger('keydown', { key: 'ArrowUp', force: true });
     cy.get('body').trigger('keydown', { key: 'ArrowLeft', force: true });
     cy.get('body').trigger('keydown', { key: 'ArrowDown', force: true });
-    
+
     // Verify game canvas remains visible after key presses
     cy.get('#game-canvas-container canvas').should('be.visible');
   });
@@ -37,16 +37,18 @@ describe('Game Controls Accessibility Tests', () => {
     cy.get('button[aria-label="Enter Fullscreen"]')
       .should('be.visible')
       .should('have.attr', 'tabindex', '0');
-    
+
     // Attempt to tab to the fullscreen button
-    cy.get('body').tab(); 
-    cy.tab(); 
-    cy.tab(); 
-    
+    cy.get('body').tab();
+    cy.tab();
+    cy.tab();
+
     // Verify focus is on the fullscreen button
-    cy.focused().should('have.attr', 'aria-label').and(label => {
-      expect(label).to.match(/Fullscreen/);
-    });
+    cy.focused()
+      .should('have.attr', 'aria-label')
+      .and((label) => {
+        expect(label).to.match(/Fullscreen/);
+      });
 
     // Tab again to ensure focus moves
     cy.tab();
@@ -69,11 +71,9 @@ describe('Game Controls Accessibility Tests', () => {
     // Verify that buttons have accessible names
     cy.get('button').each(($button) => {
       // Check if the button has appropriate labeling via aria-label, text content or title
-      const hasAccessibleName = 
-        $button.attr('aria-label') || 
-        $button.text().trim() || 
-        $button.attr('title');
-      
+      const hasAccessibleName =
+        $button.attr('aria-label') || $button.text().trim() || $button.attr('title');
+
       expect(hasAccessibleName).to.exist;
     });
   });
@@ -86,15 +86,15 @@ describe('Game Controls Accessibility Tests', () => {
       .should('have.attr', 'tabindex', '0')
       .focus()
       .should('have.css', 'cursor', 'pointer');
-    
+
     // Should be able to activate it with keyboard
     cy.focused().type('{enter}');
-    
+
     // Profile modal should appear
     cy.get('.profile-modal').should('be.visible');
-    
+
     // Should be able to close with escape
     cy.get('body').type('{esc}');
     cy.get('.profile-modal').should('not.exist');
   });
-}); 
+});

@@ -5,16 +5,13 @@ function getScaleFactors(ctx: CanvasRenderingContext2D) {
   const canvasWidth = ctx.canvas.width;
   const canvasHeight = ctx.canvas.height;
 
-  
   const baseWidth = GRID_SIZE.width * CELL_SIZE;
   const baseHeight = GRID_SIZE.height * CELL_SIZE;
 
-  
   const scaleX = canvasWidth / baseWidth;
   const scaleY = canvasHeight / baseHeight;
   const scale = Math.min(scaleX, scaleY);
 
-  
   const cellWidth = canvasWidth / GRID_SIZE.width;
   const cellHeight = canvasHeight / GRID_SIZE.height;
 

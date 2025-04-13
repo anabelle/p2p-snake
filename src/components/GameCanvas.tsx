@@ -21,7 +21,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, localPlayerId }) => 
     drawGame(ctx, gameState, localPlayerId);
   }, [gameState, localPlayerId]);
 
-  
   const canvasWidth = CANVAS.MAX_WIDTH;
   const canvasHeight = CANVAS.getHeight();
 

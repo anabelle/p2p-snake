@@ -96,11 +96,9 @@ export function useFullscreen(
     const maxHeight = window.innerHeight;
     logger.debug(`Viewport dimensions: ${maxWidth}x${maxHeight}`);
 
-    
     const minWidth = originalCanvasWidth;
     const minHeight = originalCanvasHeight;
 
-    
     let newWidth = maxWidth;
     let newHeight = newWidth / ASPECT_RATIO;
 
@@ -109,7 +107,6 @@ export function useFullscreen(
       newWidth = newHeight * ASPECT_RATIO;
     }
 
-    
     newWidth = Math.max(Math.floor(newWidth), minWidth);
     newHeight = Math.max(Math.floor(newHeight), minHeight);
 

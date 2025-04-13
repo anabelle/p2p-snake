@@ -43,6 +43,20 @@ describe('App Initialization and Profile', () => {
       // Check if the correct name is displayed, allowing for retry
       cy.get('#your-snake-info .editable-profile-item').first().should('contain', testName);
     });
+
+    it('should not allow closing the modal via Cancel button or ESC when creating profile', () => {
+      // Check if modal is visible
+      cy.get('.profile-modal').should('be.visible');
+
+      // Assert Cancel button is not present
+      cy.get('.profile-modal-actions button').contains('Cancel').should('not.exist');
+
+      // Try closing with ESC key
+      cy.get('body').type('{esc}', { force: true });
+
+      // Assert modal is still visible
+      cy.get('.profile-modal').should('be.visible');
+    });
   });
 
   context('Returning Visit (Existing Profile)', () => {

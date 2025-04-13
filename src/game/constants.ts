@@ -1,28 +1,22 @@
 export const GRID_SIZE = { width: 50, height: 30 };
 
-
 interface CanvasConfig {
   MAX_WIDTH: number;
   getHeight(width?: number): number;
   getCellSize(width?: number): number;
 }
 
-
 export const CANVAS: CanvasConfig = {
-  
   MAX_WIDTH: 1024,
 
-  
   getHeight(width = 1024): number {
     return Math.round(width * (GRID_SIZE.height / GRID_SIZE.width));
   },
 
-  
   getCellSize(width = 1024): number {
     return width / GRID_SIZE.width;
   }
 };
-
 
 export const CELL_SIZE = CANVAS.getCellSize();
 

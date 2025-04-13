@@ -38,7 +38,7 @@ Cypress.Commands.add('tab', { prevSubject: 'optional' }, (subject) => {
   } else {
     cy.focused().trigger('keydown', { keyCode: 9, key: 'Tab', code: 'Tab' });
   }
-  
+
   // This only simulates the tab keypress but doesn't actually change focus
   // Wait for focus to change
   return cy.wait(100).focused();

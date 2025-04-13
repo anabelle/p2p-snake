@@ -108,8 +108,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
       aria-modal='true'
       role='dialog'
       aria-labelledby='profile-modal-title'
-      shouldCloseOnEsc={true}
-      shouldCloseOnOverlayClick={true}
+      shouldCloseOnEsc={!!initialProfile}
+      shouldCloseOnOverlayClick={!!initialProfile}
       shouldReturnFocusAfterClose={true}
     >
       <h2 id='profile-modal-title'>
@@ -156,9 +156,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
       </div>
       <div className='profile-modal-actions'>
         {}
-        <button onClick={handleRequestClose} className='button-secondary'>
-          Cancel
-        </button>
+        {initialProfile && (
+          <button onClick={handleRequestClose} className='button-secondary'>
+            Cancel
+          </button>
+        )}
         <button
           onClick={handleSave}
           className='button-primary'

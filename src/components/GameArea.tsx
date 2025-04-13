@@ -58,9 +58,6 @@ const GameArea: React.FC<GameAreaProps> = ({
     ['--canvas-width' as string]: `${canvasWidth}px`
   };
 
-  
-  
-
   return (
     <div
       ref={gameContainerRef}

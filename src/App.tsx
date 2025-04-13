@@ -104,9 +104,9 @@ const App: React.FC = () => {
 
   return (
     <div className={`App ${isFullscreen ? 'App-fullscreen' : ''}`} ref={appRef}>
-      <header role="banner">
+      <header role='banner'>
         <h1>Multiplayer Snake Game</h1>
-        <a href="#main-content" className="skip-link">
+        <a href='#main-content' className='skip-link'>
           Skip to main content
         </a>
       </header>
@@ -116,11 +116,11 @@ const App: React.FC = () => {
         onSave={saveProfile}
         initialProfile={currentUserProfile}
       />
-      
-      <main id="main-content" role="main">
+
+      <main id='main-content' role='main'>
         <div className='game-area-wrapper'>
-          <section aria-labelledby="game-area-heading">
-            <h2 id="game-area-heading" className="visually-hidden">
+          <section aria-labelledby='game-area-heading'>
+            <h2 id='game-area-heading' className='visually-hidden'>
               Game Area
             </h2>
             <GameArea
@@ -150,7 +150,7 @@ const App: React.FC = () => {
           openProfileModal={openProfileModal}
         />
       </main>
-      
+
       <Footer />
     </div>
   );

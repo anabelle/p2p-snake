@@ -40,7 +40,7 @@ describe('GameArea', () => {
 
     expect(gameContainer).toBeInTheDocument();
     expect(gameContainer).toHaveAttribute('id', 'game-canvas-container');
-    
+
     expect(gameContainer).toHaveStyle('--canvas-width: 800px');
   });
 

@@ -12,7 +12,7 @@ describe('Accessibility Tests', () => {
   beforeEach(() => {
     // Set up local storage with profile to bypass profile creation modal
     localStorage.setItem('snakeUserProfile', JSON.stringify(testProfile));
-    
+
     // Visit page and inject axe
     cy.visit('http://localhost:3000');
     cy.reload(); // Force reload to ensure clean state
@@ -26,17 +26,16 @@ describe('Accessibility Tests', () => {
     // Skipping due to persistent Axe violations requiring manual investigation
     cy.wait(1000);
     cy.checkA11y(undefined, {
-      rules: {
-      }
+      rules: {}
     });
   });
 
   it.skip('Game Canvas should have appropriate ARIA attributes', () => {
     // Skipping due to persistent aria-label mismatch
-    cy.wait(1000); 
+    cy.wait(1000);
     cy.get('#game-canvas-container canvas')
       .should('have.attr', 'role', 'img')
-      .should('have.attr', 'aria-label', 'Snake Game'); 
+      .should('have.attr', 'aria-label', 'Snake Game');
   });
 
   it.skip('Profile Modal should be keyboard accessible', () => {
@@ -45,32 +44,34 @@ describe('Accessibility Tests', () => {
     cy.get('div.ReactModal__Content')
       .should('be.visible')
       .should('have.attr', 'role', 'dialog')
-      .within(() => { 
+      .within(() => {
         cy.get('#profile-modal-title').should('exist');
       });
     cy.focused().should('have.attr', 'id', 'profileName');
     cy.tab();
     // cy.focused().should('have.attr', 'role', 'application'); // This assertion fails
-    cy.tab(); 
+    cy.tab();
     cy.focused().should('contain', 'Cancel');
-    cy.tab(); 
+    cy.tab();
     cy.focused().should('contain', 'Save');
     cy.get('body').type('{esc}');
     cy.get('div.ReactModal__Content').should('not.exist');
   });
 
   it('Player Rankings table should have proper structure', () => {
-    cy.wait(500); 
+    cy.wait(500);
     cy.get('#player-rankings table')
       .should('have.attr', 'role', 'table')
       .within(() => {
         cy.get('thead th').first().should('have.attr', 'scope', 'col');
-        
-        cy.get('tbody').find('tr').then($rows => {
-          if (($rows.text().match(/Waiting for players|Connecting/)) === null) {
-            expect($rows.length).to.be.greaterThan(0);
-          }
-        });
+
+        cy.get('tbody')
+          .find('tr')
+          .then(($rows) => {
+            if ($rows.text().match(/Waiting for players|Connecting/) === null) {
+              expect($rows.length).to.be.greaterThan(0);
+            }
+          });
       });
   });
 
@@ -85,7 +86,7 @@ describe('Accessibility Tests', () => {
       .should('have.attr', 'rel', 'noopener noreferrer')
       .should('have.attr', 'target', '_blank')
       .should('not.have.css', 'color', 'rgb(0, 0, 255)') // Ensure links don't use default blue color
-      .each($link => {
+      .each(($link) => {
         // Check that links have sufficient color contrast (basic check)
         const style = window.getComputedStyle($link[0]);
         const foregroundColor = style.color;
@@ -96,32 +97,32 @@ describe('Accessibility Tests', () => {
   it('Game controls should be keyboard accessible', () => {
     // Focus the game area container (now focusable)
     cy.get('#game-canvas-container').focus();
-    
+
     // Trigger arrow key press events and ensure game responds
     cy.get('body').trigger('keydown', { key: 'ArrowRight', force: true });
     cy.get('body').trigger('keydown', { key: 'ArrowUp', force: true });
     cy.get('body').trigger('keydown', { key: 'ArrowLeft', force: true });
     cy.get('body').trigger('keydown', { key: 'ArrowDown', force: true });
-    
+
     // Verify game is still responsive (canvas still visible)
     cy.get('#game-canvas-container canvas').should('be.visible');
   });
 
   it('Color contrast should be sufficient throughout the application', () => {
     // Check player info text contrast
-    cy.get('#your-snake-info').then($el => {
+    cy.get('#your-snake-info').then(($el) => {
       if ($el.length > 0) {
         const style = window.getComputedStyle($el[0]);
         const color = style.color;
-        
+
         // We can't directly calculate contrast ratio,
         // but we can ensure colors are not using problematic defaults
         expect(color).not.to.equal('rgb(128, 128, 128)'); // light gray
       }
     });
-    
+
     // Check heading contrast
-    cy.get('h3').each($heading => {
+    cy.get('h3').each(($heading) => {
       const style = window.getComputedStyle($heading[0]);
       const color = style.color;
       expect(color).not.to.equal('rgb(128, 128, 128)'); // light gray
@@ -134,7 +135,7 @@ describe('Accessibility Tests', () => {
     cy.reload();
     cy.injectAxe();
     cy.get('#game-canvas-container').should('be.visible');
-    cy.get('#game-canvas-container').then($el => {
+    cy.get('#game-canvas-container').then(($el) => {
       const rect = $el[0].getBoundingClientRect();
       expect(rect.width).to.be.lessThan(Cypress.config('viewportWidth') as number);
     });
@@ -156,4 +157,4 @@ describe('Accessibility Tests', () => {
     // Close the modal
     cy.get('button').contains('Cancel').click();
   });
-}); 
+});
