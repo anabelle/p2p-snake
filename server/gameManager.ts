@@ -135,12 +135,10 @@ export class GameManager {
 
   queueProfileUpdate(update: ProfileUpdate): void {
     if (!this.currentGameState.playerStats || !this.currentGameState.playerStats[update.playerId]) {
-      
       return;
     }
     const hexColorRegex = /^#[0-9A-F]{6}$/i;
     if (!update.name || !update.color || !hexColorRegex.test(update.color)) {
-      
       return;
     }
     this.profileUpdateQueue.push(update);
@@ -189,8 +187,6 @@ export class GameManager {
         this.connectedPlayerIds
       );
     } catch (e) {
-      
-
       return null;
     }
 

@@ -27,9 +27,7 @@ setInterval(() => {
 }, GAME_LOOP_INTERVAL_MS);
 
 const PORT = process.env.PORT || 3001;
-httpServer.listen(PORT, () => {
-  
-});
+httpServer.listen(PORT, () => {});
 
 const signals = { SIGINT: 2, SIGTERM: 15 };
 
@@ -41,7 +39,6 @@ function shutdown(signal: keyof typeof signals, value: number) {
   });
 
   setTimeout(() => {
-    
     process.exit(1);
   }, 10000).unref();
 }

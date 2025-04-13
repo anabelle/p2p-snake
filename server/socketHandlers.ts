@@ -29,7 +29,6 @@ export function setupSocketHandlers(
       const playerColor = socket.handshake.query.color as string;
 
       if (!playerId || !playerName || !playerColor) {
-        
         socket.disconnect(true);
         return;
       }
@@ -47,14 +46,12 @@ export function setupSocketHandlers(
         const color = data.color?.trim();
 
         if (!name || !color) {
-          
           socket.emit('error', 'Profile update requires name and color.');
           return;
         }
 
         const hexColorRegex = /^#[0-9A-F]{6}$/i;
         if (!hexColorRegex.test(color)) {
-          
           socket.emit('error', 'Invalid color format. Use #RRGGBB.');
           return;
         }
@@ -66,9 +63,7 @@ export function setupSocketHandlers(
         gameManager.removePlayer(playerId);
       });
 
-      socket.on('error', (err) => {
-        
-      });
+      socket.on('error', (err) => {});
     }
   );
 }
