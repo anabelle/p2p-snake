@@ -93,6 +93,9 @@ export function drawSnake(
     return;
   }
 
+  
+  const canTransform = typeof ctx.translate === 'function' && typeof ctx.scale === 'function';
+
   snake.body.forEach((segment, index) => {
     let segmentColor = snake.color;
 
@@ -116,6 +119,21 @@ export function drawSnake(
       }
     }
 
+    
+    if (canTransform && index === 0 && isLocalPlayer) {
+      ctx.save();
+      const now = Date.now();
+      const pulseScale = 1 + Math.sin(now / 200) * 0.05; 
+
+      
+      const centerX = segment.x * scaleFactors.cellWidth + scaleFactors.cellWidth / 2;
+      const centerY = segment.y * scaleFactors.cellHeight + scaleFactors.cellHeight / 2;
+
+      ctx.translate(centerX, centerY);
+      ctx.scale(pulseScale, pulseScale);
+      ctx.translate(-centerX, -centerY);
+    }
+
     drawSquare(ctx, segment, segmentColor, scaleFactors);
 
     ctx.lineWidth = 1 * scaleFactors.scale;
@@ -136,6 +154,11 @@ export function drawSnake(
       scaleFactors.cellWidth,
       scaleFactors.cellHeight
     );
+
+    
+    if (canTransform && index === 0 && isLocalPlayer) {
+      ctx.restore();
+    }
   });
 
   drawSnakeEyes(ctx, snake, scaleFactors);
@@ -152,16 +175,32 @@ export function drawFood(
   const stemWidth = (CELL_SIZE / 8) * scaleFactors.scaleX;
   const stemHeight = (CELL_SIZE / 4) * scaleFactors.scaleY;
   const stemX = centerX - stemWidth / 2;
-
   const stemY = centerY - radius - stemHeight + 2 * scaleFactors.scaleY;
+
+  const canShadow = typeof ctx.shadowBlur !== 'undefined';
+
+  
+  if (canShadow) ctx.save();
+
+  if (canShadow) {
+    ctx.shadowBlur = 6 * scaleFactors.scale;
+    ctx.shadowColor = 'rgba(255, 0, 0, 0.6)';
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+  }
 
   ctx.fillStyle = 'red';
   ctx.beginPath();
   ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
   ctx.fill();
 
+  
+  if (canShadow) ctx.shadowBlur = 0;
+
   ctx.fillStyle = 'green';
   ctx.fillRect(stemX, stemY, stemWidth, stemHeight);
+
+  if (canShadow) ctx.restore();
 }
 
 export function drawPowerUp(
@@ -172,45 +211,89 @@ export function drawPowerUp(
   let symbol = '?';
   let bgColor = 'purple';
   let textColor = 'white';
+  let glowColor = 'rgba(128, 0, 128, 0.6)'; 
 
   switch (powerUp.type) {
     case 'SPEED':
       symbol = 'S';
       bgColor = 'lightblue';
       textColor = 'black';
+      glowColor = 'rgba(0, 191, 255, 0.6)';
       break;
     case 'SLOW':
       symbol = 'W';
       bgColor = '#FFB74D';
       textColor = 'white';
+      glowColor = 'rgba(255, 183, 77, 0.6)';
       break;
     case 'INVINCIBILITY':
       symbol = 'I';
       bgColor = '#BA68C8';
       textColor = 'white';
+      glowColor = 'rgba(186, 104, 200, 0.6)';
       break;
     case 'DOUBLE_SCORE':
       symbol = 'x2';
       bgColor = 'gold';
       textColor = 'black';
+      glowColor = 'rgba(255, 215, 0, 0.6)';
       break;
   }
+
+  const canTransform = typeof ctx.translate === 'function' && typeof ctx.scale === 'function';
+  const canShadow = typeof ctx.shadowBlur !== 'undefined';
+
+  const now = Date.now();
+  const pulseOffset = Math.sin(now / 300) * 0.15; 
+  const pulseFactor = 1 + pulseOffset;
 
   const rectX = powerUp.position.x * scaleFactors.cellWidth;
   const rectY = powerUp.position.y * scaleFactors.cellHeight;
   const rectSizeX = scaleFactors.cellWidth;
   const rectSizeY = scaleFactors.cellHeight;
 
+  
+  const centerX = rectX + rectSizeX / 2;
+  const centerY = rectY + rectSizeY / 2;
+
+  if (canTransform) ctx.save();
+
+  
+  if (canShadow) {
+    ctx.shadowBlur = 8 * scaleFactors.scale;
+    ctx.shadowColor = glowColor;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+  }
+
+  
+  if (canTransform) {
+    ctx.translate(centerX, centerY);
+    ctx.scale(pulseFactor, pulseFactor);
+    ctx.translate(-centerX, -centerY);
+  }
+
+  
   ctx.fillStyle = bgColor;
   ctx.fillRect(rectX, rectY, rectSizeX, rectSizeY);
 
-  ctx.fillStyle = textColor;
+  
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+  ctx.lineWidth = 1 * scaleFactors.scale;
+  ctx.strokeRect(rectX, rectY, rectSizeX, rectSizeY);
 
-  const fontSize = Math.min(rectSizeX, rectSizeY) * 0.6;
+  
+  if (canShadow) ctx.shadowBlur = 0;
+
+  
+  ctx.fillStyle = textColor;
+  const fontSize = Math.min(scaleFactors.cellWidth, scaleFactors.cellHeight) * 0.6;
   ctx.font = `bold ${fontSize}px sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(symbol, rectX + rectSizeX / 2, rectY + rectSizeY / 2);
+  ctx.fillText(symbol, centerX, centerY);
+
+  if (canTransform) ctx.restore();
 }
 
 export function drawGame(

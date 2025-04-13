@@ -83,6 +83,40 @@ describe('App Initialization and Profile', () => {
         .and('have.attr', 'height', expectedHeight.toString()); // Corrected assertion
     });
 
+    it('should display the score badge next to player count', () => {
+      // Wait for WebSocket to connect and game state to initialize
+      cy.wait(500);
+
+      // The player count should be visible
+      cy.get('.player-count-badge').should('be.visible');
+
+      // The score badge should be visible next to the player count badge (horizontally)
+      // We can't predict the exact score value as it depends on the local player id
+      cy.get('.score-badge')
+        .should('be.visible')
+        .should('contain', 'Score:')
+        .should(($el) => {
+          // Check if score badge is positioned next to the player count badge
+          const playerCountBadge = Cypress.$('.player-count-badge');
+          const scoreBadge = $el;
+
+          if (playerCountBadge.offset() && scoreBadge.offset()) {
+            // For side-by-side layout, we check horizontal position and approximate vertical alignment
+            const playerCountRight =
+              playerCountBadge.offset()!.left + playerCountBadge.outerWidth()!;
+            const scoreBadgeLeft = scoreBadge.offset()!.left;
+            const playerCountTop = playerCountBadge.offset()!.top;
+            const scoreBadgeTop = scoreBadge.offset()!.top;
+
+            // Score badge should be to the right of player count
+            expect(scoreBadgeLeft).to.be.greaterThan(playerCountRight - 5); // Allow 5px tolerance
+
+            // Vertical positions should be approximately the same
+            expect(Math.abs(playerCountTop - scoreBadgeTop)).to.be.lessThan(10); // Allow 10px vertical alignment tolerance
+          }
+        });
+    });
+
     it('should display the player rankings section', () => {
       cy.get('#player-rankings').should('be.visible');
       cy.get('#player-rankings h3').should('contain', 'Player Rankings');

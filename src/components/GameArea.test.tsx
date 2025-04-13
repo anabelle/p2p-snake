@@ -102,6 +102,7 @@ describe('GameArea', () => {
     const badge = screen.getByText(/Players: 3/);
     expect(badge).toBeInTheDocument();
     expect(badge).toHaveClass('player-count-badge');
+    expect(badge).toHaveClass('status-badge');
   });
 
   test('does not render player count badge when not connected', () => {
@@ -129,6 +130,54 @@ describe('GameArea', () => {
     };
     render(<GameArea {...baseProps} isConnected={true} syncedGameState={gameStateNoPlayers} />);
     expect(screen.queryByText(/Players:/)).not.toBeInTheDocument();
+  });
+
+  test('renders current user score below player count when connected and local player exists', () => {
+    const localPlayerId = 'p1';
+    const gameStateWithScores: GameState = {
+      ...baseMockGameState,
+      snakes: [],
+      playerCount: 2,
+      playerStats: {
+        p1: { id: 'p1', color: 'red', score: 10, deaths: 0, isConnected: true },
+        p2: { id: 'p2', color: 'blue', score: 15, deaths: 0, isConnected: true }
+      }
+    };
+    render(
+      <GameArea
+        {...baseProps}
+        isConnected={true}
+        syncedGameState={gameStateWithScores}
+        localPlayerId={localPlayerId}
+      />
+    );
+
+    
+    const playerCount = screen.getByText(/Players: 2/);
+    expect(playerCount).toBeInTheDocument();
+    expect(playerCount).toHaveClass('status-badge');
+
+    
+    const scoreDisplay = screen.getByText(/Score: 10/);
+    expect(scoreDisplay).toBeInTheDocument();
+    const scoreBadgeElement = screen.getByTestId('score-badge');
+    expect(scoreBadgeElement).toHaveClass('score-badge');
+    expect(scoreBadgeElement).toHaveClass('status-badge');
+    expect(scoreBadgeElement).not.toHaveClass('score-changed');
+  });
+
+  test('does not render score badge when not connected', () => {
+    const gameStateWithScores: GameState = {
+      ...baseMockGameState,
+      snakes: [],
+      playerCount: 2,
+      playerStats: {
+        p1: { id: 'p1', color: 'red', score: 10, deaths: 0, isConnected: true },
+        p2: { id: 'p2', color: 'blue', score: 15, deaths: 0, isConnected: true }
+      }
+    };
+    render(<GameArea {...baseProps} isConnected={false} syncedGameState={gameStateWithScores} />);
+    expect(screen.queryByText(/Score:/)).not.toBeInTheDocument();
   });
 
   test('passes the ref to the container div', () => {

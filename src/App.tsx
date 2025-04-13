@@ -123,6 +123,7 @@ const App: React.FC = () => {
           isProfileModalOpen={isProfileModalOpen}
           syncedGameState={syncedGameState}
           isFullscreen={isFullscreen}
+          localPlayerId={localPlayerId}
         />
         <FullscreenButton
           isFullscreen={isFullscreen}

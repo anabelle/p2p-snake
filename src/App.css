@@ -52,6 +52,23 @@ h1 {
   margin-bottom: var(--spacing-sm);
   text-align: center;
   display: block; /* Ensure default */
+  text-shadow:
+    0 0 10px rgba(100, 255, 218, 0.4),
+    0 0 20px rgba(100, 255, 218, 0.2);
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+
+h1::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50%;
+  max-width: 120px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
 }
 
 /* --- Game Area --- */
@@ -59,9 +76,124 @@ h1 {
   position: relative; /* For positioning the player count badge */
   border: 1px solid var(--border-color);
   background-color: #000; /* Ensure canvas container bg is distinct if needed */
+  box-shadow: 0 0 15px rgba(100, 255, 218, 0.2); /* Subtle glow using primary color */
+  border-radius: 4px;
+  transition: box-shadow 0.3s ease;
   /* width and height will be set inline based on grid - these need overriding on mobile */
   /* Ensure container shrinks if needed */
   max-width: 100%;
+}
+
+#game-canvas-container:hover {
+  box-shadow: 0 0 20px rgba(100, 255, 218, 0.3); /* Enhanced glow on hover */
+}
+
+/* --- Game Canvas --- */
+#game-canvas-container canvas {
+  display: block;
+  image-rendering: pixelated; /* Maintain crisp pixel art style */
+  z-index: 1;
+}
+
+/* Grid overlay pattern for game area */
+#game-canvas-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    linear-gradient(90deg, rgba(40, 40, 40, 0.1) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(40, 40, 40, 0.1) 1px, transparent 1px);
+  background-size: 12px 12px; /* Match CELL_SIZE */
+  z-index: 0;
+  pointer-events: none; /* Allow interactions with elements below */
+}
+
+/* Game status badges container */
+.game-status-badges {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  z-index: 5;
+  padding: 5px 8px;
+  background: none;
+}
+
+/* Shared badge styles */
+.status-badge {
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 2px;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-color);
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(1px);
+  transition: background-color 0.2s ease;
+}
+
+.status-badge:hover {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.player-count-badge {
+  color: var(--primary-color);
+}
+
+.player-count-badge::before {
+  content: '';
+  margin-right: 0;
+}
+
+.score-badge {
+  color: #ffcc00;
+}
+
+.score-badge::before {
+  content: '';
+  margin-right: 0;
+}
+
+/* Subtle effect when score changes - ensure it resets properly */
+.score-badge.score-changed {
+  transform: scale(1.05);
+  background-color: rgba(20, 20, 20, 0.6);
+  transition: all 0.15s ease-out;
+}
+
+/* Food glow animation */
+@keyframes foodGlow {
+  0% {
+    filter: drop-shadow(0 0 3px rgba(255, 0, 0, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 6px rgba(255, 0, 0, 0.7));
+  }
+  100% {
+    filter: drop-shadow(0 0 3px rgba(255, 0, 0, 0.5));
+  }
+}
+
+/* Snake head animation */
+@keyframes snakePulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* --- Responsive Canvas --- */
@@ -90,29 +222,36 @@ h1 {
   width: 100%;
   height: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: rgba(42, 42, 42, 0.8); /* Use card bg with some transparency */
+  background-color: rgba(26, 26, 26, 0.85);
   border-radius: 8px;
   font-size: 1.2rem;
-  color: var(--text-color);
+  color: var(--primary-color);
   position: absolute; /* Cover the canvas area */
   top: 0;
   left: 0;
   z-index: 10;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5);
 }
 
-.player-count-badge {
-  position: absolute;
-  top: var(--spacing-sm);
-  left: var(--spacing-sm);
-  background-color: rgba(0, 0, 0, 0.6);
-  color: var(--text-color);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: 4px;
-  font-size: 0.9rem;
-  font-weight: bold;
-  z-index: 5; /* Above canvas, below connecting overlay */
+.connecting-overlay::after {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 40px;
+  margin-top: 15px;
+  border: 3px solid rgba(100, 255, 218, 0.2);
+  border-radius: 50%;
+  border-top-color: var(--primary-color);
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* --- Info Sections --- */
@@ -501,21 +640,25 @@ tbody tr:hover {
   top: 5px;
   right: 5px;
   padding: 5px 10px;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.7);
   color: white;
-  border: 1px solid #ccc;
+  border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.8em;
   z-index: 10; /* Ensure it's above the canvas */
   transform: scale(0.8);
   transform-origin: top right;
-  opacity: 0.6;
+  opacity: 0.8;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .fullscreen-button:hover {
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgba(0, 0, 0, 0.9);
   opacity: 1;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+  transform: scale(0.9);
 }
 
 .fullscreen-button:focus {
