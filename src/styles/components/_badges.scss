@@ -2,33 +2,33 @@
 
 .game-status-badges {
   position: absolute;
-  top: 5px;
-  left: 5px;
+  top: vars.$margin-sm;
+  left: vars.$margin-sm;
   display: flex;
   flex-direction: row;
   gap: vars.$badge-gap;
   z-index: vars.$z-badges;
-  padding: 5px 8px;
+  padding: vars.$padding-xs vars.$spacing-sm;
   background: none;
 }
 
 .status-badge {
   font-size: vars.$font-size-xs;
   font-weight: 500;
-  padding: 2px 6px;
+  padding: vars.$padding-badge;
   border-radius: vars.$border-radius-sm;
-  background-color: rgba(vars.$black, 0.4);
+  background-color: rgba(vars.$black, vars.$alpha-medium-high);
   display: inline-flex;
   align-items: center;
   color: vars.$text-color;
   letter-spacing: 0.03em;
-  border-bottom: vars.$border-width solid rgba(vars.$white, 0.2);
+  border-bottom: vars.$border-width solid rgba(vars.$white, vars.$alpha-low);
   box-shadow: vars.$shadow-sm;
   backdrop-filter: blur(1px);
   transition: background-color var(--duration-normal) vars.$ease-default;
 
   &:hover {
-    background-color: rgba(vars.$black, 0.6);
+    background-color: rgba(vars.$black, vars.$alpha-very-high);
   }
 }
 
@@ -51,19 +51,19 @@
 
   &.score-changed {
     transform: scale(1.05);
-    background-color: rgba(20, 20, 20, 0.6);
+    background-color: rgba(20, 20, 20, vars.$alpha-very-high);
     transition: all var(--duration-fast) vars.$ease-out;
   }
 }
 
 .fullscreen-button {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  padding: 5px 10px;
-  background-color: rgba(vars.$black, 0.7);
+  top: vars.$margin-sm;
+  right: vars.$margin-sm;
+  padding: vars.$padding-fullscreen-button;
+  background-color: rgba(vars.$black, vars.$alpha-very-high);
   color: vars.$white;
-  border: vars.$border-width solid rgba(vars.$white, 0.4);
+  border: vars.$border-width solid rgba(vars.$white, vars.$alpha-medium-high);
   border-radius: vars.$border-radius-md;
   cursor: pointer;
   font-size: vars.$font-size-sm;
@@ -77,13 +77,13 @@
   &:hover {
     background-color: rgba(vars.$black, 0.9);
     opacity: 1;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+    box-shadow: vars.$shadow-button;
     transform: scale(0.9);
   }
 
   &:focus {
-    outline: 2px solid vars.$dodgerblue;
-    outline-offset: 2px;
+    outline: vars.$border-outline-width solid vars.$dodgerblue;
+    outline-offset: vars.$border-outline-offset;
     opacity: 1;
   }
 }

@@ -1,6 +1,6 @@
 @use '../abstracts/variables' as vars;
 
 *:focus-visible {
-  outline: 2px solid vars.$primary-color;
-  outline-offset: 2px;
+  outline: vars.$border-outline-width solid vars.$primary-color;
+  outline-offset: vars.$border-outline-offset;
 }

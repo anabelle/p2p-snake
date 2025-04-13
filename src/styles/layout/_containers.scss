@@ -18,13 +18,13 @@
   position: relative;
   border: vars.$border-width solid vars.$border-color;
   background-color: vars.$black;
-  box-shadow: 0 0 15px rgba(vars.$primary-color, 0.2);
+  box-shadow: vars.$shadow-primary;
   border-radius: vars.$border-radius-md;
   transition: box-shadow var(--duration-slow) vars.$ease-default;
   max-width: 100%;
 
   &:hover {
-    box-shadow: 0 0 20px rgba(vars.$primary-color, 0.3);
+    box-shadow: vars.$shadow-primary-hover;
   }
 
   canvas {
@@ -41,8 +41,8 @@
     right: 0;
     bottom: 0;
     background:
-      linear-gradient(90deg, rgba(40, 40, 40, 0.1) 1px, vars.$transparent 1px),
-      linear-gradient(0deg, rgba(40, 40, 40, 0.1) 1px, vars.$transparent 1px);
+      linear-gradient(90deg, rgba(40, 40, 40, vars.$alpha-low) 1px, vars.$transparent 1px),
+      linear-gradient(0deg, rgba(40, 40, 40, vars.$alpha-low) 1px, vars.$transparent 1px);
     background-size: vars.$grid-cell-size vars.$grid-cell-size;
     z-index: 0;
     pointer-events: none;
@@ -56,7 +56,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: rgba(vars.$background-color, 0.85);
+  background-color: rgba(vars.$background-color, vars.$alpha-ultra-high);
   border-radius: vars.$border-radius-lg;
   font-size: vars.$font-size-lg;
   color: vars.$primary-color;
@@ -64,15 +64,15 @@
   top: 0;
   left: 0;
   z-index: vars.$z-overlay;
-  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5);
+  box-shadow: vars.$shadow-inset;
 
   &::after {
     content: '';
     display: block;
-    width: 40px;
-    height: 40px;
-    margin-top: 15px;
-    border: 3px solid rgba(vars.$primary-color, 0.2);
+    width: vars.$spinner-size;
+    height: vars.$spinner-size;
+    margin-top: vars.$spacing-md;
+    border: vars.$spinner-border-width solid rgba(vars.$primary-color, vars.$alpha-low);
     border-radius: 50%;
     border-top-color: vars.$primary-color;
     animation: spin var(--duration-spin) vars.$ease-in-out infinite;

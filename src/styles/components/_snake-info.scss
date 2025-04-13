@@ -17,7 +17,7 @@
   display: inline-block;
   width: vars.$swatch-size;
   height: vars.$swatch-size;
-  border: vars.$border-width solid rgba(vars.$white, 0.5);
+  border: vars.$border-width solid rgba(vars.$white, vars.$alpha-high);
   border-radius: vars.$border-radius-sm;
   vertical-align: middle;
   margin-right: vars.$spacing-xs;
@@ -61,7 +61,7 @@
   color: vars.$background-color;
   font-weight: bold;
   font-size: vars.$font-size-sm;
-  border: vars.$border-width solid rgba(vars.$black, 0.3);
+  border: vars.$border-width solid rgba(vars.$black, vars.$alpha-medium);
   text-align: center;
   line-height: 22px;
   flex-shrink: 0;
@@ -86,13 +86,13 @@
 .editable-profile-item {
   cursor: pointer;
   display: block;
-  padding: 4px 8px;
-  margin: 2px 0;
+  padding: vars.$padding-sm;
+  margin: vars.$margin-xs 0;
   border-radius: vars.$border-radius-md;
   transition: background-color var(--duration-normal) vars.$ease-default;
 
   &:hover {
-    background-color: rgba(vars.$white, 0.1);
+    background-color: rgba(vars.$white, vars.$alpha-low);
   }
 
   .player-color-swatch {

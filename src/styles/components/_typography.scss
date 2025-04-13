@@ -7,11 +7,9 @@ h1 {
   margin-bottom: vars.$spacing-sm;
   text-align: center;
   display: block;
-  text-shadow:
-    0 0 10px rgba(vars.$primary-color, 0.4),
-    0 0 20px rgba(vars.$primary-color, 0.2);
+  text-shadow: vars.$text-shadow-primary;
   position: relative;
-  padding-bottom: 0.5rem;
+  padding-bottom: vars.$spacing-sm;
 
   &::after {
     content: '';
@@ -19,10 +17,10 @@ h1 {
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 50%;
-    max-width: 120px;
-    height: 2px;
-    background: linear-gradient(90deg, vars.$transparent, vars.$primary-color, vars.$transparent);
+    width: vars.$gradient-line-width;
+    max-width: vars.$gradient-line-max-width;
+    height: vars.$border-bottom-height;
+    background: vars.$gradient-line;
   }
 }
 
