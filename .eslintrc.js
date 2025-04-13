@@ -9,6 +9,12 @@ module.exports = {
       rules: {
         'no-console': 'off' // Allow console.log in server files
       }
+    },
+    {
+      files: ['cypress/e2e/**/*.cy.ts'],
+      rules: {
+        '@typescript-eslint/no-unused-expressions': 'off'
+      }
     }
   ]
 };
