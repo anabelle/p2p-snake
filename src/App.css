@@ -1,12 +1,12 @@
 :root {
-  --background-color: #1a1a1a; /* Very dark grey */
-  --text-color: #e0e0e0; /* Light grey */
-  --primary-color: #64ffda; /* Bright teal/aqua */
-  --card-bg-color: #2a2a2a; /* Slightly lighter dark grey */
-  --border-color: #444444; /* Medium grey */
-  --highlight-bg-color: #3a3a3a; /* Highlight background for rows/etc. */
-  --status-online-color: #81c784; /* Soft green */
-  --status-offline-color: #bdbdbd; /* Medium grey */
+  --background-color: #1a1a1a;
+  --text-color: #e0e0e0;
+  --primary-color: #64ffda;
+  --card-bg-color: #2a2a2a;
+  --border-color: #444444;
+  --highlight-bg-color: #3a3a3a;
+  --status-online-color: #81c784;
+  --status-offline-color: #bdbdbd;
 
   --font-title: 'Press Start 2P', cursive;
   --font-body:
@@ -41,17 +41,16 @@ body {
   align-items: center;
   gap: var(--spacing-lg);
   width: 100%;
-  max-width: 1200px; /* Adjust max-width as needed */
+  max-width: 1200px;
 }
 
-/* --- Title --- */
 h1 {
   font-family: var(--font-title);
-  font-size: 1.75rem; /* Slightly larger than before */
+  font-size: 1.75rem;
   color: var(--primary-color);
   margin-bottom: var(--spacing-sm);
   text-align: center;
-  display: block; /* Ensure default */
+  display: block;
   text-shadow:
     0 0 10px rgba(100, 255, 218, 0.4),
     0 0 20px rgba(100, 255, 218, 0.2);
@@ -71,31 +70,26 @@ h1::after {
   background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
 }
 
-/* --- Game Area --- */
 #game-canvas-container {
-  position: relative; /* For positioning the player count badge */
+  position: relative;
   border: 1px solid var(--border-color);
-  background-color: #000; /* Ensure canvas container bg is distinct if needed */
-  box-shadow: 0 0 15px rgba(100, 255, 218, 0.2); /* Subtle glow using primary color */
+  background-color: #000;
+  box-shadow: 0 0 15px rgba(100, 255, 218, 0.2);
   border-radius: 4px;
   transition: box-shadow 0.3s ease;
-  /* width and height will be set inline based on grid - these need overriding on mobile */
-  /* Ensure container shrinks if needed */
   max-width: 100%;
 }
 
 #game-canvas-container:hover {
-  box-shadow: 0 0 20px rgba(100, 255, 218, 0.3); /* Enhanced glow on hover */
+  box-shadow: 0 0 20px rgba(100, 255, 218, 0.3);
 }
 
-/* --- Game Canvas --- */
 #game-canvas-container canvas {
   display: block;
-  image-rendering: pixelated; /* Maintain crisp pixel art style */
+  image-rendering: pixelated;
   z-index: 1;
 }
 
-/* Grid overlay pattern for game area */
 #game-canvas-container::before {
   content: '';
   position: absolute;
@@ -106,12 +100,11 @@ h1::after {
   background:
     linear-gradient(90deg, rgba(40, 40, 40, 0.1) 1px, transparent 1px),
     linear-gradient(0deg, rgba(40, 40, 40, 0.1) 1px, transparent 1px);
-  background-size: 12px 12px; /* Match CELL_SIZE */
+  background-size: 12px 12px;
   z-index: 0;
-  pointer-events: none; /* Allow interactions with elements below */
+  pointer-events: none;
 }
 
-/* Game status badges container */
 .game-status-badges {
   position: absolute;
   top: 5px;
@@ -124,7 +117,6 @@ h1::after {
   background: none;
 }
 
-/* Shared badge styles */
 .status-badge {
   font-size: 0.7rem;
   font-weight: 500;
@@ -163,56 +155,51 @@ h1::after {
   margin-right: 0;
 }
 
-/* Subtle effect when score changes - ensure it resets properly */
 .score-badge.score-changed {
   transform: scale(1.05);
   background-color: rgba(20, 20, 20, 0.6);
   transition: all 0.15s ease-out;
 }
 
-/* Food glow animation */
 @keyframes foodGlow {
   0% {
     filter: drop-shadow(0 0 3px rgba(255, 0, 0, 0.5));
   }
+
   50% {
     filter: drop-shadow(0 0 6px rgba(255, 0, 0, 0.7));
   }
+
   100% {
     filter: drop-shadow(0 0 3px rgba(255, 0, 0, 0.5));
   }
 }
 
-/* Snake head animation */
 @keyframes snakePulse {
   0% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.05);
   }
+
   100% {
     transform: scale(1);
   }
 }
 
-/* --- Responsive Canvas --- */
 @media (max-width: 767px) {
   #game-canvas-container {
-    /* Override potential inline width with 100% of parent */
     width: 100% !important;
-    /* Let height adjust based on aspect ratio */
     height: auto !important;
-    /* Maintain aspect ratio based on GRID_SIZE (50/30) */
     aspect-ratio: 50 / 30;
   }
 
   #game-canvas-container canvas {
-    /* Ensure canvas fills the scaled container */
-    display: block; /* Remove extra space below canvas */
+    display: block;
     width: 100%;
     height: 100%;
-    /* Override inline canvas dimensions */
     max-width: 100%;
     max-height: 100%;
   }
@@ -229,7 +216,7 @@ h1::after {
   border-radius: 8px;
   font-size: 1.2rem;
   color: var(--primary-color);
-  position: absolute; /* Cover the canvas area */
+  position: absolute;
   top: 0;
   left: 0;
   z-index: 10;
@@ -254,13 +241,11 @@ h1::after {
   }
 }
 
-/* --- Info Sections --- */
 .info-sections-wrapper {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive columns */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: var(--spacing-lg);
   width: 100%;
-  /* max-width: calc(var(--canvas-width, 600px) + 2px); Align with canvas width + borders - Moved to media query */
 }
 
 @media (min-width: 768px) {
@@ -275,7 +260,7 @@ h1::after {
   border-radius: 8px;
   padding: var(--spacing-md);
   color: var(--text-color);
-  overflow: hidden; /* Prevents content spill */
+  overflow: hidden;
 }
 
 .info-section h3 {
@@ -288,18 +273,17 @@ h1::after {
   padding-bottom: var(--spacing-sm);
 }
 
-/* Specific Info Section elements */
 #your-snake-info > div:not(#active-powerups) {
   display: flex;
-  flex-wrap: wrap; /* Allow wrapping on small screens */
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--spacing-sm) var(--spacing-lg); /* Row and column gap */
+  gap: var(--spacing-sm) var(--spacing-lg);
   margin-bottom: var(--spacing-md);
 }
 
 #your-snake-info strong,
 #active-powerups strong {
-  color: #bbbbbb; /* Slightly lighter grey for emphasis */
+  color: #bbbbbb;
 }
 
 .player-color-swatch {
@@ -324,9 +308,8 @@ h1::after {
   margin-bottom: var(--spacing-xs);
 }
 
-/* --- Player Rankings Table --- */
 .table-scroll-wrapper {
-  max-height: 250px; /* Limit height and make scrollable */
+  max-height: 250px;
   overflow-y: auto;
   border: 1px solid var(--border-color);
   border-radius: 4px;
@@ -340,7 +323,7 @@ table {
 
 thead {
   background-color: var(--highlight-bg-color);
-  position: sticky; /* Keep header visible on scroll */
+  position: sticky;
   top: 0;
   z-index: 1;
 }
@@ -358,7 +341,7 @@ th {
 }
 
 tbody tr:nth-child(even) {
-  background-color: rgba(0, 0, 0, 0.1); /* Subtle striping */
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 tbody tr.highlight-row {
@@ -367,7 +350,7 @@ tbody tr.highlight-row {
 }
 
 tbody tr:hover {
-  background-color: rgba(var(--primary-color-rgb, 100 255 218), 0.1); /* Subtle hover */
+  background-color: rgba(var(--primary-color-rgb, 100 255 218), 0.1);
 }
 
 .status-online {
@@ -380,7 +363,6 @@ tbody tr:hover {
   font-style: italic;
 }
 
-/* --- Powerup Legend & Symbols --- */
 #powerup-legend ul {
   list-style: none;
   padding: 0;
@@ -396,7 +378,7 @@ tbody tr:hover {
 }
 
 .powerup-symbol {
-  display: inline-flex; /* Use flex for centering */
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 24px;
@@ -407,30 +389,31 @@ tbody tr:hover {
   font-size: 0.8rem;
   border: 1px solid rgba(0, 0, 0, 0.3);
   text-align: center;
-  line-height: 22px; /* Adjust for vertical centering */
-  flex-shrink: 0; /* Prevent shrinking */
+  line-height: 22px;
+  flex-shrink: 0;
 }
 
 .powerup-symbol.speed {
-  background-color: #80deea; /* Cyan */
-}
-.powerup-symbol.slow {
-  background-color: #fff59d; /* Yellow */
-}
-.powerup-symbol.invincibility {
-  background-color: #ce93d8; /* Purple */
-}
-.powerup-symbol.double-score {
-  background-color: #ffcc80; /* Orange */
+  background-color: #80deea;
 }
 
-/* --- Accessibility --- */
+.powerup-symbol.slow {
+  background-color: #fff59d;
+}
+
+.powerup-symbol.invincibility {
+  background-color: #ce93d8;
+}
+
+.powerup-symbol.double-score {
+  background-color: #ffcc80;
+}
+
 *:focus-visible {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
 }
 
-/* Basic Modal Styling */
 .profile-modal-overlay {
   position: fixed;
   top: 0;
@@ -441,29 +424,28 @@ tbody tr:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000; /* Ensure it's above other content */
-  padding: 15px; /* Add padding to ensure space around modal on small screens */
+  z-index: 1000;
+  padding: 15px;
 }
 
 .profile-modal {
-  background: var(--background-color); /* Use existing variable */
+  background: var(--background-color);
   padding: 20px 30px;
   border-radius: 8px;
-  border: 1px solid var(--border-color); /* Use existing variable */
-  color: var(--text-color); /* Use existing variable */
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
   min-width: 300px;
   max-width: 90%;
-  max-height: calc(100vh - 30px); /* Set max height to screen height minus padding */
-  overflow-y: auto; /* Enable scrolling */
+  max-height: calc(100vh - 30px);
+  overflow-y: auto;
   outline: none;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  /* Improve accessibility by ensuring proper focus management */
-  position: relative; /* For positioning scroll indicators if needed */
+  position: relative;
 }
 
 .profile-modal h2 {
   margin-top: 0;
-  color: var(--primary-color); /* Use existing variable */
+  color: var(--primary-color);
   text-align: center;
   margin-bottom: 20px;
 }
@@ -487,12 +469,11 @@ tbody tr:hover {
   padding: 8px 10px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  background-color: var(--input-bg-color, #2a2a2e); /* Adjusted default for dark theme */
-  color: var(--input-text-color, #e1e1e1); /* Adjusted default for dark theme */
-  box-sizing: border-box; /* Include padding in width */
+  background-color: var(--input-bg-color, #2a2a2e);
+  color: var(--input-text-color, #e1e1e1);
+  box-sizing: border-box;
 }
 
-/* Style the react-color CirclePicker container */
 .profile-modal .circle-picker {
   margin: 10px 0;
   display: flex;
@@ -505,7 +486,6 @@ tbody tr:hover {
   border-radius: 4px;
 }
 
-/* Improve CirclePicker accessibility */
 .profile-modal .circle-picker > span {
   margin: 4px !important;
 }
@@ -524,61 +504,18 @@ tbody tr:hover {
   box-shadow: 0 0 0 2px var(--primary-color) !important;
 }
 
-/* Remove all old SketchPicker styles */
-/* .profile-modal .sketch-picker {
-  box-shadow: none !important; 
-  padding: 0 !important; 
-  background: transparent !important; 
-  border-radius: 4px;
-  width: 100% !important; 
-  transform: scale(0.85); 
-  transform-origin: top left;
-  margin-bottom: 10px; 
-}
-
-.profile-modal .sketch-picker > div {
-  margin-bottom: 4px !important;
-  padding-bottom: 4px !important;
-}
-
-.profile-modal .sketch-picker > div:first-child {
-  height: 120px !important; 
-}
-
-.profile-modal .sketch-picker > div:not(:first-child) {
-  padding: 4px !important;
-}
-
-.profile-modal .sketch-picker > div:last-child {
-  padding-top: 0 !important;
-  margin-top: 0 !important;
-}
-
-.profile-modal .sketch-picker input {
-  background-color: var(--input-bg-color, #3a3a3e) !important;
-  color: var(--input-text-color, #e1e1e1) !important;
-  box-shadow: inset 0 0 0 1px var(--border-color, #555) !important; 
-  border: none !important;
-}
-.profile-modal .sketch-picker > div:last-child > div:first-child > div:first-child {
-}
-.profile-modal .sketch-picker label {
-    color: var(--text-color-secondary, #aaa) !important; 
-} */
-
 .profile-modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 15px; /* Add some space above buttons */
-  position: sticky; /* Make buttons sticky at bottom for better access */
+  margin-top: 15px;
+  position: sticky;
   bottom: 0;
-  background: var(--background-color); /* Match modal background */
-  padding: 10px 0; /* Add padding */
-  z-index: 5; /* Ensure buttons appear above scrollable content */
+  background: var(--background-color);
+  padding: 10px 0;
+  z-index: 5;
 }
 
-/* Basic Button Styling (adapt to your existing button styles) */
 .profile-modal-actions button {
   padding: 8px 15px;
   border-radius: 4px;
@@ -586,55 +523,51 @@ tbody tr:hover {
   cursor: pointer;
   font-weight: bold;
   transition: opacity 0.2s ease;
-  min-height: 44px; /* Improve touch target size for accessibility */
-  min-width: 44px; /* Ensure minimum touch target size */
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .button-primary {
-  background-color: var(--primary-color); /* Use existing variable */
+  background-color: var(--primary-color);
   color: white;
 }
+
 .button-primary:hover {
   opacity: 0.9;
 }
 
 .button-secondary {
-  background-color: var(--secondary-button-bg, #555); /* Adjusted default for dark theme */
-  color: var(--secondary-button-text, #e1e1e1); /* Adjusted default for dark theme */
+  background-color: var(--secondary-button-bg, #555);
+  color: var(--secondary-button-text, #e1e1e1);
 }
+
 .button-secondary:hover {
   opacity: 0.9;
 }
 
-/* Make profile items clickable */
 .editable-profile-item {
   cursor: pointer;
-  /* display: inline-block; /* Let's use block for better layout */
-  display: block; /* Makes the whole row clickable */
-  padding: 4px 8px; /* Add some padding */
-  margin: 2px 0; /* Add vertical margin */
+  display: block;
+  padding: 4px 8px;
+  margin: 2px 0;
   border-radius: 4px;
   transition: background-color 0.2s ease;
 }
 
 .editable-profile-item:hover {
-  background-color: rgba(255, 255, 255, 0.1); /* Subtle hover effect */
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Ensure swatch within clickable area also has pointer */
 .editable-profile-item .player-color-swatch {
   cursor: pointer;
-  /* Add vertical-align if needed depending on surrounding text */
   vertical-align: middle;
 }
 
-/* Game Area Wrapper */
 .game-area-wrapper {
-  position: relative; /* Ensure default has relative positioning for the button */
-  display: inline-block; /* Or block, match original intent */
+  position: relative;
+  display: inline-block;
 }
 
-/* Fullscreen Button Styling */
 .fullscreen-button {
   position: absolute;
   top: 5px;
@@ -646,7 +579,7 @@ tbody tr:hover {
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.8em;
-  z-index: 10; /* Ensure it's above the canvas */
+  z-index: 10;
   transform: scale(0.8);
   transform-origin: top right;
   opacity: 0.8;
@@ -662,12 +595,11 @@ tbody tr:hover {
 }
 
 .fullscreen-button:focus {
-  outline: 2px solid dodgerblue; /* Accessibility */
+  outline: 2px solid dodgerblue;
   outline-offset: 2px;
   opacity: 1;
 }
 
-/* App-fullscreen: Use flex to center content */
 .App-fullscreen {
   background-color: #000;
   width: 100vw;
@@ -676,19 +608,17 @@ tbody tr:hover {
   justify-content: center;
   align-items: center;
   overflow: hidden;
-  padding: 0; /* Remove padding to maximize space */
+  padding: 0;
   box-sizing: border-box;
 }
 
-/* Re-add rules for hiding elements */
 .App-fullscreen h1,
 .App-fullscreen [data-testid='info-panel-wrapper'],
-.App-fullscreen .profile-modal-overlay, /* Ensure modal hidden too */
+.App-fullscreen .profile-modal-overlay,
 .App-fullscreen footer {
   display: none;
 }
 
-/* Ensure the wrapper fills the centered space */
 .App-fullscreen .game-area-wrapper {
   flex-shrink: 0;
   width: 100%;
@@ -700,53 +630,33 @@ tbody tr:hover {
   max-height: 100%;
 }
 
-/* Style the canvas container to fill the wrapper */
 .App-fullscreen > .game-area-wrapper > #game-canvas-container {
   width: 100%;
   height: 100%;
   border: none;
-  display: flex; /* Keep flex to center canvas if needed, though canvas fills it now */
+  display: flex;
   justify-content: center;
   align-items: center;
-  /* Remove aspect-ratio and other constraints */
   aspect-ratio: unset;
   max-width: none;
 }
 
-/* Make the canvas element's *box* fill its container */
 .App-fullscreen > .game-area-wrapper > #game-canvas-container canvas {
   display: block;
   width: 100%;
   height: 100%;
-  /* Remove object-fit: contain; size is controlled by attributes now */
 }
 
-/* Footer default */
 footer {
-  /* ... existing footer styles ... */
-  display: block; /* Ensure default */
+  display: block;
 }
 
-/* Ensure the game canvas container maintains aspect ratio if needed */
-/* This might require more complex logic depending on desired behavior */
-/* .App-fullscreen #game-canvas-container { */
-/* Example: */
-/* max-width: 100vw; */
-/* max-height: 100vh; */
-/* object-fit: contain; */
-/* } */
-
-/* Note: True browser fullscreen styling might require ::backdrop pseudo-element */
-/* or targeting the :fullscreen pseudo-class on the element itself */
-
-/* Default display styles */
 h1 {
   display: block;
 }
 
-/* Use data-testid for InfoPanel wrapper */
 [data-testid='info-panel-wrapper'] {
-  display: block; /* Or grid, depending on its actual default */
+  display: block;
 }
 
 footer {
