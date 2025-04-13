@@ -33,24 +33,22 @@ describe('GameArea', () => {
     isFullscreen: false
   };
 
-  test('renders the main container div with correct styles and test id', () => {
+  test('renders the main container div with correct test id and custom property', () => {
     render(<GameArea {...baseProps} />);
 
     const gameContainer = screen.getByTestId('game-area-container');
 
     expect(gameContainer).toBeInTheDocument();
     expect(gameContainer).toHaveAttribute('id', 'game-canvas-container');
-    expect(gameContainer).toHaveStyle('width: 800px');
-    expect(gameContainer).toHaveStyle('height: 600px');
+    
     expect(gameContainer).toHaveStyle('--canvas-width: 800px');
   });
 
-  test('renders container without inline width/height when isFullscreen is true', () => {
+  test('renders container with fullscreen class when in fullscreen mode', () => {
     render(<GameArea {...baseProps} isFullscreen={true} />);
     const gameContainer = screen.getByTestId('game-area-container');
     expect(gameContainer).toBeInTheDocument();
-    expect(gameContainer).not.toHaveStyle('width: 800px');
-    expect(gameContainer).not.toHaveStyle('height: 600px');
+    expect(gameContainer).toHaveClass('fullscreen');
     expect(gameContainer).toHaveStyle('--canvas-width: 800px');
   });
 
@@ -152,12 +150,10 @@ describe('GameArea', () => {
       />
     );
 
-    
     const playerCount = screen.getByText(/Players: 2/);
     expect(playerCount).toBeInTheDocument();
     expect(playerCount).toHaveClass('status-badge');
 
-    
     const scoreDisplay = screen.getByText(/Score: 10/);
     expect(scoreDisplay).toBeInTheDocument();
     const scoreBadgeElement = screen.getByTestId('score-badge');

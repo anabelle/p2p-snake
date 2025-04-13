@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { GameState } from '../game/state/types';
-import { GRID_SIZE } from '../game/constants';
+import { CANVAS } from '../game/constants';
 import { drawGame } from '../game/rendering/renderer';
 
 interface GameCanvasProps {
@@ -22,8 +22,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, localPlayerId }) => 
   }, [gameState, localPlayerId]);
 
   
-  const canvasWidth = 1024;
-  const canvasHeight = Math.round(canvasWidth * (GRID_SIZE.height / GRID_SIZE.width));
+  const canvasWidth = CANVAS.MAX_WIDTH;
+  const canvasHeight = CANVAS.getHeight();
 
   return (
     <canvas

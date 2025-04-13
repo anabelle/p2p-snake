@@ -1,13 +1,11 @@
 import { GameState } from '../state/types';
-import { GRID_SIZE, CELL_SIZE } from '../constants';
+import { CANVAS } from '../constants';
 import { drawGame } from '../rendering/renderer';
 import logger from '../../utils/logger';
 
 export class NetplayAdapter {
-  static canvasSize = {
-    width: 1024,
-    height: Math.round(1024 * (GRID_SIZE.height / GRID_SIZE.width))
-  };
+  
+  static canvasSize = { width: CANVAS.MAX_WIDTH, height: CANVAS.getHeight() };
 
   localPlayerId: string;
 

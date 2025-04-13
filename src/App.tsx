@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import Modal from 'react-modal';
 
 import {} from './game/state/types';
-import { GRID_SIZE, CELL_SIZE } from './game/constants';
+import { CANVAS } from './game/constants';
 import ProfileModal from './components/ProfileModal';
 
 import { useWebSocket } from './hooks/useWebSocket';
@@ -29,9 +29,8 @@ const App: React.FC = () => {
   const appRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
 
-  
-  const canvasWidth = 1024;
-  const canvasHeight = Math.round(canvasWidth * (GRID_SIZE.height / GRID_SIZE.width));
+  const canvasWidth = CANVAS.MAX_WIDTH;
+  const canvasHeight = CANVAS.getHeight();
 
   const { canvasRef } = useCanvasElement({
     width: canvasWidth,

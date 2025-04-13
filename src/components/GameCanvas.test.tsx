@@ -4,7 +4,7 @@ import '@testing-library/jest-dom';
 import GameCanvas from './GameCanvas';
 import { drawGame } from '../game/rendering/renderer';
 import { GameState, Direction } from '../game/state/types';
-import { GRID_SIZE, CELL_SIZE } from '../game/constants';
+import { GRID_SIZE, CANVAS } from '../game/constants';
 
 jest.mock('../game/rendering/renderer', () => ({
   drawGame: jest.fn()
@@ -94,8 +94,8 @@ describe('GameCanvas Component', () => {
     render(<GameCanvas gameState={mockGameState} localPlayerId={localPlayerId} />);
     const canvas = screen.getByRole('img', { name: /snake game board/i });
     expect(canvas).toBeInTheDocument();
-    expect(canvas).toHaveAttribute('width', String(GRID_SIZE.width * CELL_SIZE));
-    expect(canvas).toHaveAttribute('height', String(GRID_SIZE.height * CELL_SIZE));
+    expect(canvas).toHaveAttribute('width', String(CANVAS.MAX_WIDTH));
+    expect(canvas).toHaveAttribute('height', String(CANVAS.getHeight()));
   });
 
   it('should get the 2D context and call drawGame on mount', () => {

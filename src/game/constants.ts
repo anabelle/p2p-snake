@@ -1,5 +1,31 @@
 export const GRID_SIZE = { width: 50, height: 30 };
-export const CELL_SIZE = 20.48;
+
+
+interface CanvasConfig {
+  MAX_WIDTH: number;
+  getHeight(width?: number): number;
+  getCellSize(width?: number): number;
+}
+
+
+export const CANVAS: CanvasConfig = {
+  
+  MAX_WIDTH: 1024,
+
+  
+  getHeight(width: number = 1024): number {
+    return Math.round(width * (GRID_SIZE.height / GRID_SIZE.width));
+  },
+
+  
+  getCellSize(width: number = 1024): number {
+    return width / GRID_SIZE.width;
+  }
+};
+
+
+export const CELL_SIZE = CANVAS.getCellSize();
+
 export const GAME_SPEED_MS = 150;
 export const FOOD_VALUE = 1;
 export const POWER_UP_SPAWN_INTERVAL = 5000;
