@@ -79,8 +79,6 @@ export class GameManager {
 
   addPlayer(playerId: string, name: string, color: string): void {
     if (this.connectedPlayerIds.has(playerId)) {
-      console.warn(`Player ${playerId} already connected.`);
-
       if (this.currentGameState.playerStats[playerId]) {
         this.currentGameState.playerStats[playerId].isConnected = true;
         this.currentGameState.playerStats[playerId].name = name;
@@ -137,12 +135,12 @@ export class GameManager {
 
   queueProfileUpdate(update: ProfileUpdate): void {
     if (!this.currentGameState.playerStats || !this.currentGameState.playerStats[update.playerId]) {
-      console.warn(`Received updateProfile for unknown or disconnected player: ${update.playerId}`);
+      
       return;
     }
     const hexColorRegex = /^#[0-9A-F]{6}$/i;
     if (!update.name || !update.color || !hexColorRegex.test(update.color)) {
-      console.warn(`Invalid profile update data for ${update.playerId}:`, update);
+      
       return;
     }
     this.profileUpdateQueue.push(update);
@@ -191,7 +189,7 @@ export class GameManager {
         this.connectedPlayerIds
       );
     } catch (e) {
-      console.error('!!! Error during updateGame in GameManager:', e);
+      
 
       return null;
     }

@@ -28,7 +28,7 @@ setInterval(() => {
 
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
-  console.log(`🚀 Signaling & Game Server listening on *:${PORT}`);
+  
 });
 
 const signals = { SIGINT: 2, SIGTERM: 15 };
@@ -41,7 +41,7 @@ function shutdown(signal: keyof typeof signals, value: number) {
   });
 
   setTimeout(() => {
-    console.error('Could not close connections in time, forcing shutdown');
+    
     process.exit(1);
   }, 10000).unref();
 }
