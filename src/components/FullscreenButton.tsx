@@ -22,6 +22,7 @@ const FullscreenButton: React.FC<FullscreenButtonProps> = ({
       aria-label={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
       title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
       aria-pressed={isFullscreen}
+      tabIndex={0}
     >
       {isFullscreen ? (
         <svg

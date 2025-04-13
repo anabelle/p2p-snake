@@ -34,7 +34,7 @@ export const updateGame = (
   let nextActivePowerUps = currentState.activePowerUps;
   let nextFood = currentState.food;
   let nextSnakes = currentState.snakes;
-  let nextPlayerStats = { ...currentState.playerStats };
+  const nextPlayerStats = { ...currentState.playerStats };
 
   const existingSnakeIDs = new Set(currentState.snakes.map((s) => s.id));
 

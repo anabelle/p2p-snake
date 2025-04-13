@@ -21,8 +21,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   const [color, setColor] = useState(PLAYER_COLORS[0]); // Default color
   const [isDirty, setIsDirty] = useState(false); // Track if form has changed
 
-  // Ref for the modal title to focus on open
-  const modalTitleRef = useRef<HTMLHeadingElement>(null);
+  // Ref for the first focusable element
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   // Store initial state to compare for dirtiness
   const [initialName, setInitialName] = useState('');
@@ -39,11 +39,6 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
     setInitialName(initialNameValue);
     setInitialColor(initialColorValue);
     setIsDirty(false); // Reset dirty state when modal opens/profile changes
-
-    // Reset to defaults if creating a new profile or initialProfile is null
-    // setName('');
-    // setColor(PLAYER_COLORS[Math.floor(Math.random() * PLAYER_COLORS.length)]); // Random default color for new profile
-    // }
   }, [initialProfile, isOpen]); // Reset when modal opens or initialProfile changes
 
   // Update dirty state when name or color changes
@@ -79,17 +74,14 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
     };
     onSave(finalProfile); // Pass the profile data back to the parent
     setIsDirty(false); // Reset dirty state after save
-    // No need to close here, parent handles it via onSave logic + state update
   };
 
   const handleRequestClose = () => {
     // Maybe add a confirmation dialog if changes were made?
-    // For now, just call the passed function.
     if (isDirty) {
       if (window.confirm('You have unsaved changes. Are you sure you want to close?')) {
         onRequestClose();
       }
-      // If user clicks 'Cancel' in the confirm dialog, do nothing (modal stays open)
     } else {
       onRequestClose();
     }
@@ -98,8 +90,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
   const isNameValid = name.trim().length > 0;
 
   const handleAfterOpen = () => {
-    if (modalTitleRef.current) {
-      modalTitleRef.current.focus();
+    // Focus the first focusable element (name input) when modal opens
+    if (nameInputRef.current) {
+      nameInputRef.current.focus();
     }
   };
 
@@ -108,23 +101,27 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
       isOpen={isOpen}
       onRequestClose={handleRequestClose}
       onAfterOpen={handleAfterOpen}
-      contentLabel='User Profile'
+      contentLabel='User Profile' // Used as aria-label for the modal
       className='profile-modal'
       overlayClassName='profile-modal-overlay'
       ariaHideApp={process.env.NODE_ENV !== 'test'}
       aria-modal='true'
       role='dialog'
-      shouldCloseOnEsc={false}
-      shouldCloseOnOverlayClick={false}
+      // Assign aria-labelledby to the modal title for accessibility
+      aria-labelledby='profile-modal-title' 
+      shouldCloseOnEsc={true} // Allow closing with Esc key
+      shouldCloseOnOverlayClick={true} // Allow closing by clicking overlay
       shouldReturnFocusAfterClose={true}
     >
-      <h2 id='profile-modal-title' ref={modalTitleRef} tabIndex={-1}>
+      <h2 id='profile-modal-title'>
         {initialProfile ? 'Edit Profile' : 'Welcome! Create your profile'}
       </h2>
-      <div className='profile-modal-content' aria-labelledby='profile-modal-title'>
+      {/* Removed redundant aria-labelledby from content div */}
+      <div className='profile-modal-content'>
         <div className='form-group'>
           <label htmlFor='profileName'>Name:</label>
           <input
+            ref={nameInputRef} // Add ref for focusing
             type='text'
             id='profileName'
             value={name}
@@ -145,8 +142,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
           )}
         </div>
         <div className='form-group'>
-          <label htmlFor='color-picker'>Color:</label>
-          <div id='color-picker' role='application' aria-label='Color picker'>
+          <label htmlFor='color-picker-container'>Color:</label>
+          <div id='color-picker-container' role='application' aria-label='Color picker'>
             <CirclePicker
               color={color}
               onChange={handleColorChange}
@@ -159,6 +156,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
         </div>
       </div>
       <div className='profile-modal-actions'>
+        {/* Add a Cancel button for better UX */}
+        <button onClick={handleRequestClose} className='button-secondary'>
+          Cancel
+        </button>
         <button
           onClick={handleSave}
           className='button-primary'

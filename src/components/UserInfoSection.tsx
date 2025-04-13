@@ -66,8 +66,12 @@ const UserInfoSection: React.FC<UserInfoSectionProps> = ({
       <div
         className='editable-profile-item'
         onClick={openProfileModal}
-        title='Click to edit profile'
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openProfileModal()}
+        role='button'
+        tabIndex={0}
+        title='Click or press Enter/Space to edit profile'
         data-testid='user-info-name-container'
+        aria-label={`Edit profile for ${currentUserProfile.name}`}
       >
         <span>
           <strong>Name:</strong> {currentUserProfile.name}
@@ -78,8 +82,12 @@ const UserInfoSection: React.FC<UserInfoSectionProps> = ({
       <div
         className='editable-profile-item'
         onClick={openProfileModal}
-        title='Click to edit profile'
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && openProfileModal()}
+        role='button'
+        tabIndex={0}
+        title='Click or press Enter/Space to edit profile'
         data-testid='user-info-color-container'
+        aria-label={`Edit color for ${currentUserProfile.name}`}
       >
         <span>
           <strong>Color: </strong>

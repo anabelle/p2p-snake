@@ -105,7 +105,7 @@ describe('UserInfoSection', () => {
     expect(nameContainer).toBeInTheDocument();
     expect(screen.getByText(mockProfile.name)).toBeInTheDocument();
     expect(nameContainer).toHaveClass('editable-profile-item');
-    expect(nameContainer).toHaveAttribute('title', 'Click to edit profile');
+    expect(nameContainer).toHaveAttribute('title', 'Click or press Enter/Space to edit profile');
     await userEvent.click(nameContainer);
     expect(mockOpenModal).toHaveBeenCalledTimes(1);
   });
@@ -124,7 +124,7 @@ describe('UserInfoSection', () => {
     expect(colorContainer).toBeInTheDocument();
     expect(screen.getByTestId('user-info-color-swatch')).toBeInTheDocument();
     expect(colorContainer).toHaveClass('editable-profile-item');
-    expect(colorContainer).toHaveAttribute('title', 'Click to edit profile');
+    expect(colorContainer).toHaveAttribute('title', 'Click or press Enter/Space to edit profile');
     await userEvent.click(colorContainer);
     expect(mockOpenModal).toHaveBeenCalledTimes(1);
   });

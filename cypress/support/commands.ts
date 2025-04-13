@@ -25,13 +25,35 @@
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 //
-// declare global {
-//   namespace Cypress {
-//     interface Chainable {
-//       login(email: string, password: string): Chainable<void>
-//       drag(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
-//       dismiss(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
-//       visit(originalFn: CommandOriginalFn, url: string, options: Partial<VisitOptions>): Chainable<Element>
-//     }
-//   }
-// }
+// Import cypress-axe
+import 'cypress-axe';
+
+// No need to declare types here as they're already included in cypress-axe
+// and imported with /// <reference types="cypress-axe" /> in test files
+
+// Add custom tab command for keyboard navigation testing
+Cypress.Commands.add('tab', { prevSubject: 'optional' }, (subject) => {
+  if (subject) {
+    cy.wrap(subject).trigger('keydown', { keyCode: 9, key: 'Tab', code: 'Tab' });
+  } else {
+    cy.focused().trigger('keydown', { keyCode: 9, key: 'Tab', code: 'Tab' });
+  }
+  
+  // This only simulates the tab keypress but doesn't actually change focus
+  // Wait for focus to change
+  return cy.wait(100).focused();
+});
+
+// Extend Cypress Chainable interface with our custom commands
+declare global {
+  namespace Cypress {
+    interface Chainable {
+      /**
+       * Custom command to simulate pressing the Tab key
+       * @example cy.tab()
+       */
+      tab(): Chainable<JQuery<HTMLElement>>;
+      tab(subject: JQuery<HTMLElement>): Chainable<JQuery<HTMLElement>>;
+    }
+  }
+}

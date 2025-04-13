@@ -117,7 +117,7 @@ const getDirectionToTarget = (
   const xDiff = calculateWrappedDifference(current.x, target.x, gridSize.width);
   const yDiff = calculateWrappedDifference(current.y, target.y, gridSize.height);
 
-  let preferredDirections: Direction[] = [];
+  const preferredDirections: Direction[] = [];
 
   if (Math.abs(xDiff) > Math.abs(yDiff)) {
     if (xDiff < 0) {

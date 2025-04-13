@@ -29,7 +29,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, localPlayerId }) => 
     <canvas
       ref={canvasRef}
       style={{ border: '2px solid white', backgroundColor: '#282c34' }}
-      aria-label='Snake game board'
+      aria-label='Snake Game'
       role='img'
       width={canvasWidth}
       height={canvasHeight}

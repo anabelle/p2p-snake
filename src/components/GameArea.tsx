@@ -68,6 +68,7 @@ const GameArea: React.FC<GameAreaProps> = ({
       data-testid='game-area-container'
       style={containerStyle}
       className={isFullscreen ? 'fullscreen' : ''}
+      tabIndex={0}
     >
       {showOverlay && <div className='connecting-overlay'>{overlayText}</div>}
 

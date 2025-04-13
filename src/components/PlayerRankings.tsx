@@ -47,13 +47,13 @@ const PlayerRankings: React.FC<PlayerRankingsProps> = ({
     <div className='info-section' id='player-rankings'>
       <h3>Player Rankings</h3>
       <div className='table-scroll-wrapper'>
-        <table>
+        <table role='table'>
           <thead>
             <tr>
-              <th>Player</th>
-              <th>Score</th>
-              <th>Deaths</th>
-              <th>Status</th>
+              <th scope='col'>Player</th>
+              <th scope='col'>Score</th>
+              <th scope='col'>Deaths</th>
+              <th scope='col'>Status</th>
             </tr>
           </thead>
           {}

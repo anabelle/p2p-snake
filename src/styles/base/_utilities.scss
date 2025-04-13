@@ -1,0 +1,27 @@
+// Visually hide an element but keep it accessible to screen readers
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+// Styling for the skip link
+.skip-link {
+  position: absolute;
+  top: -40px; // Initially hide off-screen
+  left: 0;
+  background: #333;
+  color: white;
+  padding: 8px;
+  z-index: 100;
+  transition: top 0.3s;
+
+  &:focus {
+    top: 0; // Bring into view on focus
+  }
+} 

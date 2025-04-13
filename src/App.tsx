@@ -104,43 +104,54 @@ const App: React.FC = () => {
 
   return (
     <div className={`App ${isFullscreen ? 'App-fullscreen' : ''}`} ref={appRef}>
-      <h1>Multiplayer Snake Game</h1> {}
+      <header role="banner">
+        <h1>Multiplayer Snake Game</h1>
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
+      </header>
       <ProfileModal
         isOpen={isProfileModalOpen}
         onRequestClose={closeProfileModal}
         onSave={saveProfile}
         initialProfile={currentUserProfile}
-      />{' '}
-      {}
-      {}
-      <div className='game-area-wrapper'>
-        <GameArea
-          gameContainerRef={gameContainerRef}
-          canvasWidth={canvasWidth}
-          canvasHeight={canvasHeight}
+      />
+      
+      <main id="main-content" role="main">
+        <div className='game-area-wrapper'>
+          <section aria-labelledby="game-area-heading">
+            <h2 id="game-area-heading" className="visually-hidden">
+              Game Area
+            </h2>
+            <GameArea
+              gameContainerRef={gameContainerRef}
+              canvasWidth={canvasWidth}
+              canvasHeight={canvasHeight}
+              isConnected={isConnected}
+              profileStatus={profileStatus}
+              isProfileModalOpen={isProfileModalOpen}
+              syncedGameState={syncedGameState}
+              isFullscreen={isFullscreen}
+              localPlayerId={localPlayerId}
+            />
+            <FullscreenButton
+              isFullscreen={isFullscreen}
+              toggleFullscreen={toggleFullscreen}
+              isFullscreenEnabled={isFullscreenEnabled}
+            />
+          </section>
+        </div>
+        <InfoPanel
           isConnected={isConnected}
+          currentUserProfile={currentUserProfile}
           profileStatus={profileStatus}
-          isProfileModalOpen={isProfileModalOpen}
           syncedGameState={syncedGameState}
-          isFullscreen={isFullscreen}
           localPlayerId={localPlayerId}
+          openProfileModal={openProfileModal}
         />
-        <FullscreenButton
-          isFullscreen={isFullscreen}
-          toggleFullscreen={toggleFullscreen}
-          isFullscreenEnabled={isFullscreenEnabled}
-        />
-      </div>
-      <InfoPanel
-        isConnected={isConnected}
-        currentUserProfile={currentUserProfile}
-        profileStatus={profileStatus}
-        syncedGameState={syncedGameState}
-        localPlayerId={localPlayerId}
-        openProfileModal={openProfileModal}
-      />{' '}
-      {}
-      <Footer /> {}
+      </main>
+      
+      <Footer />
     </div>
   );
 };

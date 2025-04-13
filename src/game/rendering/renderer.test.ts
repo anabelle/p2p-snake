@@ -59,8 +59,8 @@ function createMockContext(
   const calls: MockCall[] = [];
   let currentFillStyle: string | CanvasGradient | CanvasPattern = '';
   let currentStrokeStyle: string | CanvasGradient | CanvasPattern = '';
-  let currentLineWidth: number = 1;
-  let currentFont: string = '';
+  let currentLineWidth = 1;
+  let currentFont = '';
   let currentTextAlign: CanvasTextAlign = 'start';
   let currentTextBaseline: CanvasTextBaseline = 'alphabetic';
 
@@ -237,7 +237,7 @@ describe('Game Renderer', () => {
       type: PowerUpType,
       expectedSymbol: string,
       expectedBgColor: string,
-      expectedTextColor: string = 'white'
+      expectedTextColor = 'white'
     ) => {
       const powerUpItem: PowerUp = {
         id: `pu-${type}`,

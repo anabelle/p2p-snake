@@ -1,14 +1,13 @@
 module.exports = {
   extends: ['react-app', 'react-app/jest', 'prettier'],
   rules: {
-    'no-console': ['error', { allow: ['warn', 'error'] }] // Allow console.warn and console.error but forbid console.log
+    'no-console': ['error', { allow: ['warn', 'error'] }]
   },
   overrides: [
     {
-      // Disable no-console rule for server-side code
-      files: ['server/**/*.ts', 'server/**/*.js'],
+      files: ['server/**/*.ts'],
       rules: {
-        'no-console': 'off'
+        'no-console': 'off' // Allow console.log in server files
       }
     }
   ]

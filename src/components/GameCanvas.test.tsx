@@ -92,7 +92,7 @@ describe('GameCanvas Component', () => {
 
   it('should render a canvas element with correct attributes', () => {
     render(<GameCanvas gameState={mockGameState} localPlayerId={localPlayerId} />);
-    const canvas = screen.getByRole('img', { name: /snake game board/i });
+    const canvas = screen.getByRole('img', { name: /Snake Game/i });
     expect(canvas).toBeInTheDocument();
     expect(canvas).toHaveAttribute('width', String(CANVAS.MAX_WIDTH));
     expect(canvas).toHaveAttribute('height', String(CANVAS.getHeight()));

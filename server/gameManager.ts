@@ -21,7 +21,7 @@ export class GameManager {
   private connectedPlayerIds = new Set<string>();
   private playerInputs = new Map<string, PlayerInputData>();
   private profileUpdateQueue: ProfileUpdate[] = [];
-  private lastTickTime: number = 0;
+  private lastTickTime = 0;
 
   constructor() {
     this.initializeGame();

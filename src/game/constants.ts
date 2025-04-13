@@ -13,12 +13,12 @@ export const CANVAS: CanvasConfig = {
   MAX_WIDTH: 1024,
 
   
-  getHeight(width: number = 1024): number {
+  getHeight(width = 1024): number {
     return Math.round(width * (GRID_SIZE.height / GRID_SIZE.width));
   },
 
   
-  getCellSize(width: number = 1024): number {
+  getCellSize(width = 1024): number {
     return width / GRID_SIZE.width;
   }
 };
