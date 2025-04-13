@@ -1,0 +1,175 @@
+@use '../abstracts/variables' as vars;
+
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: vars.$spacing-lg;
+  width: 100%;
+  max-width: vars.$max-content-width;
+}
+
+.game-area-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+#game-canvas-container {
+  position: relative;
+  border: vars.$border-width solid vars.$border-color;
+  background-color: vars.$black;
+  box-shadow: 0 0 15px rgba(vars.$primary-color, 0.2);
+  border-radius: vars.$border-radius-md;
+  transition: box-shadow var(--duration-slow) vars.$ease-default;
+  max-width: 100%;
+
+  &:hover {
+    box-shadow: 0 0 20px rgba(vars.$primary-color, 0.3);
+  }
+
+  canvas {
+    display: block;
+    image-rendering: pixelated;
+    z-index: vars.$z-canvas;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+      linear-gradient(90deg, rgba(40, 40, 40, 0.1) 1px, vars.$transparent 1px),
+      linear-gradient(0deg, rgba(40, 40, 40, 0.1) 1px, vars.$transparent 1px);
+    background-size: vars.$grid-cell-size vars.$grid-cell-size;
+    z-index: 0;
+    pointer-events: none;
+  }
+}
+
+.connecting-overlay {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(vars.$background-color, 0.85);
+  border-radius: vars.$border-radius-lg;
+  font-size: vars.$font-size-lg;
+  color: vars.$primary-color;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: vars.$z-overlay;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5);
+
+  &::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 40px;
+    margin-top: 15px;
+    border: 3px solid rgba(vars.$primary-color, 0.2);
+    border-radius: 50%;
+    border-top-color: vars.$primary-color;
+    animation: spin var(--duration-spin) vars.$ease-in-out infinite;
+  }
+}
+
+.info-sections-wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: vars.$spacing-lg;
+  width: 100%;
+
+  @include vars.desktop {
+    max-width: calc(#{vars.$canvas-width} + 2px);
+  }
+}
+
+.info-section {
+  background-color: vars.$card-bg-color;
+  border: vars.$border-width solid vars.$border-color;
+  border-radius: vars.$border-radius-lg;
+  padding: vars.$spacing-md;
+  color: vars.$text-color;
+  overflow: hidden;
+
+  h3 {
+    font-family: vars.$font-body;
+    font-size: vars.$font-size-lg;
+    color: vars.$primary-color;
+    margin-top: 0;
+    margin-bottom: vars.$spacing-md;
+    border-bottom: vars.$border-width solid vars.$border-color;
+    padding-bottom: vars.$spacing-sm;
+  }
+}
+
+// Fullscreen mode styles
+.App-fullscreen {
+  background-color: vars.$black;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  padding: 0;
+  box-sizing: border-box;
+
+  h1,
+  [data-testid='info-panel-wrapper'],
+  .profile-modal-overlay,
+  footer {
+    display: none;
+  }
+
+  .game-area-wrapper {
+    flex-shrink: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  > .game-area-wrapper > #game-canvas-container {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    aspect-ratio: unset;
+    max-width: none;
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+
+// Mobile responsive styles
+@include vars.mobile {
+  #game-canvas-container {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 50 / 30;
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+    }
+  }
+}

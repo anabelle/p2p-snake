@@ -1,0 +1,36 @@
+@use '../abstracts/variables' as vars;
+
+:root {
+  --background-color: #{vars.$background-color};
+  --text-color: #{vars.$text-color};
+  --primary-color: #{vars.$primary-color};
+  --card-bg-color: #{vars.$card-bg-color};
+  --border-color: #{vars.$border-color};
+  --highlight-bg-color: #{vars.$highlight-bg-color};
+  --status-online-color: #{vars.$status-online-color};
+  --status-offline-color: #{vars.$status-offline-color};
+
+  --font-title: #{vars.$font-title};
+  --font-body: #{vars.$font-body};
+
+  --spacing-xs: #{vars.$spacing-xs};
+  --spacing-sm: #{vars.$spacing-sm};
+  --spacing-md: #{vars.$spacing-md};
+  --spacing-lg: #{vars.$spacing-lg};
+  --spacing-xl: #{vars.$spacing-xl};
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background-color: var(--background-color);
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-md);
+}

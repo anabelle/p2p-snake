@@ -1,0 +1,49 @@
+@use '../abstracts/variables' as vars;
+
+h1 {
+  font-family: vars.$font-title;
+  font-size: vars.$font-size-xl;
+  color: vars.$primary-color;
+  margin-bottom: vars.$spacing-sm;
+  text-align: center;
+  display: block;
+  text-shadow:
+    0 0 10px rgba(vars.$primary-color, 0.4),
+    0 0 20px rgba(vars.$primary-color, 0.2);
+  position: relative;
+  padding-bottom: 0.5rem;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50%;
+    max-width: 120px;
+    height: 2px;
+    background: linear-gradient(90deg, vars.$transparent, vars.$primary-color, vars.$transparent);
+  }
+}
+
+footer {
+  display: block;
+}
+
+h1 {
+  display: block;
+}
+
+[data-testid='info-panel-wrapper'] {
+  display: block;
+}
+
+.status-online {
+  color: vars.$status-online-color;
+  font-weight: bold;
+}
+
+.status-offline {
+  color: vars.$status-offline-color;
+  font-style: italic;
+}

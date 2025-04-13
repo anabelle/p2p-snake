@@ -1,0 +1,132 @@
+@use '../abstracts/variables' as vars;
+
+.profile-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(vars.$black, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: vars.$z-modal;
+  padding: 15px;
+}
+
+.profile-modal {
+  background: vars.$background-color;
+  padding: 20px 30px;
+  border-radius: vars.$border-radius-lg;
+  border: vars.$border-width solid vars.$border-color;
+  color: vars.$text-color;
+  min-width: vars.$modal-min-width;
+  max-width: 90%;
+  max-height: calc(100vh - 30px);
+  overflow-y: auto;
+  outline: none;
+  box-shadow: vars.$shadow-lg;
+  position: relative;
+
+  h2 {
+    margin-top: 0;
+    color: vars.$primary-color;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+}
+
+.profile-modal-content {
+  margin-bottom: 20px;
+}
+
+.profile-modal .form-group {
+  margin-bottom: 15px;
+
+  label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+
+  input[type='text'] {
+    width: 100%;
+    padding: 8px 10px;
+    border: vars.$border-width solid vars.$border-color;
+    border-radius: vars.$border-radius-md;
+    background-color: vars.$input-bg-color;
+    color: vars.$input-text-color;
+    box-sizing: border-box;
+  }
+}
+
+.profile-modal .circle-picker {
+  margin: 10px 0;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 5px;
+  border: vars.$border-width solid vars.$border-color;
+  border-radius: vars.$border-radius-md;
+
+  > span {
+    margin: 4px !important;
+
+    > div {
+      cursor: pointer;
+      transition: transform var(--duration-normal) vars.$ease-default;
+
+      &:hover {
+        transform: scale(1.15);
+      }
+
+      &:focus {
+        outline: 2px solid vars.$primary-color !important;
+        box-shadow: 0 0 0 2px vars.$primary-color !important;
+      }
+    }
+  }
+}
+
+.profile-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
+  position: sticky;
+  bottom: 0;
+  background: vars.$background-color;
+  padding: 10px 0;
+  z-index: vars.$z-modal-content;
+
+  button {
+    padding: 8px 15px;
+    border-radius: vars.$border-radius-md;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: opacity var(--duration-normal) vars.$ease-default;
+    min-height: vars.$min-height-button;
+    min-width: vars.$min-width-button;
+  }
+}
+
+.button-primary {
+  background-color: vars.$primary-color;
+  color: vars.$white;
+
+  &:hover {
+    opacity: vars.$opacity-hover;
+  }
+}
+
+.button-secondary {
+  background-color: vars.$secondary-button-bg;
+  color: vars.$secondary-button-text;
+
+  &:hover {
+    opacity: vars.$opacity-hover;
+  }
+}

@@ -1,0 +1,119 @@
+// Colors
+$background-color: #1a1a1a;
+$text-color: #e0e0e0;
+$primary-color: #64ffda;
+$card-bg-color: #2a2a2a;
+$border-color: #444444;
+$highlight-bg-color: #3a3a3a;
+$status-online-color: #81c784;
+$status-offline-color: #bdbdbd;
+$input-bg-color: #2a2a2e;
+$input-text-color: #e1e1e1;
+$secondary-button-bg: #555;
+$secondary-button-text: #e1e1e1;
+$table-stripe-color: rgba(0, 0, 0, 0.1);
+$row-hover-color: rgba(100, 255, 218, 0.1);
+$strong-text-color: #bbbbbb;
+$black: #000;
+$white: #fff;
+$dodgerblue: dodgerblue;
+$yellow: #ffcc00;
+$transparent: transparent;
+
+// Fonts
+$font-title: 'Press Start 2P', cursive;
+$font-body:
+  -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans',
+  'Helvetica Neue', sans-serif;
+
+// Font Sizes
+$font-size-xs: 0.7rem;
+$font-size-sm: 0.8rem;
+$font-size-md: 0.9rem;
+$font-size-base: 1rem;
+$font-size-lg: 1.2rem;
+$font-size-xl: 1.75rem;
+
+// Spacing
+$spacing-xs: 0.25rem;
+$spacing-sm: 0.5rem;
+$spacing-md: 1rem;
+$spacing-lg: 1.5rem;
+$spacing-xl: 2rem;
+
+// Borders
+$border-radius-sm: 2px;
+$border-radius-md: 4px;
+$border-radius-lg: 8px;
+$border-width: 1px;
+
+// Shadows
+$shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+$shadow-md: 0 2px 4px rgba(0, 0, 0, 0.3);
+$shadow-lg: 0 5px 15px rgba(0, 0, 0, 0.3);
+
+// Dimensions
+$min-height-button: 44px;
+$min-width-button: 44px;
+$swatch-size: 16px;
+$powerup-size: 24px;
+$canvas-width: 600px;
+$modal-min-width: 300px;
+$table-max-height: 250px;
+$badge-gap: 12px;
+
+// Opacity
+$opacity-hover: 0.9;
+$opacity-inactive: 0.8;
+
+// Z-indices
+$z-canvas: 1;
+$z-badges: 5;
+$z-modal-content: 5;
+$z-modal: 1000;
+$z-overlay: 10;
+
+// Animation durations
+$duration-fast: 0.15s;
+$duration-normal: 0.2s;
+$duration-slow: 0.3s;
+$duration-spin: 1s;
+
+// Animation easings
+$ease-default: ease;
+$ease-out: ease-out;
+$ease-in-out: ease-in-out;
+
+// Layout
+$max-content-width: 1200px;
+$mobile-breakpoint: 767px;
+$desktop-breakpoint: 768px;
+$grid-cell-size: 12px;
+
+// Powerup colors
+$powerup-speed: #80deea;
+$powerup-slow: #fff59d;
+$powerup-invincibility: #ce93d8;
+$powerup-double-score: #ffcc80;
+
+// Animations
+$animations-enabled: true;
+
+// Media Queries
+@mixin mobile {
+  @media (max-width: $mobile-breakpoint) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: $desktop-breakpoint) {
+    @content;
+  }
+}
+
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}

@@ -97,6 +97,7 @@
     "lint-staged": "^15.5.1",
     "prettier": "^3.5.3",
     "react-app-rewired": "^2.2.1",
+    "sass": "^1.86.3",
     "semantic-release": "^22.0.12",
     "strip-comments": "^2.0.1",
     "ts-jest": "^27.1.4",
@@ -122,7 +123,9 @@
     "watchPlugins": []
   },
   "release": {
-    "branches": ["main"],
+    "branches": [
+      "main"
+    ],
     "plugins": [
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
@@ -130,7 +133,11 @@
       [
         "@semantic-release/git",
         {
-          "assets": ["package.json", "package-lock.json", "CHANGELOG.md"],
+          "assets": [
+            "package.json",
+            "package-lock.json",
+            "CHANGELOG.md"
+          ],
           "message": "chore(release): ${nextRelease.version} [skip ci]\\n\\n${nextRelease.notes}"
         }
       ],

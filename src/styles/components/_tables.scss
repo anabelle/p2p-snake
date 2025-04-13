@@ -1,0 +1,48 @@
+@use '../abstracts/variables' as vars;
+
+.table-scroll-wrapper {
+  max-height: vars.$table-max-height;
+  overflow-y: auto;
+  border: vars.$border-width solid vars.$border-color;
+  border-radius: vars.$border-radius-md;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: vars.$font-size-md;
+}
+
+thead {
+  background-color: vars.$highlight-bg-color;
+  position: sticky;
+  top: 0;
+  z-index: vars.$z-canvas;
+}
+
+th,
+td {
+  padding: vars.$spacing-sm;
+  text-align: left;
+  border-bottom: vars.$border-width solid vars.$border-color;
+}
+
+th {
+  color: vars.$primary-color;
+  font-weight: bold;
+}
+
+tbody {
+  tr:nth-child(even) {
+    background-color: vars.$table-stripe-color;
+  }
+
+  tr.highlight-row {
+    background-color: vars.$highlight-bg-color;
+    font-weight: bold;
+  }
+
+  tr:hover {
+    background-color: vars.$row-hover-color;
+  }
+}

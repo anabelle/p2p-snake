@@ -1,0 +1,102 @@
+@use '../abstracts/variables' as vars;
+
+#your-snake-info > div:not(#active-powerups) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: vars.$spacing-sm vars.$spacing-lg;
+  margin-bottom: vars.$spacing-md;
+}
+
+#your-snake-info strong,
+#active-powerups strong {
+  color: vars.$strong-text-color;
+}
+
+.player-color-swatch {
+  display: inline-block;
+  width: vars.$swatch-size;
+  height: vars.$swatch-size;
+  border: vars.$border-width solid rgba(vars.$white, 0.5);
+  border-radius: vars.$border-radius-sm;
+  vertical-align: middle;
+  margin-right: vars.$spacing-xs;
+}
+
+#active-powerups {
+  margin-top: vars.$spacing-md;
+
+  > div {
+    display: flex;
+    align-items: center;
+    gap: vars.$spacing-sm;
+    margin-left: vars.$spacing-sm;
+    margin-bottom: vars.$spacing-xs;
+  }
+}
+
+#powerup-legend {
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: vars.$font-size-md;
+  }
+
+  li {
+    margin-bottom: vars.$spacing-sm;
+    display: flex;
+    align-items: center;
+    gap: vars.$spacing-sm;
+  }
+}
+
+.powerup-symbol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: vars.$powerup-size;
+  height: vars.$powerup-size;
+  border-radius: 50%;
+  color: vars.$background-color;
+  font-weight: bold;
+  font-size: vars.$font-size-sm;
+  border: vars.$border-width solid rgba(vars.$black, 0.3);
+  text-align: center;
+  line-height: 22px;
+  flex-shrink: 0;
+
+  &.speed {
+    background-color: vars.$powerup-speed;
+  }
+
+  &.slow {
+    background-color: vars.$powerup-slow;
+  }
+
+  &.invincibility {
+    background-color: vars.$powerup-invincibility;
+  }
+
+  &.double-score {
+    background-color: vars.$powerup-double-score;
+  }
+}
+
+.editable-profile-item {
+  cursor: pointer;
+  display: block;
+  padding: 4px 8px;
+  margin: 2px 0;
+  border-radius: vars.$border-radius-md;
+  transition: background-color var(--duration-normal) vars.$ease-default;
+
+  &:hover {
+    background-color: rgba(vars.$white, 0.1);
+  }
+
+  .player-color-swatch {
+    cursor: pointer;
+    vertical-align: middle;
+  }
+}

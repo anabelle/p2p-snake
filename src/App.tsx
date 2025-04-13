@@ -19,7 +19,7 @@ import InfoPanel from './components/InfoPanel';
 import Footer from './components/Footer';
 import FullscreenButton from './components/FullscreenButton';
 
-import './App.css';
+import './styles/main.scss';
 
 if (typeof window !== 'undefined') {
   Modal.setAppElement(document.getElementById('root') || document.body);

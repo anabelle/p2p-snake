@@ -1,0 +1,49 @@
+@use 'variables' as vars;
+
+// Animation keyframes
+@keyframes foodGlow {
+  0% {
+    filter: drop-shadow(0 0 3px rgba(255, 0, 0, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 6px rgba(255, 0, 0, 0.7));
+  }
+  100% {
+    filter: drop-shadow(0 0 3px rgba(255, 0, 0, 0.5));
+  }
+}
+
+@keyframes snakePulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Animation durations and reduced motion handling
+:root {
+  --duration-fast: #{vars.$duration-fast};
+  --duration-normal: #{vars.$duration-normal};
+  --duration-slow: #{vars.$duration-slow};
+  --duration-spin: #{vars.$duration-spin};
+}
+
+@include vars.reduced-motion {
+  :root {
+    --duration-fast: 0s;
+    --duration-normal: 0s;
+    --duration-slow: 0s;
+    --duration-spin: 0s;
+  }
+}
