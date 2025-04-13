@@ -3,6 +3,11 @@ description:
 globs: 
 alwaysApply: true
 ---
+---
+alwaysApply: true
+description: 
+globs: 
+---
 # Code Quality Mandatory Rules
 
 ## 1. Gather Context(MANDATORY)
@@ -16,7 +21,7 @@ alwaysApply: true
 *   **Write a Failing Test:** Before implementing a feature or fixing a bug, write a specific test (unit or Cypress E2E) that clearly defines the desired outcome or reproduces the problem. Ensure this test fails as expected.
 *   **Implement/Fix:** Write the minimal code required to make the failing test pass.
 *   **Refactor:** Improve the code structure and clarity while ensuring all tests still pass.
-*   **Iterative Testing:** During development, run relevant tests frequently to get fast feedback. Use targeted commands like `npm test -- --testPathPattern=yourFile.test.ts` or specific Cypress commands, ensure to disable watch mode so you dont get stuck.
+*   **Iterative Testing:** During development, run relevant tests frequently to get fast feedback. Use targeted commands like `npm test -- --testPathPattern=yourFile.test.ts --watchAll=false` or specific Cypress commands, ensure to disable watch mode so you dont get stuck.
 *   **Troubleshooting Webpack Overlays:** If a `webpack-dev-server-client-overlay` appears during Cypress tests, run `npm run build` to get clearer error messages from the build process.
 
 ## 3. Final Checks & Cleanup
@@ -24,3 +29,11 @@ alwaysApply: true
 *   **Comprehensive Verification:** Before considering work complete or committing changes, run the full `npm run verify` suite to catch any regressions.
 *   **Linting & Formatting:** Run `npm run lint` and `npm run format`. Fix any errors or warnings reported.
 *   **Final Verification:** After *all* code changes, including lint/format fixes, run `npm run verify` one last time to guarantee everything is still working correctly.
+
+Additional notes:
+
+* If a test fails repeatedly due to Jest.Mock vs jest.mock type just use any.
+
+Tools:
+
+* You have access to the terminal use git to revert files when trying different things if its useful
