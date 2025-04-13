@@ -101,27 +101,26 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
       isOpen={isOpen}
       onRequestClose={handleRequestClose}
       onAfterOpen={handleAfterOpen}
-      contentLabel='User Profile' // Used as aria-label for the modal
+      contentLabel='User Profile'
       className='profile-modal'
       overlayClassName='profile-modal-overlay'
       ariaHideApp={process.env.NODE_ENV !== 'test'}
       aria-modal='true'
       role='dialog'
-      // Assign aria-labelledby to the modal title for accessibility
-      aria-labelledby='profile-modal-title' 
-      shouldCloseOnEsc={true} // Allow closing with Esc key
-      shouldCloseOnOverlayClick={true} // Allow closing by clicking overlay
+      aria-labelledby='profile-modal-title'
+      shouldCloseOnEsc={true}
+      shouldCloseOnOverlayClick={true}
       shouldReturnFocusAfterClose={true}
     >
       <h2 id='profile-modal-title'>
         {initialProfile ? 'Edit Profile' : 'Welcome! Create your profile'}
       </h2>
-      {/* Removed redundant aria-labelledby from content div */}
+      {}
       <div className='profile-modal-content'>
         <div className='form-group'>
           <label htmlFor='profileName'>Name:</label>
           <input
-            ref={nameInputRef} // Add ref for focusing
+            ref={nameInputRef}
             type='text'
             id='profileName'
             value={name}
@@ -156,7 +155,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({
         </div>
       </div>
       <div className='profile-modal-actions'>
-        {/* Add a Cancel button for better UX */}
+        {}
         <button onClick={handleRequestClose} className='button-secondary'>
           Cancel
         </button>
