@@ -29,8 +29,9 @@ const App: React.FC = () => {
   const appRef = useRef<HTMLDivElement>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
 
-  const canvasWidth = GRID_SIZE.width * CELL_SIZE;
-  const canvasHeight = GRID_SIZE.height * CELL_SIZE;
+  
+  const canvasWidth = 1024;
+  const canvasHeight = Math.round(canvasWidth * (GRID_SIZE.height / GRID_SIZE.width));
 
   const { canvasRef } = useCanvasElement({
     width: canvasWidth,

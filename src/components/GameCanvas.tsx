@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { GameState } from '../game/state/types';
-import { CELL_SIZE } from '../game/constants';
+import { GRID_SIZE } from '../game/constants';
 import { drawGame } from '../game/rendering/renderer';
 
 interface GameCanvasProps {
@@ -21,14 +21,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, localPlayerId }) => 
     drawGame(ctx, gameState, localPlayerId);
   }, [gameState, localPlayerId]);
 
+  
+  const canvasWidth = 1024;
+  const canvasHeight = Math.round(canvasWidth * (GRID_SIZE.height / GRID_SIZE.width));
+
   return (
     <canvas
       ref={canvasRef}
       style={{ border: '2px solid white', backgroundColor: '#282c34' }}
       aria-label='Snake game board'
       role='img'
-      width={gameState.gridSize.width * CELL_SIZE}
-      height={gameState.gridSize.height * CELL_SIZE}
+      width={canvasWidth}
+      height={canvasHeight}
     />
   );
 };

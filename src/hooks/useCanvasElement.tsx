@@ -25,6 +25,13 @@ const useCanvasElement = ({ width, height, containerRef }: UseCanvasElementProps
       container.appendChild(canvas);
       canvasRef.current = canvas;
       canvasElementCreated = true;
+    } else if (canvasRef.current) {
+      
+      if (canvasRef.current.width !== width || canvasRef.current.height !== height) {
+        logger.debug(`useCanvasElement: Updating canvas dimensions to ${width}x${height}`);
+        canvasRef.current.width = width;
+        canvasRef.current.height = height;
+      }
     }
 
     const canvasToRemove = canvasRef.current;

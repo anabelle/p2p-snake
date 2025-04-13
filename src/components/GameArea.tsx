@@ -39,7 +39,6 @@ const GameArea: React.FC<GameAreaProps> = ({
   };
 
   useEffect(() => {
-    
     const currentScore = (() => {
       if (!syncedGameState?.playerStats || !localPlayerId) return 0;
       return syncedGameState.playerStats[localPlayerId]?.score || 0;
@@ -49,7 +48,7 @@ const GameArea: React.FC<GameAreaProps> = ({
       setScoreChanged(true);
       const timer = setTimeout(() => {
         setScoreChanged(false);
-      }, 300); 
+      }, 300);
       return () => clearTimeout(timer);
     }
     previousScoreRef.current = currentScore;
@@ -58,10 +57,9 @@ const GameArea: React.FC<GameAreaProps> = ({
   const containerStyle: React.CSSProperties = {
     ['--canvas-width' as string]: `${canvasWidth}px`
   };
-  if (!isFullscreen) {
-    containerStyle.width = canvasWidth;
-    containerStyle.height = canvasHeight;
-  }
+
+  
+  
 
   return (
     <div
@@ -69,6 +67,7 @@ const GameArea: React.FC<GameAreaProps> = ({
       id='game-canvas-container'
       data-testid='game-area-container'
       style={containerStyle}
+      className={isFullscreen ? 'fullscreen' : ''}
     >
       {showOverlay && <div className='connecting-overlay'>{overlayText}</div>}
 

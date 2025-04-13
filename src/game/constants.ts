@@ -1,5 +1,5 @@
 export const GRID_SIZE = { width: 50, height: 30 };
-export const CELL_SIZE = 12;
+export const CELL_SIZE = 20.48;
 export const GAME_SPEED_MS = 150;
 export const FOOD_VALUE = 1;
 export const POWER_UP_SPAWN_INTERVAL = 5000;

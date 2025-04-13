@@ -4,20 +4,22 @@ import { CELL_SIZE, GRID_SIZE } from '../constants';
 function getScaleFactors(ctx: CanvasRenderingContext2D) {
   const canvasWidth = ctx.canvas.width;
   const canvasHeight = ctx.canvas.height;
-  const baseWidth = GRID_SIZE.width * CELL_SIZE;
-  const baseHeight = GRID_SIZE.height * CELL_SIZE;
 
-  const scaleX = canvasWidth / baseWidth;
-  const scaleY = canvasHeight / baseHeight;
+  
+  
+  const cellWidth = canvasWidth / GRID_SIZE.width;
+  const cellHeight = canvasHeight / GRID_SIZE.height;
 
-  const scale = Math.min(scaleX, scaleY);
+  const scaleX = 1; 
+  const scaleY = 1;
+  const scale = 1;
 
   return {
     scaleX,
     scaleY,
     scale,
-    cellWidth: CELL_SIZE * scaleX,
-    cellHeight: CELL_SIZE * scaleY
+    cellWidth,
+    cellHeight
   };
 }
 
@@ -93,7 +95,6 @@ export function drawSnake(
     return;
   }
 
-  
   const canTransform = typeof ctx.translate === 'function' && typeof ctx.scale === 'function';
 
   snake.body.forEach((segment, index) => {
@@ -119,13 +120,11 @@ export function drawSnake(
       }
     }
 
-    
     if (canTransform && index === 0 && isLocalPlayer) {
       ctx.save();
       const now = Date.now();
-      const pulseScale = 1 + Math.sin(now / 200) * 0.05; 
+      const pulseScale = 1 + Math.sin(now / 200) * 0.05;
 
-      
       const centerX = segment.x * scaleFactors.cellWidth + scaleFactors.cellWidth / 2;
       const centerY = segment.y * scaleFactors.cellHeight + scaleFactors.cellHeight / 2;
 
@@ -155,7 +154,6 @@ export function drawSnake(
       scaleFactors.cellHeight
     );
 
-    
     if (canTransform && index === 0 && isLocalPlayer) {
       ctx.restore();
     }
@@ -179,7 +177,6 @@ export function drawFood(
 
   const canShadow = typeof ctx.shadowBlur !== 'undefined';
 
-  
   if (canShadow) ctx.save();
 
   if (canShadow) {
@@ -194,7 +191,6 @@ export function drawFood(
   ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
   ctx.fill();
 
-  
   if (canShadow) ctx.shadowBlur = 0;
 
   ctx.fillStyle = 'green';
@@ -211,7 +207,7 @@ export function drawPowerUp(
   let symbol = '?';
   let bgColor = 'purple';
   let textColor = 'white';
-  let glowColor = 'rgba(128, 0, 128, 0.6)'; 
+  let glowColor = 'rgba(128, 0, 128, 0.6)';
 
   switch (powerUp.type) {
     case 'SPEED':
@@ -244,7 +240,7 @@ export function drawPowerUp(
   const canShadow = typeof ctx.shadowBlur !== 'undefined';
 
   const now = Date.now();
-  const pulseOffset = Math.sin(now / 300) * 0.15; 
+  const pulseOffset = Math.sin(now / 300) * 0.15;
   const pulseFactor = 1 + pulseOffset;
 
   const rectX = powerUp.position.x * scaleFactors.cellWidth;
@@ -252,13 +248,11 @@ export function drawPowerUp(
   const rectSizeX = scaleFactors.cellWidth;
   const rectSizeY = scaleFactors.cellHeight;
 
-  
   const centerX = rectX + rectSizeX / 2;
   const centerY = rectY + rectSizeY / 2;
 
   if (canTransform) ctx.save();
 
-  
   if (canShadow) {
     ctx.shadowBlur = 8 * scaleFactors.scale;
     ctx.shadowColor = glowColor;
@@ -266,26 +260,21 @@ export function drawPowerUp(
     ctx.shadowOffsetY = 0;
   }
 
-  
   if (canTransform) {
     ctx.translate(centerX, centerY);
     ctx.scale(pulseFactor, pulseFactor);
     ctx.translate(-centerX, -centerY);
   }
 
-  
   ctx.fillStyle = bgColor;
   ctx.fillRect(rectX, rectY, rectSizeX, rectSizeY);
 
-  
   ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
   ctx.lineWidth = 1 * scaleFactors.scale;
   ctx.strokeRect(rectX, rectY, rectSizeX, rectSizeY);
 
-  
   if (canShadow) ctx.shadowBlur = 0;
 
-  
   ctx.fillStyle = textColor;
   const fontSize = Math.min(scaleFactors.cellWidth, scaleFactors.cellHeight) * 0.6;
   ctx.font = `bold ${fontSize}px sans-serif`;

@@ -157,7 +157,24 @@
   }
 }
 
-// Mobile responsive styles
+// Responsive styles for all non-fullscreen modes
+// Canvas is always responsive and maintains aspect ratio
+#game-canvas-container {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 50 / 30;
+  max-width: vars.$canvas-width; // Ensures it doesn't exceed 1024px
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+  }
+}
+
+// Mobile-specific adjustments
 @include vars.mobile {
   #game-canvas-container {
     width: 100% !important;

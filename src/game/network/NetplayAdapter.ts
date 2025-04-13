@@ -4,7 +4,10 @@ import { drawGame } from '../rendering/renderer';
 import logger from '../../utils/logger';
 
 export class NetplayAdapter {
-  static canvasSize = { width: GRID_SIZE.width * CELL_SIZE, height: GRID_SIZE.height * CELL_SIZE };
+  static canvasSize = {
+    width: 1024,
+    height: Math.round(1024 * (GRID_SIZE.height / GRID_SIZE.width))
+  };
 
   localPlayerId: string;
 
