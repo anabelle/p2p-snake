@@ -1,16 +1,12 @@
 ---
-description: 
-globs: 
-alwaysApply: true
----
----
 alwaysApply: true
 description: 
 globs: 
 ---
+
 # Code Quality Mandatory Rules
 
-## 1. Gather Context(MANDATORY)
+## 1. Gather Context (MANDATORY)
 
 *   **Baseline Check:** Before starting any work or addressing an issue, ensure a clean slate by running a mandatory `npm run verify`.
 *   **Understand the Scope:** Always review relevant sections of `package.json` (scripts, dependencies) and understand the local file/directory structure before doing anything.
