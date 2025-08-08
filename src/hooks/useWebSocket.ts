@@ -32,11 +32,11 @@ export const useWebSocket = (): UseWebSocketReturn => {
       `Connecting to WebSocket with Profile: ID=${profile.id}, Name=${profile.name}, Color=${profile.color}`
     );
 
-    const SIGNALING_SERVER_URI =
-      process.env.REACT_APP_SIGNALING_SERVER_URL || 'https://snake.heyanabelle.com/backend';
-    logger.debug(`Using signaling server: ${SIGNALING_SERVER_URI}`);
+    const SIGNALING_SERVER_URL = process.env.REACT_APP_SIGNALING_SERVER_URL || '';
+    logger.debug(`Using signaling server URL: ${SIGNALING_SERVER_URL}`);
 
-    const newSocket = io(SIGNALING_SERVER_URI, {
+    const newSocket = io(SIGNALING_SERVER_URL, {
+      path: '/backend/socket.io',
       query: {
         id: profile.id,
         name: profile.name,

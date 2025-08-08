@@ -6,6 +6,7 @@ import { GAME_SPEED_MS } from '../src/game/constants';
 import { GameState } from '../src/game/state/types';
 
 const io = new Server(httpServer, {
+  path: '/backend/socket.io',
   cors: {
     origin: '*',
     methods: ['GET', 'POST']
