@@ -76,6 +76,10 @@ jobs:
           cp server/cpanel.json dist-server/server/
           cp server/.user.ini dist-server/server/
           
+          # Create backend directory and copy backend .htaccess
+          mkdir -p dist-server/server/backend
+          cp server/backend/.htaccess dist-server/server/backend/
+          
           # Create .cpanel.yml for deployment
           cat > dist-server/server/.cpanel.yml << 'EOL'
           ---
@@ -91,6 +95,7 @@ jobs:
               - /bin/cp -R server/httpServer.js $DEPLOYPATH
               - /bin/cp -R server/gameManager.js $DEPLOYPATH
               - /bin/cp -R server/socketHandlers.js $DEPLOYPATH
+              - /bin/cp -R server/backend $DEPLOYPATH
               - /bin/cp -R src $DEPLOYPATH
               - cd $DEPLOYPATH && npm install --production
           EOL
@@ -149,6 +154,7 @@ jobs:
           - `.htaccess`: Apache configuration for the Node.js app
           - `cpanel.json`: cPanel-specific configuration
           - `install.sh`: Helper script to install dependencies
+          - `backend/.htaccess`: Cloudlinux Passenger configuration for the /backend endpoint
 
           ### Troubleshooting
 

@@ -4,6 +4,10 @@ Copy-Item -Path "server/cpanel-entry.js" -Destination "dist-server/server/" -For
 # Copy the .htaccess file for cPanel
 Copy-Item -Path "server/.htaccess" -Destination "dist-server/server/" -Force
 
+# Create backend directory and copy the backend .htaccess file
+New-Item -Path "dist-server/server/backend" -ItemType Directory -Force
+Copy-Item -Path "server/backend/.htaccess" -Destination "dist-server/server/backend/" -Force
+
 # Copy the cpanel.json file for cPanel
 Copy-Item -Path "server/cpanel.json" -Destination "dist-server/server/" -Force
 
