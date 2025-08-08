@@ -33,7 +33,7 @@ export const useWebSocket = (): UseWebSocketReturn => {
     );
 
     const SIGNALING_SERVER_URI =
-      process.env.REACT_APP_SIGNALING_SERVER_URL || 'https://snake-api-974c0cc98060.herokuapp.com';
+      process.env.REACT_APP_SIGNALING_SERVER_URL || 'https://snake.heyanabelle.com/backend';
     logger.debug(`Using signaling server: ${SIGNALING_SERVER_URI}`);
 
     const newSocket = io(SIGNALING_SERVER_URI, {
