@@ -1,4 +1,4 @@
-name: Deploy Frontend # Name for the Deploy workflow (will appear on deploy badge)
+name: Deploy Frontend and Server # Name for the Deploy workflow (will appear on deploy badge)
 
 on:
   workflow_run:
@@ -35,6 +35,14 @@ jobs:
       - name: Build frontend for deployment
         run: npm run build
 
+      - name: Build server for deployment
+        run: |
+          npm run build:server
+          cp server/cpanel-entry.js dist-server/server/
+          cp server/.htaccess dist-server/server/
+          cp server/cpanel.json dist-server/server/
+          cp server/.user.ini dist-server/server/
+
       - name: Install lftp
         run: |
           # Disable man-db updates to speed up installation
@@ -46,8 +54,13 @@ jobs:
 
       - name: Prepare deployment files
         run: |
+          # Frontend files
           mkdir -p deploy
           cp -r build/* deploy/
+          
+          # Server files
+          mkdir -p deploy/server
+          cp -r dist-server/* deploy/server/
 
       - name: Deploy via FTP
         env:

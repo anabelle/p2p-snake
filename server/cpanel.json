@@ -1,0 +1,10 @@
+{
+  "backend": "nodejs",
+  "nodeapp": {
+    "startscript": "server/cpanel-entry.js",
+    "environment": "production",
+    "mode": "production"
+  },
+  "applicationType": "node",
+  "entrypoint": "server/cpanel-entry.js"
+}

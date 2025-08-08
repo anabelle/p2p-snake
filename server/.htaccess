@@ -1,0 +1,8 @@
+# Prevent directory listing
+Options -Indexes
+
+# Set application/node to handle .js files
+AddHandler application/node .js
+
+# Set the main entry point for the Node.js application
+DirectoryIndex server/cpanel-entry.js
