@@ -72,7 +72,7 @@ describe('useWebSocket Hook', () => {
     expect(mockIo).toHaveBeenCalledTimes(1);
 
     const expectedUrl =
-      process.env.REACT_APP_SIGNALING_SERVER_URL || 'https://snake-api-974c0cc98060.herokuapp.com';
+      process.env.REACT_APP_SIGNALING_SERVER_URL || 'https://snake.heyanabelle.com/backend';
     expect(mockIo).toHaveBeenCalledWith(expectedUrl, {
       query: {
         id: mockProfile.id,
