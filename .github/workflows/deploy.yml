@@ -37,11 +37,127 @@ jobs:
 
       - name: Build server for deployment
         run: |
+          # Build the server TypeScript files
           npm run build:server
+          
+          # Create server package.json with dependencies
+          cat > dist-server/package.json << 'EOL'
+          {
+            "name": "snake-game-server",
+            "version": "1.0.0",
+            "description": "Multiplayer Snake Game Server",
+            "main": "server/cpanel-entry.js",
+            "engines": {
+              "node": "18.x"
+            },
+            "scripts": {
+              "start": "node server/cpanel-entry.js",
+              "install-deps": "npm install --production",
+              "postinstall": "echo 'Dependencies installed successfully'"
+            },
+            "dependencies": {
+              "socket.io": "^4.8.1",
+              "http": "^0.0.1-security",
+              "uuid": "^9.0.1"
+            },
+            "cPanel": {
+              "type": "nodejs",
+              "entrypoint": "server/cpanel-entry.js",
+              "environment": {
+                "NODE_ENV": "production"
+              }
+            }
+          }
+          EOL
+          
+          # Copy cPanel configuration files to the dist-server directory
           cp server/cpanel-entry.js dist-server/server/
           cp server/.htaccess dist-server/server/
           cp server/cpanel.json dist-server/server/
           cp server/.user.ini dist-server/server/
+          
+          # Create .cpanel.yml for deployment
+          cat > dist-server/server/.cpanel.yml << 'EOL'
+          ---
+          deployment:
+            tasks:
+              - export DEPLOYPATH=/home/username/public_html/server/
+              - /bin/cp -R server/package.json $DEPLOYPATH
+              - /bin/cp -R server/package-lock.json $DEPLOYPATH
+              - /bin/cp -R server/npm-shrinkwrap.json $DEPLOYPATH
+              - /bin/cp -R server/.npmrc $DEPLOYPATH
+              - /bin/cp -R server/cpanel-entry.js $DEPLOYPATH
+              - /bin/cp -R server/index.js $DEPLOYPATH
+              - /bin/cp -R server/httpServer.js $DEPLOYPATH
+              - /bin/cp -R server/gameManager.js $DEPLOYPATH
+              - /bin/cp -R server/socketHandlers.js $DEPLOYPATH
+              - /bin/cp -R src $DEPLOYPATH
+              - cd $DEPLOYPATH && npm install --production
+          EOL
+          
+          # Create .npmrc file for npm configuration
+          cat > dist-server/server/.npmrc << 'EOL'
+          save-exact=true
+          package-lock=true
+          fund=false
+          audit=false
+          engine-strict=true
+          legacy-peer-deps=true
+          EOL
+          
+          # Create install.sh script in the server directory
+          cat > dist-server/server/install.sh << 'EOL'
+          #!/bin/bash
+          echo "Installing dependencies for Snake Game Server..."
+          npm install --production
+          echo "Dependencies installed successfully!"
+          EOL
+          
+          chmod +x dist-server/server/install.sh
+          
+          # Create README.md for server deployment
+          cat > dist-server/server/README.md << 'EOL'
+          # Snake Game Server
+
+          ## cPanel Deployment Instructions
+
+          This directory contains the compiled server code for the Snake Game multiplayer backend.
+
+          ### Manual Installation
+
+          1. After uploading the files to your cPanel server, navigate to the server directory
+          2. Run the install script:
+          ```
+          chmod +x install.sh
+          ./install.sh
+          ```
+
+          3. Configure the application in cPanel's Node.js App Manager:
+             - Application root: Path to this directory
+             - Application URL: Your domain or subdomain
+             - Application startup file: `cpanel-entry.js`
+             - Node.js version: 18.x
+             - Environment mode: Production
+             - Environment variables:
+               - PORT: The port assigned by your cPanel provider (usually in the 8000-9000 range)
+
+          ### Files Overview
+
+          - `cpanel-entry.js`: The main entry point for the Node.js application
+          - `index.js`: The compiled server logic
+          - `package.json` & `package-lock.json`: Define dependencies for the server
+          - `.htaccess`: Apache configuration for the Node.js app
+          - `cpanel.json`: cPanel-specific configuration
+          - `install.sh`: Helper script to install dependencies
+
+          ### Troubleshooting
+
+          If the server fails to start:
+
+          1. Check the Node.js app logs in cPanel
+          2. Ensure all dependencies were installed correctly 
+          3. Verify the PORT environment variable is set correctly
+          EOL
 
       - name: Install lftp
         run: |
