@@ -1,18 +1,15 @@
 name: Deploy Frontend and Server # Name for the Deploy workflow (will appear on deploy badge)
 
 on:
-  workflow_run:
-    workflows: ['E2E Tests'] # Trigger after the "E2E Tests" workflow completes
-    types:
-      - completed
-    branches:
-      - main
+  # Auto-trigger via workflow_run disabled: the FTP deploy target (huellasp cPanel
+  # account) was removed during the 8servidores sunset. Snake now deploys to
+  # eightser manually via the Passenger pattern. Manual-only to keep this as a
+  # reference and avoid accumulating failing runs.
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # Only run deployment if the triggering workflow was successful
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     environment: production
 
     steps:
