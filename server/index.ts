@@ -10,7 +10,10 @@ const io = new Server(httpServer, {
   cors: {
     origin: '*',
     methods: ['GET', 'POST']
-  }
+  },
+  // Disable permessage-deflate: Cloudflare proxy + LiteSpeed corrupt compressed
+  // WebSocket frames (RSV2/RSV3 set). Plain frames upgrade cleanly through CF.
+  perMessageDeflate: false
 });
 
 const gameManager = new GameManager();
